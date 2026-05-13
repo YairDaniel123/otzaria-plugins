@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "com.yourname.niqqud-dicta",
+  "name": "ניקוד אוטומטי",
+  "version": "1.0.0",
+  "description": "ניקוד אוטומטי לעברית באמצעות שירות דיקטה של האוניברסיטה העברית",
+  "author": "Your Name",
+  "stability": "beta",
+  "entrypoint": "index.html",
+  "minAppVersion": "0.9.91",
+  "sdkVersion": "1.x",
+  "permissions": [
+    "ui.feedback",
+    "network.access",
+    "reader.context_menu",
+    "events.subscribe:theme.changed"
+  ],
+  "network": {
+    "enabled": true,
+    "allowlist": [
+      "nakdan-u1-0.loadbalancer.dicta.org.il",
+      "nakdan-5-1.loadbalancer.dicta.org.il"
+    ]
+  },
+  "contributes": {
+    "toolTab": {
+      "title": "ניקוד",
+      "order": 100,
+      "defaultPinned": false,
+      "iconSvg": "<svg width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M13.75 3a.75.75 0 0 1 .694.468l5.498 13.498a.75.75 0 1 1-1.388.568L16.84 14H10.16l-1.714 4.534a.75.75 0 1 1-1.388-.568L12.056 3.468A.75.75 0 0 1 13.75 3Zm0 3.094L11.026 12.5h5.449L13.75 6.094ZM6 3.75a.75.75 0 0 0-1.5 0v9.5a.75.75 0 0 0 1.5 0v-9.5Zm-3 4a.75.75 0 0 0 0 1.5h1.25v-1.5H3Zm4.25 0H6.5v1.5h.75a.75.75 0 0 0 0-1.5ZM4.25 19a1.75 1.75 0 1 0 3.5 0 1.75 1.75 0 0 0-3.5 0Z\" fill=\"#212121\"/></svg>"
+    },
+    "publishedDataTypes": []
+  }
+}

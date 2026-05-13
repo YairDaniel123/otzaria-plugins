@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "otzaria-github-downloader",
+  "name": "מנהל הורדות מאגרים",
+  "version": "1.0.0",
+  "description": "הורדה ועדכון מאגרי ספרים מ-GitHub",
+  "author": "Otzaria User",
+  "stability": "beta",
+  "entrypoint": "index.html",
+  "minAppVersion": "0.9.92",
+  "sdkVersion": "1.x",
+  "permissions": [
+    "network.access",
+    "ui.snackbar"
+  ],
+  "network": {
+    "enabled": true,
+    "allowlist": [
+      "api.github.com",
+      "github.com",
+      "objects.githubusercontent.com"
+    ]
+  },
+  "contributes": {
+    "toolTab": {
+      "title": "הורדות",
+      "order": 100,
+      "defaultPinned": true,
+      "iconCodepoint": 60094,
+      "iconVariant": "regular"
+    }
+  }
+}

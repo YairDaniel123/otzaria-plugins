@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otzaria Plugin Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Heebo:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f4f4f5; /* zinc-100 */
+        }
+        
+        .code-font {
+            font-family: 'Fira Code', monospace;
+            direction: ltr;
+        }
+
+        /* Smooth Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Dark scrollbar for editor */
+        .dark-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        .dark-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Focus rings transition */
+        input, textarea, button { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col relative selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Header -->
+    <header class="glass-header sticky top-0 z-40 shadow-sm">
+        <div class="max-w-screen-2xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-2 rounded-xl shadow-lg shadow-blue-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Otzaria Studio</h1>
+                    <p class="text-xs text-slate-500 font-medium">סביבת פיתוח ואריזת תוספים</p>
+                </div>
+            </div>
+            <button id="btn-generate-top" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg font-medium shadow-md shadow-slate-900/20 flex items-center gap-2 group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>הורד .otzplugin</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-screen-2xl mx-auto w-full p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6 z-10">
+        
+        <!-- Left Column: Settings & Manifest -->
+        <div class="xl:col-span-4 flex flex-col gap-5">
+            
+            <!-- Card 1: Manifest -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-1.5 h-full bg-blue-500"></div>
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="bg-blue-50 text-blue-600 p-1.5 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-800">הגדרות בסיס</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">שם התוסף</label>
+                        <input type="text" id="p-name" value="תוסף חדש לאוצריא" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">מזהה ייחודי (ID)</label>
+                        <input type="text" id="p-id" value="com.myname.newplugin" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">תיאור</label>
+                        <textarea id="p-desc" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none hide-scrollbar">תיאור התוסף החדש שלי.</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">גרסה (SemVer)</label>
+                            <input type="text" id="p-version" value="1.0.0" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">מחבר</label>
+                            <input type="text" id="p-author" value="Otzaria User" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">דף בית (homepage)</label>
+                            <input type="text" id="p-homepage" value="" placeholder="https://github.com/..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none" dir="ltr">
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">יציבות</label>
+                            <select id="p-stability" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                                <option value="stable">stable</option>
+                                <option value="beta" selected>beta</option>
+                                <option value="experimental">experimental</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">גרסת אוצריא מינימלית (minAppVersion)</label>
+                        <input type="text" id="p-minappversion" value="0.9.0" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Tab UI -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-1.5 h-full bg-indigo-500"></div>
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-800">מראה ולשונית</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">שם הלשונית</label>
+                        <input type="text" id="t-title" value="התוסף שלי" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex justify-between items-center">
+                            שם אייקון FluentUI (24px)
+                            <a href="https://github.com/microsoft/fluentui-system-icons" target="_blank" class="text-[10px] text-indigo-600 hover:underline">גלריה &nearr;</a>
+                        </label>
+                        <input type="text" id="t-icon" value="book_24_regular" placeholder="book_24_regular" dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1">שם אייקון מ-FluentUI System Icons בגודל 24, חייב להסתיים ב-<span class="code-font">_24_regular</span> או <span class="code-font">_24_filled</span>.</p>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">סדר הופעה (order)</label>
+                        <input type="number" id="t-order" value="100" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none">
+                    </div>
+                </div>
+                <div id="published-types-wrap" class="hidden mt-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                        publishedDataTypes (מופרדים בפסיקים)
+                    </label>
+                    <input type="text" id="p-published-types" value="calendar.event" placeholder="calendar.event, saved.query, ..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 code-font focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" dir="ltr">
+                    <p class="text-[11px] text-slate-500 mt-1">סוגים נתמכים: calendar.event, saved.query, note.draft, reference.link, tool.badge</p>
+                </div>
+            </div>
+
+            <!-- Card 3: Permissions -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 relative flex flex-col min-h-[300px] xl:flex-grow">
+                <div class="absolute top-0 right-0 w-1.5 h-full bg-emerald-500"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-800">הרשאות API</h2>
+                    </div>
+                    <span class="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md" id="perm-counter">0 נבחרו</span>
+                </div>
+                
+                <div class="flex-grow overflow-y-auto pr-1 space-y-2 dark-scroll" id="permissions-list" style="max-height: 400px;">
+                    <!-- Checkboxes injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Code Editor & Actions -->
+        <div class="xl:col-span-8 flex flex-col h-full gap-5">
+            
+            <!-- Editor Card -->
+            <div class="bg-[#1e1e2e] rounded-2xl shadow-xl flex flex-col overflow-hidden flex-grow border border-slate-800 relative">
+                
+                <!-- Mac-like Window Header -->
+                <div class="bg-[#181825] px-4 py-3 flex justify-between items-center select-none border-b border-white/5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                        <span class="text-slate-400 text-xs font-medium tracking-wide ml-2 mr-4 code-font">index.html</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="cursor-pointer bg-white/10 hover:bg-white/20 text-slate-200 px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                            העלאת קובץ
+                            <input type="file" id="file-upload" accept=".html" class="hidden">
+                        </label>
+                        <button id="btn-load-demo" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                            טען תבנית
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="flex-grow relative min-h-[450px]">
+                    <!-- Minimal line numbers illusion -->
+                    <div class="absolute inset-y-0 right-0 w-10 bg-[#181825] border-l border-white/5 pointer-events-none flex flex-col items-center py-4 text-[#45475a] text-xs code-font leading-[1.4rem] overflow-hidden select-none">
+                        1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>...
+                    </div>
+                    <textarea id="code-editor" class="absolute inset-0 w-full h-full py-4 pl-4 pr-14 code-font text-[13px] leading-[1.4rem] bg-transparent text-[#cdd6f4] outline-none resize-none dark-scroll" spellcheck="false" placeholder="<!-- הקוד שלך כאן... -->"></textarea>
+                </div>
+            </div>
+
+            <!-- Extra Files Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-1.5 h-full bg-amber-500"></div>
+                <div class="flex items-center justify-between mb-3 pr-3">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-amber-50 text-amber-600 p-1.5 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-800">קבצים נוספים בתוסף</h2>
+                    </div>
+                    <label class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        הוסף קבצים
+                        <input type="file" id="extra-files-upload" multiple class="hidden">
+                    </label>
+                </div>
+                <p class="text-xs text-slate-500 mb-3 pr-3 leading-relaxed">
+                    אפשר להוסיף לתוסף קבצי <span class="code-font">CSS</span>, <span class="code-font">JS</span>, <span class="code-font">TS</span>, גופנים (<span class="code-font">.woff2</span>, <span class="code-font">.ttf</span>, <span class="code-font">.otf</span>), תמונות וכל קובץ סטטי אחר. הם יישמרו ב-<span class="code-font">root</span> של ה-ZIP ויהיו זמינים מקובץ ה-HTML שלך בנתיב יחסי (לדוגמה <span class="code-font" dir="ltr">&lt;link href="rubik.css"&gt;</span>).
+                </p>
+                <div id="extra-files-list" class="space-y-2 pr-3 mb-3"></div>
+                <details class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700">
+                    <summary class="cursor-pointer font-bold text-slate-800">מקורות רשמיים מומלצים להורדת קבצים</summary>
+                    <ul class="mt-3 space-y-2 list-disc pr-5">
+                        <li>
+                            <strong>גופן רוביק (Rubik):</strong>
+                            <a href="https://fonts.google.com/specimen/Rubik?script=Hebr&preview.script=Hebr" target="_blank" class="text-amber-700 hover:underline" dir="ltr">fonts.google.com/specimen/Rubik</a>
+                            — לחץ על "Get font" → "Download all".
+                        </li>
+                        <li>
+                            <strong>גופנים עבריים נוספים:</strong>
+                            <a href="https://fonts.google.com/?subset=hebrew" target="_blank" class="text-amber-700 hover:underline" dir="ltr">fonts.google.com (Hebrew subset)</a>
+                        </li>
+                        <li>
+                            <strong>אייקוני FluentUI (שמות):</strong>
+                            <a href="https://github.com/microsoft/fluentui-system-icons" target="_blank" class="text-amber-700 hover:underline" dir="ltr">FluentUI System Icons</a>
+                            — השתמש בשם בגודל 24, למשל <span class="code-font">book_24_regular</span> או <span class="code-font">calendar_24_filled</span>.
+                        </li>
+                        <li>
+                            <strong>Tailwind כקובץ סטטי (אופליין מלא):</strong>
+                            <a href="https://cdn.tailwindcss.com" target="_blank" class="text-amber-700 hover:underline" dir="ltr">cdn.tailwindcss.com</a>
+                            — שמור Save-As ל-<span class="code-font">tailwind.js</span>.
+                        </li>
+                        <li>
+                            <strong>Heroicons / Lucide (SVG):</strong>
+                            <a href="https://heroicons.com/" target="_blank" class="text-amber-700 hover:underline" dir="ltr">heroicons.com</a>,
+                            <a href="https://lucide.dev/" target="_blank" class="text-amber-700 hover:underline" dir="ltr">lucide.dev</a>
+                        </li>
+                    </ul>
+                </details>
+            </div>
+
+            <!-- Export Options -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                
+                <div class="space-y-4">
+                    <!-- Toggle 1 -->
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <div class="relative inline-flex items-center mt-0.5">
+                            <input type="checkbox" id="opt-inject" class="sr-only peer" checked>
+                            <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:-translate-x-full"></div>
+                        </div>
+                        <div class="flex-1">
+                            <span class="block text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">הזרקת Boilerplate חכמה</span>
+                            <span class="block text-xs text-slate-500 mt-1 leading-relaxed">הוספת קוד אוטומטי לחיבור ה-API והתאמת עיצוב מצב לילה.</span>
+                        </div>
+                    </label>
+                    
+                    <!-- Toggle 2 -->
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <div class="relative inline-flex items-center mt-0.5">
+                            <input type="checkbox" id="opt-offline" class="sr-only peer" checked>
+                            <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:-translate-x-full"></div>
+                        </div>
+                        <div class="flex-1">
+                            <span class="block text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">תמיכה עצמאית באופליין</span>
+                            <span class="block text-xs text-slate-500 mt-1 leading-relaxed">שאיבת כל הסקריפטים, התמונות והעיצובים אל תוך קובץ ה-ZIP.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex flex-col gap-3 md:items-end justify-center h-full border-t md:border-t-0 md:border-r border-slate-100 pt-4 md:pt-0 md:pr-6">
+                    <div id="status-area" class="text-xs font-bold text-blue-600 hidden bg-blue-50 px-3 py-1.5 rounded-md animate-pulse border border-blue-100"></div>
+                    
+                    <button id="btn-generate-bottom" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex justify-center items-center gap-2 group transform hover:-translate-y-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                        <span class="text-lg">ארוז לתוסף</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Generic Message Modal -->
+    <div id="msg-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full border border-slate-100 transform scale-95 transition-transform duration-300" id="msg-modal-content">
+            <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 id="msg-title" class="text-xl font-bold text-slate-800 mb-2"></h3>
+            <p id="msg-content" class="text-slate-600 mb-6 leading-relaxed whitespace-pre-wrap text-sm"></p>
+            <div class="flex justify-end">
+                <button onclick="closeModal('msg-modal')" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl font-medium transition-colors w-full sm:w-auto">
+                    הבנתי
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Upload Modal Wizard -->
+    <div id="manual-upload-modal" class="hidden fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-100 transform scale-95 transition-transform duration-300" id="manual-upload-modal-content">
+            <div class="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">השלמת משאבים אופליין</h3>
+                    <p class="text-slate-500 mt-1 text-sm leading-relaxed">
+                        המערכת זקוקה לעזרתך. הקישורים הבאים חסומים להורדה אוטומטית. שמור אותם ידנית למחשבך וטען אותם כאן כדי שיכנסו לתוסף.
+                    </p>
+                </div>
+            </div>
+            
+            <div id="manual-upload-list" class="p-6 overflow-y-auto flex-1 space-y-4 bg-slate-50/50">
+                <!-- dynamic rows injected by JS -->
+            </div>
+            
+            <div class="p-4 sm:p-6 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
+                <button id="btn-skip-manual" class="text-slate-500 hover:text-slate-700 text-sm font-medium w-full sm:w-auto px-4 py-2">
+                    דלג על הכל (השאר כקישורים מקוונים)
+                </button>
+                <button id="btn-continue-manual" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold transition-colors shadow-md shadow-blue-500/20 w-full sm:w-auto">
+                    המשך באריזה
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded SDK file -->
+    <script type="text/plain" id="otzaria-plugin-js-source">/**
+ * Otzaria Plugin SDK
+ * Version: 1.0.0
+ *
+ * This script is injected automatically by the Otzaria host into every plugin WebView.
+ * You do NOT need to include it manually — it is always available as `window.Otzaria`.
+ *
+ * Usage:
+ *   const result = await Otzaria.call('library.findBooks', { query: 'רמב"ם' });
+ *   Otzaria.on('plugin.boot', (payload) => { /* use payload.theme, payload.app ... *\/ });
+ *
+ * Full documentation: docs/plugin-development-guide.md
+ */
+
+// ---------------------------------------------------------------------------
+// JSDoc type definitions
+// ---------------------------------------------------------------------------
+
+/**
+ * @typedef {Object} OtzariaResponse
+ * @property {boolean} success
+ * @property {*} data
+ * @property {{ code: string, message: string }|null} error
+ */
+
+/**
+ * @typedef {Object} BootPayload
+ * @property {{ id: string, version: string }} plugin
+ * @property {{ version: string, platform: string, locale: string, textDirection: string }} app
+ * @property {ThemePayload} theme
+ * @property {string[]} permissions  Currently granted permissions at boot time (for a fresh snapshot use app.getGrantedPermissions)
+ */
+
+/**
+ * @typedef {Object} PermissionSnapshot
+ * @property {string[]} permissions
+ */
+
+/**
+ * @typedef {Object} ThemePayload
+ * @property {'light'|'dark'} mode
+ * @property {{ primary:string, onPrimary:string, secondary:string, onSecondary:string,
+ *              surface:string, onSurface:string, surfaceContainerHighest:string,
+ *              error:string, onError:string, outline:string }} colorScheme
+ * @property {{ fontFamily:string, fontSize:number, lineHeight:number,
+ *              commentatorsFontFamily:string, commentatorsFontSize:number }} typography
+ */
+
+/**
+ * @typedef {Object} BookMeta
+ * @property {string} bookId
+ * @property {string} title
+ * @property {string[]} [topics]
+ */
+
+/**
+ * @typedef {Object} SearchResult
+ * @property {string} book
+ * @property {string} text
+ * @property {number} index
+ */
+
+/**
+ * @typedef {Object} TocEntry
+ * @property {string} text
+ * @property {number} index
+ * @property {number} level
+ */
+
+/**
+ * @typedef {Object} JewishDate
+ * @property {number} year
+ * @property {number} month
+ * @property {number} day
+ * @property {string} gregorian  ISO 8601
+ */
+
+/**
+ * @typedef {Object} CalendarEvent
+ * @property {string} id
+ * @property {string} title
+ * @property {string} date  ISO 8601
+ * @property {string} description
+ */
+
+/**
+ * @typedef {Object} DatabaseSourceSummary
+ * @property {string}  id
+ * @property {string}  label
+ * @property {boolean} available
+ */
+
+/**
+ * @typedef {Object} DatabaseTableSchema
+ * @property {string}   name
+ * @property {string[]} columns
+ */
+
+/**
+ * @typedef {Object} DatabaseSourceDescription
+ * @property {{ id: string, label: string }}    source
+ * @property {{ tables: DatabaseTableSchema[] }} schema
+ * @property {{ maxLimit: number, maxBatchQueries: number }} limits
+ */
+
+/**
+ * @typedef {Object} DatabaseSelectItem
+ * @property {string}  expr
+ * @property {string} [as]
+ */
+
+/**
+ * @typedef {Object} DatabaseQuerySpec
+ * @property {string}               sourceId
+ * @property {{ table: string, alias?: string }} from
+ * @property {DatabaseSelectItem[]} select
+ * @property {Object[]}             [joins]
+ * @property {Object}               [where]
+ * @property {Object[]}             [orderBy]
+ * @property {number}               [limit]
+ * @property {number}               [offset]
+ * @property {'array'|'object'}     [rowFormat]
+ */
+
+/**
+ * @typedef {Object} DatabaseQueryResult
+ * @property {{ sourceId:string, rowCount:number, limit:number, offset:number, hasMore:boolean, elapsedMs:number }} meta
+ * @property {{ name: string }[]} columns
+ * @property {Array<Array<*>|Object>} rows
+ */
+
+/**
+ * @typedef {Object} ReaderState
+ * @property {string|null} currentBook
+ * @property {string|null} currentBookId
+ * @property {number}      currentIndex
+ * @property {string|null} currentRef
+ * @property {Array<{bookId:string, book:string, index:number, currentRef:string|null}>} openTabs
+ */
+
+/**
+ * @typedef {Object} ReaderRefState
+ * @property {string|null} currentBook
+ * @property {string|null} currentBookId
+ * @property {number}      currentIndex
+ * @property {string|null} currentRef
+ */
+
+/**
+ * @typedef {Object} ReaderSelection
+ * @property {string}      text
+ * @property {number|null} start
+ * @property {number|null} end
+ * @property {string|null} currentRef
+ * @property {string}      currentBook
+ * @property {string}      currentBookId
+ * @property {number}      currentIndex
+ */
+
+/**
+ * @typedef {Object} PublishedRecord
+ * @property {string} type
+ * @property {string} scope
+ * @property {string} key
+ * @property {*}      payload
+ */
+
+// ---------------------------------------------------------------------------
+// Reference object (documentation only — actual object is injected by host)
+// ---------------------------------------------------------------------------
+
+/**
+ * The global Otzaria Plugin API.
+ * Every method listed here maps to an Otzaria.call() invocation.
+ *
+ * @namespace Otzaria
+ */
+const OtzariaPluginSDK = {
+
+  // =========================================================================
+  // Core RPC
+  // =========================================================================
+
+  /**
+   * Call a Host API method.
+   *
+   * @async
+   * @param {string} method  Dot-separated, e.g. 'library.findBooks'
+   * @param {Object} [payload={}]
+   * @returns {Promise<OtzariaResponse>}
+   *
+   * @example
+   * const res = await Otzaria.call('library.findBooks', { query: 'רמב"ם', limit: 10 });
+   * if (res.success) res.data.forEach(b => console.log(b.title));
+   */
+  call: async function(method, payload) {},
+
+  /**
+   * Subscribe to a host event.
+   *
+   * Built-in events:
+   *  - `plugin.boot`                   — {@link BootPayload}, fired once
+   *  - `plugin.ready`                  — no payload, fired once
+   *  - `theme.changed`                 — {@link ThemePayload}
+   *  - `navigation.changed`            — { screen: string }
+   *  - `reader.current_book_changed`   — { book: string, index: number }
+   *  - `reader.current_ref_changed`    — { currentBook: string|null, currentBookId: string|null, currentIndex: number, currentRef: string|null }
+   *  - `calendar.date_changed`         — { date: string } (ISO 8601)
+   *  - `workspace.changed`             — { workspaceId: string }
+   *  - `settings.changed`              — { key: string, newValue: * }
+   *  - `plugin.permissions_changed`    — { permissions: string[] }
+   *  - `reader.selection_changed`      — { text, currentRef, currentBook, currentBookId, currentIndex } (requires events.subscribe:reader.selection_changed)
+   *  - `reader.context_menu_item_clicked` — { itemId, selectedText, currentRef, currentBook, currentBookId, currentIndex }
+   *
+   * @param {string}            event
+   * @param {function(*):void}  callback
+   *
+   * @example
+   * Otzaria.on('plugin.boot', payload => applyTheme(payload.theme));
+   * Otzaria.on('theme.changed', theme => applyTheme(theme));
+   */
+  on: function(event, callback) {},
+
+  /**
+   * Unsubscribe a previously-registered handler.
+   * Must pass the exact same function reference used in `on()`.
+   *
+   * @param {string}   event
+   * @param {function} callback
+   */
+  off: function(event, callback) {},
+
+  // =========================================================================
+  // app.*        Permission: app.info.read
+  // =========================================================================
+
+  /**
+   * Get Otzaria app info (version, platform).
+   * @example
+   * const { data } = await Otzaria.call('app.getInfo');
+   * console.log(data.version); // '5.2.1'
+   */
+  'app.getInfo': null,
+
+  /**
+   * Get the current UI theme (full colorScheme + typography).
+   * @example
+   * const { data: theme } = await Otzaria.call('app.getTheme');
+   * document.body.style.background = theme.colorScheme.surface;
+   */
+  'app.getTheme': null,
+
+  /**
+   * Get the app locale and text direction.
+   * @example
+   * const { data } = await Otzaria.call('app.getLocale');
+   * console.log(data.textDirection); // 'rtl'
+   */
+  'app.getLocale': null,
+
+  /**
+   * Get the user's email address for identification (if configured).
+   * @returns {{ email: string }}
+   * @example
+   * const { data } = await Otzaria.call('app.getUserEmail');
+   * console.log(data.email); // 'user@example.com' or ''
+   */
+  'app.getUserEmail': null,
+
+  /**
+   * Get a fresh snapshot of currently granted permissions.
+   * @returns {PermissionSnapshot}
+   * @example
+   * const { data } = await Otzaria.call('app.getGrantedPermissions');
+   * console.log(data.permissions); // ['app.info.read', 'reader.open']
+   */
+  'app.getGrantedPermissions': null,
+
+  // =========================================================================
+  // library.*    Permission: library.books.read / library.content.read
+  // =========================================================================
+
+  /**
+   * Search books by title.
+   * @param {{ query: string, limit?: number }} payload
+   * @returns {BookMeta[]}
+   * @example
+   * const { data } = await Otzaria.call('library.findBooks', { query: 'תנ"ך', limit: 5 });
+   */
+  'library.findBooks': null,
+
+  /**
+   * Get metadata for a specific book.
+   * @param {{ bookId: string }} payload
+   * @returns {BookMeta|null}
+   */
+  'library.getBookMetadata': null,
+
+  /**
+   * Get the user's recently-opened books.
+   * @returns {Array<{ bookId:string, title:string, ref:string }>}
+   */
+  'library.listRecentBooks': null,
+
+  /**
+   * Get book text (paginated, max 5000 chars per call).
+   * @param {{ bookId:string, offset?:number, limit?:number, section?:string }} payload
+   * @returns {string}
+   * @example
+   * const { data: text } = await Otzaria.call('library.getBookContent', {
+   *   bookId: 'בראשית', offset: 0, limit: 2000
+   * });
+   */
+  'library.getBookContent': null,
+
+  /**
+   * Get a book's Table of Contents.
+   * @param {{ bookId: string }} payload
+   * @returns {TocEntry[]}
+   */
+  'library.getBookToc': null,
+
+  // =========================================================================
+  // search.*     Permission: search.fulltext.read
+  // =========================================================================
+
+  /**
+   * Full-text search across the library.
+   * @param {{ query:string, limit?:number }} payload
+   * @returns {SearchResult[]}
+   * @example
+   * const { data } = await Otzaria.call('search.fullText', {
+   *   query: 'ואהבת לרעך כמוך', limit: 20
+   * });
+   */
+  'search.fullText': null,
+
+  // =========================================================================
+  // reader.*     Permission: reader.open
+  // =========================================================================
+
+  /**
+   * Open a book at a position.
+   * @param {{ bookId:string, index?:number, searchQuery?:string }} payload
+   * @returns {boolean}
+   */
+  'reader.openBook': null,
+
+  /**
+   * Open a book at a named reference (section title).
+   * @param {{ bookId:string, ref:string, index?:number }} payload
+   * @returns {boolean}
+   */
+  'reader.openBookAtRef': null,
+
+  /**
+   * Get the current reader state (active book, all open tabs).
+   * @returns {ReaderState}
+   */
+  'reader.getCurrentState': null,
+
+  /**
+   * Get the current reader reference for the active tab.
+   * Returns null when no reliable reference is available yet.
+   * @returns {ReaderRefState}
+   */
+  'reader.getCurrentRef': null,
+
+  /**
+   * Get the current text selection in the active text tab.
+   * Returns null when there is no selection or the active tab is not a text tab.
+   * @returns {ReaderSelection|null}
+   */
+  'reader.getSelection': null,
+
+  // =========================================================================
+  // navigation.* Permission: navigation.write
+  // =========================================================================
+
+  /**
+   * Navigate to a top-level screen.
+   * @param {{ target: 'library'|'reading'|'more'|'settings' }} payload
+   * @returns {boolean}
+   * @example
+   * await Otzaria.call('navigation.goTo', { target: 'library' });
+   */
+  'navigation.goTo': null,
+
+  // =========================================================================
+  // notes.*      Permission: notes.read / notes.write
+  // =========================================================================
+
+  /**
+   * List notes for a book.
+   * @param {{ bookId:string }} payload
+   */
+  'notes.list': null,
+
+  /** Get a summary of all books that have notes. */
+  'notes.getBookNotesSummary': null,
+
+  /**
+   * Add a note.
+   * @param {{ bookId:string, lineNumber:number, content:string }} payload
+   */
+  'notes.add': null,
+
+  /**
+   * Update a note.
+   * @param {{ bookId:string, noteId:string, content:string }} payload
+   */
+  'notes.update': null,
+
+  /**
+   * Delete a note.
+   * @param {{ bookId:string, noteId:string }} payload
+   */
+  'notes.delete': null,
+
+  // =========================================================================
+  // ui.*         Permission: ui.feedback
+  // =========================================================================
+
+  /**
+   * Show an informational snackbar.
+   * @param {{ message:string }} payload
+   */
+  'ui.showMessage': null,
+
+  /** Show a success snackbar. */
+  'ui.showSuccess': null,
+
+  /** Show an error snackbar. */
+  'ui.showError': null,
+
+  /**
+   * Show a two-button confirmation dialog.
+   * @param {{ title:string, content:string }} payload
+   * @returns {{ confirmed:boolean }}
+   * @example
+   * const { data } = await Otzaria.call('ui.showConfirm', {
+   *   title: 'מחיקה', content: 'האם למחוק?'
+   * });
+   * if (data.confirmed) { ... }
+   */
+  'ui.showConfirm': null,
+
+  /**
+   * Show a warning dialog (destructive action pattern).
+   * @param {{ title:string, content:string, subtitle?:string }} payload
+   * @returns {{ confirmed:boolean }}
+   */
+  'ui.showWarning': null,
+
+  // =========================================================================
+  // storage.*    Permission: plugin.storage.read / plugin.storage.write
+  // =========================================================================
+
+  /**
+   * Read a stored value (JSON-deserialized).
+   * @param {{ key:string }} payload
+   * @returns {*|null}
+   * @example
+   * const { data: count } = await Otzaria.call('storage.get', { key: 'visitCount' });
+   */
+  'storage.get': null,
+
+  /**
+   * Store any JSON-serializable value.
+   * @param {{ key:string, value:* }} payload
+   */
+  'storage.set': null,
+
+  /**
+   * Delete a stored key.
+   * @param {{ key:string }} payload
+   */
+  'storage.remove': null,
+
+  /** List all stored keys. */
+  'storage.list': null,
+
+  // =========================================================================
+  // settings.*   Permission: settings.read
+  // =========================================================================
+
+  /**
+   * Read one allowlisted setting.
+   *
+   * Allowed keys:
+   *   keyDarkMode, keyFollowSystemTheme, keySwatchColor, keyDarkSwatchColor,
+   *   keyFontSize, keyFontFamily, keyCommentatorsFontFamily, keyCommentatorsFontSize,
+   *   keyLineHeight, keySelectedCity, keyCalendarType, keyShowTeamim,
+   *   keyDefaultNikud, keyRemoveNikudFromTanach, keyReplaceHolyNames,
+   *   keyLibraryViewMode, keyAlignTabsToRight, keyCopyWithHeaders, keyCopyHeaderFormat
+   *
+   * @param {{ key:string }} payload
+   */
+  'settings.get': null,
+
+  /**
+   * Read multiple allowlisted settings at once.
+   * @param {{ keys:string[] }} payload
+   */
+  'settings.getMany': null,
+
+  // =========================================================================
+  // calendar.*   Permission: calendar.read
+  // =========================================================================
+
+  /** Get the currently-selected date (ISO 8601). */
+  'calendar.getSelectedDate': null,
+
+  /**
+   * Get halachic daily times (zmanim).
+   * @returns {Record<string, string>}  map of zman name → time string in HH:mm format (local time)
+   *
+   * @example
+   * const { data: times } = await Otzaria.call('calendar.getDailyTimes');
+   * console.log(times.sunrise); // '06:23'
+   */
+  'calendar.getDailyTimes': null,
+
+  /**
+   * Get halachic times (same as getDailyTimes).
+   * @returns {Record<string, string>}
+   */
+  'calendar.getHalachicTimes': null,
+
+  /**
+   * Get the Jewish date for the selected day.
+    * @returns {JewishDate}
+    *   {
+    *     year: number,
+    *     month: number,
+    *     day: number,
+    *     gregorian: string,
+    *     monthName: string,
+    *     isLeapYear: boolean,
+    *     isShabbat: boolean,
+    *     holidays: Array<{ text: string, kind: 'yomTov'|'roshChodesh'|'taanit'|'special' }>
+    *   }
+   */
+  'calendar.getJewishDate': null,
+
+  /**
+   * Get calendar events for a date.
+   * @param {{ date?:string }} payload  ISO 8601, defaults to selected date
+   * @returns {CalendarEvent[]}
+   */
+  'calendar.getEvents': null,
+
+  // =========================================================================
+  // publishedData.*  Permission: published_data.write
+  // =========================================================================
+
+  /**
+   * Publish or update a record.
+   *
+   * Supported types: `calendar.event`, `saved.query`, `note.draft`,
+   *                  `reference.link`, `tool.badge`
+   *
+   * Scope:
+   *   `'global'`             visible everywhere
+   *   `'workspace:<id>'`     visible only in a specific workspace
+   *   `'book:<bookId>'`      visible only when that book is open
+   *
+   * @param {{ type:string, scope:string, key:string, payload:Object }} args
+   * @returns {boolean}
+   *
+   * @example
+   * await Otzaria.call('publishedData.upsert', {
+   *   type:    'calendar.event',
+   *   scope:   'global',
+   *   key:     'myPlugin:sunset:2026-04-05',
+   *   payload: {
+   *     title:     'שקיעה',
+   *     startsAt:  '2026-04-05T19:11:00+03:00',
+   *     source:    'לוח שנה הלכתי',
+   *     importance: 'high',
+   *   },
+   * });
+   */
+  'publishedData.upsert': null,
+
+  /**
+   * Remove a previously published record.
+   * @param {{ type:string, scope:string, key:string }} args
+   */
+  'publishedData.remove': null,
+
+  /**
+   * List all records published by this plugin.
+   * @returns {PublishedRecord[]}
+   */
+  'publishedData.listOwn': null,
+
+  // =========================================================================
+  // feedback.*  Permission: feedback.send_email
+  // =========================================================================
+
+  /**
+   * Send feedback or report to a custom email address.
+   * @param {{ to:string, subject:string, body:string, includeSystemInfo?:boolean }} args
+   * @returns {boolean}
+   */
+  'feedback.sendEmail': null,
+
+  // =========================================================================
+  // history.*  Permission: history.read / history.write
+  // =========================================================================
+
+  /**
+   * Get list of recently read books (without searches).
+   * @param {{ limit?:number }} args
+   * @returns {Array<{bookId:string, title:string, ref:string, index:number, workspaceName?:string}>}
+   */
+  'history.list': null,
+
+  /**
+   * Get list of recent searches (without books).
+   * @param {{ limit?:number }} args
+   * @returns {Array<{query:string, ref:string, workspaceName?:string}>}
+   */
+  'history.listSearches': null,
+
+  /**
+   * Clear all history (books and searches).
+   * @returns {boolean}
+   */
+  'history.clear': null,
+
+  /**
+   * Remove specific item from history.
+   * @param {{ bookId:string, index?:number }} args
+   * @returns {boolean}
+   */
+  'history.remove': null,
+
+  // =========================================================================
+  // notifications.*  Permission: notifications.send / notifications.system
+  // =========================================================================
+
+  /**
+   * Show notification inside the app (UiSnack).
+   * @param {{ message:string, type?:'info'|'success'|'error' }} args
+   * @returns {boolean}
+   */
+  'notifications.showInApp': null,
+
+  /**
+   * Send immediate notification to OS.
+   * @param {{ title:string, body:string, id?:number }} args
+   * @returns {{id:number}}
+   */
+  'notifications.sendSystem': null,
+
+  /**
+   * Schedule notification to OS for future time.
+   * @param {{ title:string, body:string, scheduledTime:string, id?:number }} args
+   * @returns {{id:number}}
+   */
+  'notifications.scheduleSystem': null,
+
+  /**
+   * Cancel specific notification.
+   * @param {{ id:number }} args
+   * @returns {boolean}
+   */
+  'notifications.cancel': null,
+
+  /**
+   * Cancel all notifications created by this plugin.
+   * @returns {boolean}
+   */
+  'notifications.cancelAll': null,
+
+  /**
+   * Check notification permissions status.
+   * @returns {{granted:boolean, initialized:boolean}}
+   */
+  'notifications.checkPermissions': null,
+
+  /**
+   * Request notification permissions from user.
+   * @returns {{granted:boolean}}
+   */
+  'notifications.requestPermissions': null,
+
+  // =========================================================================
+  // database.*  Permission: database.read
+  // =========================================================================
+
+  /**
+   * List registered database sources declared by this plugin.
+   * @returns {{sources: DatabaseSourceSummary[]}}
+   */
+  'database.listSources': null,
+
+  /**
+   * Describe the exposed schema of a registered database source.
+   * @param {{ sourceId:string }} args
+   * @returns {DatabaseSourceDescription}
+   */
+  'database.describeSource': null,
+
+  /**
+   * Execute a validated declarative query against a registered SQLite source.
+   * @param {DatabaseQuerySpec} args
+   * @returns {DatabaseQueryResult}
+   */
+  'database.query': null,
+
+  /**
+   * Execute multiple declarative queries in one RPC roundtrip.
+   * @param {{ queries: DatabaseQuerySpec[] }} args
+   * @returns {{ results: DatabaseQueryResult[] }}
+   */
+  'database.batchQuery': null,
+};
+
+// ---------------------------------------------------------------------------
+// Export (Node / bundlers — ignored in browser)
+// ---------------------------------------------------------------------------
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = OtzariaPluginSDK;
+}
+</script>
+
+    <script>
+        // Modal Handling
+        function showModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.remove('hidden');
+            // Trigger reflow
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + '-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function showMsg(title, content, isHtml) {
+            document.getElementById('msg-title').innerHTML = title;
+            const el = document.getElementById('msg-content');
+            if (isHtml) el.innerHTML = content;
+            else el.innerText = content;
+            showModal('msg-modal');
+        }
+
+        const availablePermissions = [
+            { id: "app.info.read", label: "קריאת פרטי מערכת/משתמש" },
+            { id: "app.user_email.read", label: "גישה למייל המשתמש (לדיווח שגיאות)" },
+            { id: "library.books.read", label: "קריאת מטא-דאטה מספרים" },
+            { id: "library.content.read", label: "קריאת תוכן ספרים פנימי" },
+            { id: "search.fulltext.read", label: "חיפוש בטקסט מלא" },
+            { id: "reader.open", label: "פתיחת ספרים וניווט" },
+            { id: "reader.highlight", label: "הדגשת טקסט בספרים" },
+            { id: "reader.context_menu", label: "פריטים לתפריט קליק-ימני" },
+            { id: "navigation.write", label: "ניווט אוטומטי בין מסכים" },
+            { id: "notes.read", label: "קריאת הערות אישיות" },
+            { id: "notes.write", label: "עריכת ומחיקת הערות" },
+            { id: "calendar.read", label: "גישה ללוח השנה והזמנים" },
+            { id: "settings.read", label: "קריאת הגדרות אפליקציה" },
+            { id: "ui.feedback", label: "הצגת הודעות ודיאלוגים" },
+            { id: "plugin.storage.read", label: "קריאה מאחסון מקומי" },
+            { id: "plugin.storage.write", label: "כתיבה לאחסון מקומי" },
+            { id: "published_data.write", label: "פרסום אירועים באפליקציה" },
+            { id: "network.access", label: "גישה לאינטרנט (טעינת משאבים חיצוניים)" },
+            { id: "feedback.send_email", label: "שליחת משוב למייל" },
+            { id: "history.read", label: "גישה להיסטוריית הלמידה" },
+            { id: "history.write", label: "עריכה ומחיקה של היסטוריה" },
+            { id: "notifications.send", label: "פופאפים/התראות פנים-אפליקציה" },
+            { id: "notifications.system", label: "התראות מערכת מתוזמנות (OS)" },
+            { id: "database.read", label: "ביצוע שאילתות למסדי נתונים" },
+            { id: "events.subscribe:theme.changed", label: "האזנה לשינוי עיצוב (Dark/Light)" },
+            { id: "events.subscribe:navigation.changed", label: "האזנה לשינוי מסך פעיל" },
+            { id: "events.subscribe:reader.current_book_changed", label: "האזנה לשינוי ספר נוכחי" },
+            { id: "events.subscribe:reader.current_ref_changed", label: "מעקב אחר מיקום בקורא" },
+            { id: "events.subscribe:reader.selection_changed", label: "האזנה לסימון טקסט בקורא" },
+            { id: "events.subscribe:calendar.date_changed", label: "האזנה לשינוי תאריך בלוח" },
+            { id: "events.subscribe:settings.changed", label: "האזנה לשינוי הגדרות" },
+            { id: "events.subscribe:workspace.changed", label: "האזנה להחלפת סביבת עבודה" },
+            { id: "events.subscribe:plugin.permissions_changed", label: "האזנה לשינוי הרשאות התוסף" }
+        ];
+
+        const defaultChecked = ["ui.feedback", "events.subscribe:theme.changed"];
+        const permsContainer = document.getElementById('permissions-list');
+        const permCounter = document.getElementById('perm-counter');
+
+        function isPermissionChecked(id) {
+            const cb = document.querySelector(`.perm-cb[value="${id}"]`);
+            return cb ? cb.checked : false;
+        }
+
+        function updateCounter() {
+            const count = document.querySelectorAll('.perm-cb:checked').length;
+            permCounter.innerText = `${count} נבחרו`;
+            const wrap = document.getElementById('published-types-wrap');
+            if (wrap) {
+                wrap.classList.toggle('hidden', !isPermissionChecked('published_data.write'));
+            }
+        }
+
+        availablePermissions.forEach(p => {
+            const isChecked = defaultChecked.includes(p.id) ? 'checked' : '';
+            permsContainer.innerHTML += `
+                <label class="group relative flex items-center p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:bg-emerald-50/50 has-[:checked]:border-emerald-300 has-[:checked]:ring-1 has-[:checked]:ring-emerald-400">
+                    <div class="flex items-center h-5 mr-1 ml-3">
+                        <input type="checkbox" value="${p.id}" class="perm-cb w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition-colors" ${isChecked} onchange="updateCounter()">
+                    </div>
+                    <div class="flex-1 text-sm">
+                        <span class="block font-bold text-slate-800 code-font text-xs mb-0.5 group-has-[:checked]:text-emerald-800" dir="ltr">${p.id}</span>
+                        <span class="block text-slate-500 text-xs group-has-[:checked]:text-emerald-600/80">${p.label}</span>
+                    </div>
+                </label>
+            `;
+        });
+        updateCounter();
+
+        const demoHtml = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוסף לאוצריא</title>
+    <style>
+        :root {
+            --primary: #1976d2;
+            --on-primary: #ffffff;
+            --surface: #ffffff;
+            --on-surface: #1a1a1a;
+            --surface-container: #f3f4f6;
+            --outline: #cbd5e1;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100%; }
+        body {
+            background: var(--surface);
+            color: var(--on-surface);
+            font-family: var(--font-family, system-ui, sans-serif);
+            font-size: var(--font-size, 16px);
+            line-height: var(--line-height, 1.5);
+            transition: background-color .25s, color .25s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .card {
+            background: var(--surface-container);
+            color: var(--on-surface);
+            border: 1px solid var(--outline);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            max-width: 32rem;
+            width: 100%;
+        }
+        h2 { color: var(--primary); margin: 0 0 1rem; }
+        p  { margin: 0 0 1.5rem; opacity: .85; }
+        button {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            border-radius: .75rem;
+            padding: .75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:active { transform: scale(.98); }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>שלום עולם!</h2>
+        <p>זהו תוסף בסיסי לדוגמה. הצבעים מגיעים מערכת הנושא של אוצריא.</p>
+        <button onclick="testOtzaria()">הקפץ הודעת אישור</button>
+    </div>
+
+    <script>
+        // עיצוב התוסף חייב להגיע מ-API של אוצריא, לא לקודד צבעים ישירות.
+        function applyTheme(theme) {
+            if (!theme || !theme.colorScheme) return;
+            const cs = theme.colorScheme;
+            const r = document.documentElement.style;
+            r.setProperty('--primary', cs.primary);
+            r.setProperty('--on-primary', cs.onPrimary);
+            r.setProperty('--surface', cs.surface);
+            r.setProperty('--on-surface', cs.onSurface);
+            r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surface);
+            r.setProperty('--outline', cs.outline);
+            if (theme.typography) {
+                if (theme.typography.fontFamily) r.setProperty('--font-family', theme.typography.fontFamily + ', system-ui, sans-serif');
+                if (theme.typography.fontSize)   r.setProperty('--font-size',   theme.typography.fontSize + 'px');
+                if (theme.typography.lineHeight) r.setProperty('--line-height', theme.typography.lineHeight);
+            }
+        }
+
+        function testOtzaria() {
+            if (window.Otzaria) {
+                Otzaria.call('ui.showSuccess', { message: 'מעולה! מחובר לאוצריא!' });
+            } else {
+                alert('יש להפעיל מתוך האפליקציה.');
+            }
+        }
+
+        if (window.Otzaria) {
+            Otzaria.on('plugin.boot',     payload => applyTheme(payload.theme));
+            Otzaria.on('theme.changed',   theme   => applyTheme(theme));
+        }
+    <\/script>
+</body>
+</html>`;
+
+        document.getElementById('btn-load-demo').addEventListener('click', () => {
+            document.getElementById('code-editor').value = demoHtml;
+        });
+
+        document.getElementById('code-editor').value = demoHtml;
+
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('code-editor').value = e.target.result;
+            };
+            reader.readAsText(file);
+        });
+
+        // ----- Extra files (CSS/JS/TS/fonts/etc.) bundled into the plugin zip -----
+        const extraFiles = new Map(); // name -> File
+
+        function formatBytes(b) {
+            if (b < 1024) return b + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            return (b / 1024 / 1024).toFixed(2) + ' MB';
+        }
+
+        function renderExtraFiles() {
+            const list = document.getElementById('extra-files-list');
+            if (extraFiles.size === 0) {
+                list.innerHTML = '<div class="text-xs text-slate-400 italic py-2">לא נוספו קבצים. הקבצים שתוסיף יהיו זמינים בנתיב יחסי מתוך index.html.</div>';
+                return;
+            }
+            list.innerHTML = '';
+            for (const [name, file] of extraFiles) {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2';
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span class="code-font text-xs text-slate-800 truncate" dir="ltr" title="${name}">${name}</span>
+                        <span class="text-[10px] text-slate-500 shrink-0">${formatBytes(file.size)}</span>
+                    </div>
+                    <button type="button" data-name="${name}" class="extra-remove text-rose-600 hover:text-rose-800 text-xs font-bold px-2">
+                        הסר
+                    </button>
+                `;
+                list.appendChild(row);
+            }
+            list.querySelectorAll('.extra-remove').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    extraFiles.delete(btn.dataset.name);
+                    renderExtraFiles();
+                });
+            });
+        }
+        renderExtraFiles();
+
+        document.getElementById('extra-files-upload').addEventListener('change', function (e) {
+            for (const f of e.target.files) {
+                if (f.name === 'manifest.json' || f.name === 'index.html' || f.name === 'otzaria_plugin.js') {
+                    showMsg('שם קובץ שמור', `הקובץ "${f.name}" נוצר אוטומטית על ידי הכלי. בחר שם אחר.`);
+                    continue;
+                }
+                extraFiles.set(f.name, f);
+            }
+            renderExtraFiles();
+            e.target.value = '';
+        });
+
+        function updateStatus(msg) {
+            const statusArea = document.getElementById('status-area');
+            if(msg) {
+                statusArea.classList.remove('hidden');
+                statusArea.innerText = msg;
+            } else {
+                statusArea.classList.add('hidden');
+            }
+        }
+
+        async function fetchResource(url) {
+            let response;
+            try {
+                response = await fetch(url);
+                if (response.ok) return { ok: true, response };
+            } catch (e) { }
+            try {
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                response = await fetch(proxyUrl);
+                if (response.ok) return { ok: true, response };
+            } catch (e) { }
+            return { ok: false };
+        }
+
+        async function generatePlugin() {
+            const btnTop = document.getElementById('btn-generate-top');
+            const btnBottom = document.getElementById('btn-generate-bottom');
+            
+            const setBtnState = (isLoading) => {
+                const text = isLoading ? 'מעבד...' : 'הורד .otzplugin';
+                const textBottom = isLoading ? 'אורז משאבים...' : 'ארוז לתוסף';
+                btnTop.disabled = isLoading;
+                btnBottom.disabled = isLoading;
+                btnTop.querySelector('span').innerText = text;
+                btnBottom.querySelector('span').innerText = textBottom;
+                
+                if (isLoading) {
+                    btnBottom.classList.add('opacity-80', 'cursor-not-allowed', 'animate-pulse');
+                } else {
+                    btnBottom.classList.remove('opacity-80', 'cursor-not-allowed', 'animate-pulse');
+                }
+            };
+
+            const pId = (document.getElementById('p-id').value || '').trim();
+            const pVersion = (document.getElementById('p-version').value || '').trim();
+            const pMinAppVersion = (document.getElementById('p-minappversion').value || '').trim();
+
+            if (!/^[a-z0-9_.-]+$/.test(pId)) {
+                showMsg('מזהה תוסף לא חוקי', 'מזהה (id) חייב להכיל רק אותיות קטנות באנגלית, ספרות, נקודות, מקפים וקווים תחתונים.\nלדוגמה: com.mycompany.my-plugin');
+                return;
+            }
+            if (!/^\d+\.\d+\.\d+(?:\+.*)?$/.test(pVersion)) {
+                showMsg('גרסה לא חוקית', 'גרסה (version) חייבת להיות בפורמט SemVer: major.minor.patch\nלדוגמה: 1.0.0');
+                return;
+            }
+            if (!/^\d+\.\d+\.\d+$/.test(pMinAppVersion)) {
+                showMsg('minAppVersion לא חוקי', 'גרסת אוצריא מינימלית חייבת להיות בפורמט major.minor.patch\nלדוגמה: 0.9.0');
+                return;
+            }
+
+            setBtnState(true);
+            updateStatus('מתחיל באריזת התוסף...');
+
+            try {
+                let htmlCode = document.getElementById('code-editor').value;
+                const zip = new JSZip();
+                
+                let failedItems = [];
+                let finalDoc = null;
+
+                if (document.getElementById('opt-offline').checked) {
+                    finalDoc = new DOMParser().parseFromString(htmlCode, 'text/html');
+                    const assetsFolder = zip.folder("assets");
+
+                    const getFileName = (url, type) => {
+                        const name = url.split('/').pop().split('?')[0].split('#')[0] || 'resource';
+                        return `${name.replace(/[^a-zA-Z0-9.-]/g, '_')}_${Math.random().toString(36).substr(2, 5)}.${type}`;
+                    };
+
+                    async function processCssContent(cssContent, parentSafeName) {
+                        const urlRegex = /url\((['"]?)(https?:\/\/[^'"()]+)\1\)/g;
+                        let match;
+                        const urlsToFetch = [];
+                        while ((match = urlRegex.exec(cssContent)) !== null) {
+                            if (!urlsToFetch.includes(match[2])) urlsToFetch.push(match[2]);
+                        }
+                        
+                        for (let assetUrl of urlsToFetch) {
+                            updateStatus(`מוריד פונט/משאב פנימי...`);
+                            const result = await fetchResource(assetUrl);
+                            const ext = assetUrl.split('/').pop().split('.').pop().split('?')[0].split('#')[0] || 'woff2';
+                            const safeName = `asset_${Math.random().toString(36).substr(2, 6)}.${ext}`;
+                            
+                            if (result.ok) {
+                                const blob = await result.response.blob();
+                                assetsFolder.file(safeName, blob);
+                                cssContent = cssContent.split(assetUrl).join(safeName);
+                            } else {
+                                failedItems.push({
+                                    url: assetUrl,
+                                    type: 'עיצוב (Font/Image)',
+                                    resolveManual: async (file) => {
+                                        assetsFolder.file(safeName, file);
+                                        cssContent = cssContent.split(assetUrl).join(safeName);
+                                        if (parentSafeName) assetsFolder.file(parentSafeName, cssContent);
+                                    }
+                                });
+                            }
+                        }
+                        return cssContent;
+                    }
+
+                    // Scripts
+                    const scripts = Array.from(finalDoc.querySelectorAll('script[src^="http"]'));
+                    for (let script of scripts) {
+                        const url = script.getAttribute('src');
+                        const safeName = getFileName(url, 'js');
+                        updateStatus(`מוריד סקריפט מרוחק...`);
+                        const result = await fetchResource(url);
+                        if (result.ok) {
+                            assetsFolder.file(safeName, await result.response.text());
+                            script.setAttribute('src', `assets/${safeName}`);
+                        } else {
+                            failedItems.push({
+                                url: url,
+                                type: 'סקריפט (JS)',
+                                resolveManual: async (file) => {
+                                    assetsFolder.file(safeName, file);
+                                    script.setAttribute('src', `assets/${safeName}`);
+                                }
+                            });
+                        }
+                    }
+
+                    // CSS
+                    const links = Array.from(finalDoc.querySelectorAll('link[rel="stylesheet"][href^="http"]'));
+                    for (let link of links) {
+                        const url = link.getAttribute('href');
+                        const safeName = getFileName(url, 'css');
+                        updateStatus(`מוריד עיצוב (CSS)...`);
+                        const result = await fetchResource(url);
+                        if (result.ok) {
+                            let content = await result.response.text();
+                            content = await processCssContent(content, safeName);
+                            assetsFolder.file(safeName, content);
+                            link.setAttribute('href', `assets/${safeName}`);
+                        } else {
+                            failedItems.push({
+                                url: url,
+                                type: 'קובץ סגנון (CSS)',
+                                resolveManual: async (file) => {
+                                    let content = await file.text();
+                                    content = await processCssContent(content, safeName);
+                                    assetsFolder.file(safeName, content);
+                                    link.setAttribute('href', `assets/${safeName}`);
+                                }
+                            });
+                        }
+                    }
+
+                    // Images
+                    const images = Array.from(finalDoc.querySelectorAll('img[src^="http"]'));
+                    for (let img of images) {
+                        const url = img.getAttribute('src');
+                        const safeName = getFileName(url, 'png');
+                        updateStatus(`מוריד תמונה...`);
+                        const result = await fetchResource(url);
+                        if (result.ok) {
+                            assetsFolder.file(safeName, await result.response.blob());
+                            img.setAttribute('src', `assets/${safeName}`);
+                        } else {
+                            failedItems.push({
+                                url: url,
+                                type: 'תמונה (IMG)',
+                                resolveManual: async (file) => {
+                                    assetsFolder.file(safeName, file);
+                                    img.setAttribute('src', `assets/${safeName}`);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                if (failedItems.length > 0) {
+                    await new Promise((resolve) => {
+                        const list = document.getElementById('manual-upload-list');
+                        list.innerHTML = '';
+                        
+                        failedItems.forEach((item, idx) => {
+                            list.innerHTML += `
+                                <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center justify-between transition-colors">
+                                    <div class="overflow-hidden flex-1 w-full">
+                                        <span class="inline-block bg-orange-100 text-orange-800 text-xs px-2.5 py-1 rounded-md font-bold mb-2">${item.type}</span>
+                                        <div class="text-[13px] text-slate-600 font-mono truncate w-full p-2 bg-slate-50 rounded border border-slate-100" title="${item.url}" dir="ltr">${item.url}</div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+                                        <a href="${item.url}" target="_blank" download class="text-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm">
+                                            1. הורד מכאן
+                                        </a>
+                                        <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors text-center shadow-sm">
+                                            <span class="btn-text flex items-center justify-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                                2. העלה חזרה
+                                            </span>
+                                            <input type="file" id="manual-file-${idx}" class="hidden" onchange="
+                                                const p = this.parentElement;
+                                                const wrap = p.parentElement.parentElement;
+                                                wrap.classList.add('border-emerald-300', 'bg-emerald-50/30');
+                                                p.classList.add('bg-emerald-500', 'border-emerald-600', 'text-white');
+                                                p.classList.remove('bg-blue-50', 'border-blue-200', 'text-blue-700');
+                                                p.querySelector('.btn-text').innerHTML = '✓ קובץ נטען בהצלחה';
+                                            ">
+                                        </label>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        showModal('manual-upload-modal');
+                        
+                        document.getElementById('btn-continue-manual').onclick = async () => {
+                            updateStatus('מעבד קבצים שהועלו ידנית...');
+                            for (let i = 0; i < failedItems.length; i++) {
+                                const fileInput = document.getElementById(`manual-file-${i}`);
+                                if (fileInput.files.length > 0) {
+                                    await failedItems[i].resolveManual(fileInput.files[0]);
+                                }
+                            }
+                            closeModal('manual-upload-modal');
+                            resolve();
+                        };
+                        
+                        document.getElementById('btn-skip-manual').onclick = () => {
+                            closeModal('manual-upload-modal');
+                            resolve();
+                        };
+                    });
+                }
+
+                if (finalDoc) {
+                    let finalHtml = finalDoc.documentElement.outerHTML;
+                    const doctype = finalDoc.doctype;
+                    if (doctype) {
+                        finalHtml = `<!DOCTYPE ${doctype.name}${doctype.publicId ? ` PUBLIC "${doctype.publicId}"` : ''}${!doctype.publicId && doctype.systemId ? ' SYSTEM' : ''}${doctype.systemId ? ` "${doctype.systemId}"` : ''}>\n` + finalHtml;
+                    } else if (htmlCode.trim().toLowerCase().startsWith('<!doctype')) {
+                        finalHtml = '<!DOCTYPE html>\n' + finalHtml;
+                    }
+                    htmlCode = finalHtml;
+                }
+
+                if (document.getElementById('opt-inject').checked && htmlCode.includes('</body>')) {
+                    const boilerplate = `
+    <!-- Otzaria Integration Boilerplate -->
+    <script>
+        (function () {
+            function applyOtzariaTheme(theme) {
+                if (!theme) return;
+                const root = document.documentElement;
+                const cs = theme.colorScheme || {};
+                const map = {
+                    '--primary': cs.primary,
+                    '--on-primary': cs.onPrimary,
+                    '--secondary': cs.secondary,
+                    '--on-secondary': cs.onSecondary,
+                    '--surface': cs.surface,
+                    '--on-surface': cs.onSurface,
+                    '--surface-container-highest': cs.surfaceContainerHighest,
+                    '--surface-container': cs.surfaceContainerHighest,
+                    '--error': cs.error,
+                    '--on-error': cs.onError,
+                    '--outline': cs.outline
+                };
+                Object.keys(map).forEach(function (k) {
+                    if (map[k]) root.style.setProperty(k, map[k]);
+                });
+
+                if (theme.mode === 'dark') {
+                    document.body.classList.add('dark');
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                    document.documentElement.classList.remove('dark');
+                }
+                if (cs.surface)   document.body.style.backgroundColor = cs.surface;
+                if (cs.onSurface) document.body.style.color = cs.onSurface;
+
+                const t = theme.typography || {};
+                if (t.fontFamily) {
+                    root.style.setProperty('--font-family', "'" + t.fontFamily + "', system-ui, sans-serif");
+                    document.body.style.fontFamily = "'" + t.fontFamily + "', system-ui, sans-serif";
+                }
+                if (t.fontSize)   root.style.setProperty('--font-size',   t.fontSize + 'px');
+                if (t.lineHeight) root.style.setProperty('--line-height', t.lineHeight);
+                if (t.commentatorsFontFamily) root.style.setProperty('--commentators-font-family', "'" + t.commentatorsFontFamily + "', system-ui, sans-serif");
+                if (t.commentatorsFontSize)   root.style.setProperty('--commentators-font-size',   t.commentatorsFontSize + 'px');
+            }
+
+            if (window.Otzaria) {
+                Otzaria.on('plugin.boot',   function (payload) { applyOtzariaTheme(payload.theme); });
+                Otzaria.on('theme.changed', function (theme)   { applyOtzariaTheme(theme); });
+            }
+        })();
+    <\/script>
+`;
+                    htmlCode = htmlCode.replace('</body>', boilerplate + '\n</body>');
+                }
+
+                updateStatus('אורז סופית את כל הקבצים ל-ZIP...');
+                
+                const permissions = Array.from(document.querySelectorAll('.perm-cb:checked')).map(cb => cb.value);
+                const wantsNetwork = permissions.includes('network.access');
+                const homepage = (document.getElementById('p-homepage').value || '').trim();
+                const stability = document.getElementById('p-stability').value || 'beta';
+                const tabOrder = parseInt(document.getElementById('t-order').value);
+
+                const publishedTypesRaw = (document.getElementById('p-published-types').value || '').trim();
+                const publishedDataTypes = permissions.includes('published_data.write') && publishedTypesRaw
+                    ? publishedTypesRaw.split(',').map(s => s.trim()).filter(Boolean)
+                    : [];
+
+                const manifest = {
+                    schemaVersion: 1,
+                    id: pId,
+                    name: document.getElementById('p-name').value || 'My Plugin',
+                    version: pVersion,
+                    description: document.getElementById('p-desc').value || '',
+                    author: document.getElementById('p-author').value || '',
+                    stability: stability,
+                    entrypoint: "index.html",
+                    minAppVersion: pMinAppVersion,
+                    sdkVersion: "1.x",
+                    permissions: permissions,
+                    network: { enabled: wantsNetwork, allowlist: [] },
+                    contributes: {
+                        toolTab: {
+                            title: document.getElementById('t-title').value || 'Tab',
+                            order: Number.isFinite(tabOrder) ? tabOrder : 100,
+                            defaultPinned: true,
+                            iconName: document.getElementById('t-icon').value.trim() || 'book_24_regular'
+                        },
+                        publishedDataTypes: publishedDataTypes
+                    }
+                };
+                if (homepage) manifest.homepage = homepage;
+
+                zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+                zip.file("index.html", htmlCode);
+                zip.file("otzaria_plugin.js", document.getElementById('otzaria-plugin-js-source').textContent);
+
+                for (const [name, file] of extraFiles) {
+                    zip.file(name, file);
+                }
+
+                const blob = await zip.generateAsync({ type: "blob" });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = pId + ".otzplugin";
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                updateStatus('');
+                
+                const uploadCta = `
+                    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-slate-700 leading-relaxed">
+                        <div class="font-bold text-blue-800 mb-1">רוצה לשתף את התוסף שלך?</div>
+                        העלה אותו לחנות התוספים הרשמית של אוצריא, כדי שכל המשתמשים יוכלו ליהנות:<br>
+                        <a href="https://otzaria.org/plugins/upload" target="_blank" class="inline-block mt-2 font-bold text-blue-700 hover:text-blue-900 underline code-font" dir="ltr">
+                            otzaria.org/plugins/upload &nearr;
+                        </a>
+                    </div>
+                `;
+                const unresolvedCount = failedItems.filter((_, i) => !document.getElementById(`manual-file-${i}`)?.files.length).length;
+                if (unresolvedCount > 0) {
+                    showMsg(
+                        'התוסף נארז בהצלחה, אבל...',
+                        `<div>דילגת על הורדה של ${unresolvedCount} קבצים. הקוד נשאר עם הקישור המקורי והתוסף יצטרך חיבור לאינטרנט כדי לטעון אותם במלואם.</div>${uploadCta}`,
+                        true
+                    );
+                } else {
+                    showMsg(
+                        'התוסף נארז בהצלחה! 🎉',
+                        `<div>קובץ ה-otzplugin מוכן כעת ויתפקד בצורה מושלמת גם כשתהיה מנותק לגמרי מהרשת.</div>${uploadCta}`,
+                        true
+                    );
+                }
+
+            } catch (error) {
+                showMsg('שגיאה ביצירת הקובץ', error.message);
+                console.error(error);
+                updateStatus('');
+            } finally {
+                setBtnState(false);
+            }
+        }
+
+        document.getElementById('btn-generate-top').addEventListener('click', generatePlugin);
+        document.getElementById('btn-generate-bottom').addEventListener('click', generatePlugin);
+
+    </script>
+</body>
+</html>

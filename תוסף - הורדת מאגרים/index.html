@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנהל הורדות מאגרים</title>
+    <style>
+        :root {
+            --primary: #1976d2;
+            --on-primary: #ffffff;
+            --surface: #ffffff;
+            --on-surface: #1a1a1a;
+            --surface-container: #f3f4f6;
+            --outline: #cbd5e1;
+            --error-bg: #fef2f2;
+            --error-color: #b91c1c;
+            --error-border: #fca5a5;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            background: var(--surface);
+            color: var(--on-surface);
+            font-family: var(--font-family, system-ui, sans-serif);
+            font-size: var(--font-size, 16px);
+            line-height: var(--line-height, 1.5);
+            transition: background-color .25s, color .25s;
+            padding: 24px;
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin: 0 0 16px;
+        }
+
+        .version-notice {
+            background-color: var(--error-bg);
+            color: var(--error-color);
+            border: 1px solid var(--error-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            display: none;
+        }
+        .version-notice.visible { display: block; }
+
+        .assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface-container);
+            color: var(--on-surface);
+            border: 1px solid var(--outline);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            min-height: 2.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-size {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            margin-bottom: 16px;
+        }
+
+        button {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            border-radius: 24px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.88; }
+        button:active { transform: scale(.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <h2>ניהול מאגר ספרים</h2>
+
+    <div class="version-notice" id="version-notice"></div>
+
+    <div id="assets-list" class="assets-grid">
+        <div class="loading">טוען רשימה...</div>
+    </div>
+
+    <script src="otzaria_plugin.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        function applyTheme(theme) {
+            if (!theme || !theme.colorScheme) return;
+            const cs = theme.colorScheme;
+            const r = document.documentElement.style;
+            if (cs.primary)                                      r.setProperty('--primary',           cs.primary);
+            if (cs.onPrimary)                                    r.setProperty('--on-primary',         cs.onPrimary);
+            if (cs.surface)                                      r.setProperty('--surface',            cs.surface);
+            if (cs.onSurface)                                    r.setProperty('--on-surface',         cs.onSurface);
+            if (cs.surfaceContainerHighest || cs.surfaceContainer) r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surfaceContainer);
+            if (cs.outline)                                      r.setProperty('--outline',            cs.outline);
+            if (cs.errorContainer)                               r.setProperty('--error-bg',           cs.errorContainer);
+            if (cs.onErrorContainer)                             r.setProperty('--error-color',        cs.onErrorContainer);
+            if (cs.error)                                        r.setProperty('--error-border',       cs.error);
+
+            if (theme.typography) {
+                const t = theme.typography;
+                if (t.fontFamily) r.setProperty('--font-family', t.fontFamily + ', system-ui, sans-serif');
+                if (t.fontSize)   r.setProperty('--font-size',   t.fontSize + 'px');
+                if (t.lineHeight) r.setProperty('--line-height', t.lineHeight);
+            }
+        }
+
+        if (window.Otzaria) {
+            Otzaria.on('plugin.boot',   payload => applyTheme(payload.theme));
+            Otzaria.on('theme.changed', theme   => applyTheme(theme));
+        }
+    </script>
+</body>
+</html>

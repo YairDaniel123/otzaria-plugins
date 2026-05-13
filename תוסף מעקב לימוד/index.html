@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הספק ליום</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-primary:    #6750A4;
+      --color-on-primary: #FFFFFF;
+      --color-secondary:  #625B71;
+      --color-on-secondary: #FFFFFF;
+      --color-surface:    #FFFBFE;
+      --color-on-surface: #1C1B1F;
+      --color-surface-container-highest: #E6E0E9;
+      --color-error:    #B3261E;
+      --color-on-error: #FFFFFF;
+      --color-outline:  #79747E;
+      --color-primary-subtle:   rgba(103,80,164,0.12);
+      --color-secondary-subtle: rgba(98,91,113,0.12);
+      --font-main:       'Frank Ruhl Libre', 'David', serif;
+      --font-size-base:  18px;
+      --line-height:     1.5;
+      --radius-sm:  8px;
+      --radius-md:  12px;
+      --radius-lg:  16px;
+      --radius-pill:999px;
+    }
+
+    body {
+      font-family: var(--font-main);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height);
+      background: var(--color-surface);
+      color: var(--color-on-surface);
+      direction: rtl;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Layout ── */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--color-outline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .app-header h1 {
+      font-size: 1.1em;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .app-header .subtitle {
+      font-size: 0.78em;
+      color: var(--color-outline);
+      margin-top: 1px;
+    }
+
+    .app-content {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+    }
+    .card-title {
+      font-size: 0.88em;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Today Card ── */
+    .today-card {
+      border-color: var(--color-primary);
+      background: var(--color-primary-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .today-label {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+    .today-ref {
+      font-size: 1.2em;
+      font-weight: 700;
+      color: var(--color-on-surface);
+      line-height: 1.35;
+      margin-bottom: 14px;
+      min-height: 1.5em;
+    }
+    .today-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .chip {
+      border-radius: var(--radius-pill);
+      background: var(--color-secondary-subtle);
+      color: var(--color-on-surface);
+      border: 1px solid var(--color-outline);
+      padding: 3px 11px;
+      font-size: 0.78em;
+      font-weight: 600;
+    }
+    .chip.primary {
+      background: var(--color-primary-subtle);
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .today-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Progress Bar ── */
+    .progress-wrap {
+      margin-top: 4px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+      font-size: 0.82em;
+    }
+    .progress-label { font-weight: 600; }
+    .progress-pct { color: var(--color-primary); font-weight: 700; }
+    .progress-bar-bg {
+      height: 8px;
+      border-radius: var(--radius-pill);
+      background: var(--color-secondary-subtle);
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: var(--color-primary);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 9px 18px;
+      font-family: var(--font-main);
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover    { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-secondary {
+      background: var(--color-secondary-subtle);
+      color: var(--color-on-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      padding: 9px 18px;
+      font-family: var(--font-main);
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-secondary:hover    { opacity: 0.85; }
+    .btn-secondary:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-on-surface);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      transition: background 0.15s;
+      font-size: 1em;
+    }
+    .btn-icon:hover { background: var(--color-secondary-subtle); }
+
+    /* ── Inputs ── */
+    .input {
+      padding: 9px 12px;
+      border: 1.5px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-main);
+      font-size: 0.95em;
+      color: var(--color-on-surface);
+      background: var(--color-surface);
+      direction: rtl;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .input:focus { border-color: var(--color-primary); }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .input-label {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: var(--color-outline);
+    }
+
+    /* ── Form Row ── */
+    .form-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .form-row .input-group { flex: 1; }
+
+    /* ── Segments ── */
+    .segment-group {
+      display: flex;
+      border: 1.5px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .segment-btn {
+      flex: 1;
+      padding: 8px 4px;
+      font-family: var(--font-main);
+      font-size: 0.82em;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: var(--color-surface);
+      color: var(--color-on-surface);
+      border-left: 1px solid var(--color-outline);
+      transition: background 0.15s, color 0.15s;
+    }
+    .segment-btn:first-child { border-left: none; }
+    .segment-btn.active {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+
+    /* ── Streak ── */
+    .streak-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .streak-num {
+      font-size: 2em;
+      font-weight: 700;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .streak-label {
+      font-size: 0.82em;
+      color: var(--color-outline);
+    }
+
+    /* ── History List ── */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      font-size: 0.88em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .history-item:hover { background: var(--color-secondary-subtle); }
+    .history-item.today-done { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+    .history-item .day-label { font-weight: 600; }
+    .history-item .day-ref   { color: var(--color-outline); font-size: 0.9em; }
+    .history-item .done-badge {
+      font-size: 0.75em;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .history-item .pending-badge {
+      font-size: 0.75em;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--color-secondary-subtle);
+      color: var(--color-outline);
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--color-outline);
+    }
+    .empty-state .icon { font-size: 2.5em; margin-bottom: 10px; }
+    .empty-state p { font-size: 0.9em; }
+
+    /* ── Overlay ── */
+    .overlay-scrim {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.30);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s; z-index: 100;
+    }
+    .overlay-scrim.open { opacity: 1; pointer-events: auto; }
+
+    .overlay-panel {
+      position: fixed;
+      top: 10px; bottom: 12px;
+      right: 10px;
+      width: min(360px, calc(100vw - 20px));
+      background: color-mix(in srgb, var(--color-secondary) 12%, var(--color-surface));
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 101;
+      opacity: 0; transform: translateX(30px);
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    .overlay-panel.open {
+      opacity: 1; transform: translateX(0);
+      pointer-events: auto;
+    }
+    .overlay-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .overlay-title {
+      font-size: 1em;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    /* ── Fade-in ── */
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── No-plan state ── */
+    #view-no-plan { display: flex; }
+    #view-main    { display: none; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--color-outline);
+      opacity: 0.3;
+      margin: 4px 0;
+    }
+
+    /* ── Stats Row ── */
+    .stats-row {
+      display: flex;
+      gap: 10px;
+    }
+    .stat-box {
+      flex: 1;
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: var(--color-primary);
+      line-height: 1.1;
+    }
+    .stat-label {
+      font-size: 0.72em;
+      color: var(--color-outline);
+      margin-top: 2px;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-outline);
+      opacity: 0.5;
+      border-radius: 99px;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 0.78em;
+      font-weight: 700;
+      color: var(--color-outline);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div>
+      <h1>📖 ספק ליום</h1>
+      <div class="subtitle" id="header-subtitle">מעקב לימוד יומי</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn-icon" id="btn-open-settings" title="הגדרות תכנית">
+        <!-- gear icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: NO PLAN ════════════ -->
+  <div id="view-no-plan" class="app-content" style="justify-content:center;align-items:center;">
+    <div class="empty-state fade-in" style="max-width:280px;">
+      <div class="icon">📚</div>
+      <div style="font-size:1.05em;font-weight:700;margin-bottom:8px;">אין תכנית לימוד פעילה</div>
+      <p style="margin-bottom:20px;">הגדר ספר, תאריך התחלה וקצב יומי — והתוסף יחשב בדיוק מה אתה צריך ללמוד בכל יום!</p>
+      <button class="btn-primary" id="btn-create-plan">הגדר תכנית לימוד</button>
+    </div>
+  </div>
+
+  <!-- ════════════ VIEW: MAIN ════════════ -->
+  <div id="view-main" class="app-content">
+
+    <!-- Today Card -->
+    <div class="today-card fade-in">
+      <div class="today-label">היום ·&nbsp;<span id="today-hebrew-date">—</span></div>
+      <div class="today-ref" id="today-ref-text">טוען...</div>
+      <div class="today-meta">
+        <span class="chip primary" id="chip-unit">—</span>
+        <span class="chip" id="chip-day-num">יום 1</span>
+        <span class="chip" id="chip-book-name">—</span>
+      </div>
+      <div class="today-actions">
+        <button class="btn-primary" id="btn-open-in-reader">פתח באוצריא ←</button>
+        <button class="btn-secondary" id="btn-mark-done" style="display:none;">✓ סמן כלמוד</button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card">
+      <div class="card-title">התקדמות</div>
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label" id="progress-label-text">—</span>
+          <span class="progress-pct" id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-streak">0</div>
+        <div class="stat-label">🔥 רצף ימים</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">✓ ימים שהושלמו</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-remaining">—</div>
+        <div class="stat-label">ימים נותרו</div>
+      </div>
+    </div>
+
+    <!-- Recent Days -->
+    <div class="card">
+      <div class="card-title">ימים אחרונים</div>
+      <div class="history-list" id="history-list">
+        <div class="empty-state" style="padding:16px 0;"><p>אין היסטוריה עדיין</p></div>
+      </div>
+    </div>
+
+  </div><!-- /view-main -->
+</div><!-- /app-shell -->
+
+<!-- ════════ OVERLAY: Settings ════════ -->
+<div class="overlay-scrim" id="overlay-scrim"></div>
+<div class="overlay-panel" id="overlay-panel">
+  <div class="overlay-header">
+    <div class="overlay-title">⚙️ הגדרות תכנית</div>
+    <button class="btn-icon" id="btn-close-overlay">✕</button>
+  </div>
+
+  <!-- Book -->
+  <div class="input-group" style="margin-bottom:14px;">
+    <label class="input-label" for="input-book">ספר / מסכת / חיבור</label>
+    <input class="input" type="text" id="input-book" placeholder='למשל: משנה, אבות, תהילים' />
+  </div>
+
+  <!-- Book ID (for reader) -->
+  <div class="input-group" style="margin-bottom:14px;">
+    <label class="input-label" for="input-book-id">שם הספר באוצריא (לפתיחה באוצריא)</label>
+    <input class="input" type="text" id="input-book-id" placeholder='למשל: משנה מסכת אבות' dir="rtl" />
+  </div>
+
+  <!-- Unit Type -->
+  <div class="input-group" style="margin-bottom:14px;">
+    <label class="input-label">יחידת לימוד</label>
+    <div class="segment-group" id="unit-type-seg">
+      <button class="segment-btn" data-val="daf">דפים</button>
+      <button class="segment-btn" data-val="perek">פרקים</button>
+      <button class="segment-btn" data-val="siman">סימנים</button>
+      <button class="segment-btn" data-val="custom">אחר</button>
+    </div>
+  </div>
+
+  <!-- Custom unit label (shown when "אחר") -->
+  <div class="input-group" style="margin-bottom:14px;display:none;" id="custom-unit-wrap">
+    <label class="input-label" for="input-custom-unit">שם היחידה (למשל: עמוד)</label>
+    <input class="input" type="text" id="input-custom-unit" placeholder="עמוד, סעיף, הלכה..." />
+  </div>
+
+  <!-- Daily amount -->
+  <div class="form-row" style="margin-bottom:14px;">
+    <div class="input-group">
+      <label class="input-label" for="input-daily">כמות יומית</label>
+      <input class="input" type="number" id="input-daily" min="1" max="200" value="2" style="direction:ltr;" />
+    </div>
+    <div class="input-group">
+      <label class="input-label" for="input-total">סה"כ יחידות בספר</label>
+      <input class="input" type="number" id="input-total" min="1" value="63" style="direction:ltr;" />
+    </div>
+  </div>
+
+  <!-- Start date -->
+  <div class="input-group" style="margin-bottom:14px;">
+    <label class="input-label" for="input-start">תאריך התחלה</label>
+    <input class="input" type="date" id="input-start" style="direction:ltr;" />
+  </div>
+
+  <!-- Start unit offset -->
+  <div class="input-group" style="margin-bottom:20px;">
+    <label class="input-label" for="input-offset">מספר יחידה להתחלה (אם לא מהתחלה)</label>
+    <input class="input" type="number" id="input-offset" min="1" value="1" style="direction:ltr;" />
+    <span style="font-size:0.75em;color:var(--color-outline);margin-top:3px;">לדוגמה: אם כבר למדת 10 משניות, רשום 11</span>
+  </div>
+
+  <div class="divider" style="margin-bottom:16px;"></div>
+
+  <button class="btn-primary" style="width:100%;" id="btn-save-plan">שמור תכנית</button>
+
+  <div style="margin-top:10px;">
+    <button class="btn-secondary" style="width:100%;font-size:0.82em;" id="btn-delete-plan">🗑 מחק תכנית</button>
+  </div>
+</div>
+
+<script src="otzaria_plugin.js"></script>
+<script>
+'use strict';
+
+// ════════════════════════════════════════
+//  Theme
+// ════════════════════════════════════════
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function applyTheme(theme) {
+  if (!theme || !theme.colorScheme) return;
+  const cs = theme.colorScheme;
+  const root = document.documentElement;
+  root.style.setProperty('--color-primary',    cs.primary);
+  root.style.setProperty('--color-on-primary',  cs.onPrimary);
+  root.style.setProperty('--color-secondary',   cs.secondary);
+  root.style.setProperty('--color-on-secondary',cs.onSecondary);
+  root.style.setProperty('--color-surface',     cs.surface);
+  root.style.setProperty('--color-on-surface',  cs.onSurface);
+  root.style.setProperty('--color-surface-container-highest', cs.surfaceContainerHighest);
+  root.style.setProperty('--color-error',    cs.error);
+  root.style.setProperty('--color-on-error', cs.onError);
+  root.style.setProperty('--color-outline',  cs.outline);
+  root.style.setProperty('--color-primary-subtle',   hexToRgba(cs.primary,   0.12));
+  root.style.setProperty('--color-secondary-subtle', hexToRgba(cs.secondary, 0.12));
+  document.body.classList.toggle('dark-mode', theme.mode === 'dark');
+  if (theme.typography) {
+    const t = theme.typography;
+    root.style.setProperty('--font-main', `'${t.fontFamily}', 'David', serif`);
+    root.style.setProperty('--font-size-base', `${t.fontSize}px`);
+    root.style.setProperty('--line-height', String(t.lineHeight));
+  }
+}
+
+// ════════════════════════════════════════
+//  State
+// ════════════════════════════════════════
+let plan = null;      // { book, bookId, unitType, customUnit, daily, total, startDate, startOffset }
+let doneMap = {};     // { 'YYYY-MM-DD': true }
+
+const STORAGE_PLAN    = 'safek_plan_v2';
+const STORAGE_DONE    = 'safek_done_v2';
+
+// ════════════════════════════════════════
+//  Helpers
+// ════════════════════════════════════════
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysBetween(a, b) {
+  // a, b = 'YYYY-MM-DD' strings; returns b - a in days
+  const msA = new Date(a).setHours(0,0,0,0);
+  const msB = new Date(b).setHours(0,0,0,0);
+  return Math.round((msB - msA) / 86400000);
+}
+
+function unitLabel(unitType, customUnit, n) {
+  const labels = {
+    mishna: n === 1 ? 'משנה' : 'משניות',
+    perek:  n === 1 ? 'פרק'  : 'פרקים',
+    siman:  n === 1 ? 'סימן' : 'סימנים',
+    daf:    n === 1 ? 'דף'   : 'דפים',
+    custom: customUnit || 'יחידות',
+  };
+  return labels[unitType] || 'יחידות';
+}
+
+// calculates which unit # the user should be at on a given day
+function calcUnitForDay(dayOffset) {
+  // dayOffset = 0 → day 1 of plan
+  const start = (plan.startOffset || 1) - 1; // 0-based
+  return start + dayOffset * plan.daily;
+}
+
+// Returns {from, to} unit numbers (1-based) for a given dayOffset
+function calcRangeForDay(dayOffset) {
+  const base = (plan.startOffset || 1) - 1; // 0-based
+  const from = base + dayOffset * plan.daily + 1;
+  const to   = base + (dayOffset + 1) * plan.daily;
+  return { from, to: Math.min(to, plan.total) };
+}
+
+// Hebrew date string via Intl
+function hebrewDateStr(dateStr) {
+  try {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('he-IL-u-ca-hebrew', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  } catch(e) {
+    return dateStr;
+  }
+}
+
+function calcStreak() {
+  let streak = 0;
+  const today = todayStr();
+  let cur = new Date(today);
+  while (true) {
+    const s = cur.toISOString().slice(0,10);
+    if (doneMap[s]) {
+      streak++;
+      cur.setDate(cur.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// ════════════════════════════════════════
+//  Render
+// ════════════════════════════════════════
+function render() {
+  const hasPlan = !!plan;
+  document.getElementById('view-no-plan').style.display = hasPlan ? 'none'  : 'flex';
+  document.getElementById('view-main').style.display    = hasPlan ? 'flex'  : 'none';
+  if (!hasPlan) return;
+
+  const today = todayStr();
+  const dayOffset = daysBetween(plan.startDate, today);
+
+  // Clamp
+  const totalDays = Math.ceil((plan.total - (plan.startOffset - 1)) / plan.daily);
+
+  // Header subtitle
+  document.getElementById('header-subtitle').textContent = plan.book || 'לימוד יומי';
+
+  // Today date
+  document.getElementById('today-hebrew-date').textContent = hebrewDateStr(today);
+
+  // Today ref
+  if (dayOffset < 0) {
+    document.getElementById('today-ref-text').textContent = 'התכנית מתחילה ב-' + hebrewDateStr(plan.startDate);
+    document.getElementById('chip-day-num').textContent = 'טרם נלמד התחיל';
+    document.getElementById('chip-unit').textContent = '—';
+    document.getElementById('btn-mark-done').style.display = 'none';
+  } else {
+    const { from, to } = calcRangeForDay(dayOffset);
+
+    let refText;
+    if (from > plan.total) {
+      refText = '✅ סיימת את הספר!';
+    } else if (from === to) {
+      refText = `${unitLabel(plan.unitType, plan.customUnit, 1)} ${from}`;
+    } else {
+      refText = `${unitLabel(plan.unitType, plan.customUnit, 2)} ${from}–${to}`;
+    }
+    document.getElementById('today-ref-text').textContent = refText;
+    document.getElementById('chip-unit').textContent =
+      `${plan.daily} ${unitLabel(plan.unitType, plan.customUnit, plan.daily)} ליום`;
+    document.getElementById('chip-day-num').textContent = `יום ${dayOffset + 1}`;
+
+    // Mark done button
+    const isToday = dayOffset >= 0 && from <= plan.total;
+    document.getElementById('btn-mark-done').style.display = isToday ? '' : 'none';
+    document.getElementById('btn-mark-done').textContent = doneMap[today] ? '✓ נלמד היום!' : '✓ סמן כלמוד';
+    document.getElementById('btn-mark-done').style.opacity = doneMap[today] ? '0.6' : '1';
+  }
+
+  document.getElementById('chip-book-name').textContent = plan.book || '—';
+
+  // Progress
+  const doneUnits = Math.max(0, Math.min(
+    dayOffset >= 0 ? calcUnitForDay(dayOffset) : 0,
+    plan.total - (plan.startOffset - 1)
+  ));
+  const totalUnits = plan.total - (plan.startOffset - 1);
+  const pct = totalUnits > 0 ? Math.round((doneUnits / totalUnits) * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-label-text').textContent =
+    `${doneUnits} מתוך ${totalUnits} ${unitLabel(plan.unitType, plan.customUnit, totalUnits)}`;
+
+  // Stats
+  const streak    = calcStreak();
+  const doneCount = Object.keys(doneMap).filter(d => doneMap[d]).length;
+  const remaining = Math.max(0, totalDays - Math.max(0, dayOffset + 1));
+  document.getElementById('stat-streak').textContent    = streak;
+  document.getElementById('stat-done').textContent      = doneCount;
+  document.getElementById('stat-remaining').textContent = remaining > 0 ? remaining : '✅';
+
+  // History: last 10 days
+  renderHistory(dayOffset, totalDays);
+}
+
+function renderHistory(todayOffset, totalDays) {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  if (todayOffset < 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p>הלימוד עוד לא התחיל</p></div>';
+    return;
+  }
+
+  const count = Math.min(todayOffset + 1, 14);
+  if (count === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:16px 0;"><p>אין היסטוריה עדיין</p></div>';
+    return;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const offset = todayOffset - i;
+    const d = new Date(plan.startDate + 'T12:00:00');
+    d.setDate(d.getDate() + offset);
+    const ds = d.toISOString().slice(0,10);
+    const done = !!doneMap[ds];
+    const { from, to } = calcRangeForDay(offset);
+    const isToday = (i === 0);
+
+    const el = document.createElement('div');
+    el.className = 'history-item' + (isToday && done ? ' today-done' : '');
+
+    const label = isToday ? 'היום' : hebrewDateStr(ds).replace(/,.*/, '');
+    const refStr = from > plan.total
+      ? '(סיום)'
+      : from === to
+        ? `${unitLabel(plan.unitType, plan.customUnit, 1)} ${from}`
+        : `${unitLabel(plan.unitType, plan.customUnit, 2)} ${from}–${to}`;
+
+    el.innerHTML = `
+      <div>
+        <div class="day-label">${label}</div>
+        <div class="day-ref">${refStr}</div>
+      </div>
+      ${done
+        ? '<span class="done-badge">✓ נלמד</span>'
+        : '<span class="pending-badge">טרם נלמד</span>'}
+    `;
+    // clicking a history row opens it in reader
+    el.addEventListener('click', () => openInReader(offset));
+    list.appendChild(el);
+  }
+}
+
+// ════════════════════════════════════════
+//  Open in Reader
+// ════════════════════════════════════════
+async function openInReader(dayOffset) {
+  if (!plan || !plan.bookId) {
+    await Otzaria.call('notifications.showInApp', { message: 'לא הוגדר מזהה ספר', type: 'error' });
+    return;
+  }
+  const { from } = calcRangeForDay(dayOffset ?? daysBetween(plan.startDate, todayStr()));
+  try {
+    await Otzaria.call('reader.openBook', {
+      bookId: plan.bookId,
+      index: Math.max(0, from - 1)
+    });
+  } catch(e) {
+    await Otzaria.call('notifications.showInApp', { message: 'לא ניתן לפתוח את הספר', type: 'error' });
+  }
+}
+
+// ════════════════════════════════════════
+//  Storage
+// ════════════════════════════════════════
+async function loadData() {
+  try {
+    const r1 = await Otzaria.call('storage.get', { key: STORAGE_PLAN });
+    if (r1.success && r1.data) plan = r1.data;
+  } catch(e) {}
+  try {
+    const r2 = await Otzaria.call('storage.get', { key: STORAGE_DONE });
+    if (r2.success && r2.data) doneMap = r2.data;
+  } catch(e) {}
+}
+
+async function savePlan() {
+  await Otzaria.call('storage.set', { key: STORAGE_PLAN, value: plan });
+}
+
+async function saveDone() {
+  await Otzaria.call('storage.set', { key: STORAGE_DONE, value: doneMap });
+}
+
+// ════════════════════════════════════════
+//  Overlay (Settings Panel)
+// ════════════════════════════════════════
+function openOverlay() {
+  // Populate fields from current plan (if any)
+  if (plan) {
+    document.getElementById('input-book').value    = plan.book    || '';
+    document.getElementById('input-book-id').value = plan.bookId  || '';
+    document.getElementById('input-daily').value   = plan.daily   || 2;
+    document.getElementById('input-total').value   = plan.total   || 63;
+    document.getElementById('input-start').value   = plan.startDate || todayStr();
+    document.getElementById('input-offset').value  = plan.startOffset || 1;
+    document.getElementById('input-custom-unit').value = plan.customUnit || '';
+    setUnitType(plan.unitType || 'mishna');
+  } else {
+    document.getElementById('input-start').value = todayStr();
+    setUnitType('mishna');
+  }
+  document.getElementById('overlay-scrim').classList.add('open');
+  document.getElementById('overlay-panel').classList.add('open');
+}
+
+function closeOverlay() {
+  document.getElementById('overlay-scrim').classList.remove('open');
+  document.getElementById('overlay-panel').classList.remove('open');
+}
+
+function setUnitType(val) {
+  document.querySelectorAll('#unit-type-seg .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === val);
+  });
+  document.getElementById('custom-unit-wrap').style.display = val === 'custom' ? '' : 'none';
+}
+
+function getSelectedUnitType() {
+  const active = document.querySelector('#unit-type-seg .segment-btn.active');
+  return active ? active.dataset.val : 'mishna';
+}
+
+// ════════════════════════════════════════
+//  Event Wiring
+// ════════════════════════════════════════
+document.getElementById('btn-open-settings').addEventListener('click', openOverlay);
+document.getElementById('btn-create-plan').addEventListener('click', openOverlay);
+document.getElementById('btn-close-overlay').addEventListener('click', closeOverlay);
+document.getElementById('overlay-scrim').addEventListener('click', closeOverlay);
+
+// Segment buttons
+document.querySelectorAll('#unit-type-seg .segment-btn').forEach(btn => {
+  btn.addEventListener('click', () => setUnitType(btn.dataset.val));
+});
+
+// Save plan
+document.getElementById('btn-save-plan').addEventListener('click', async () => {
+  const book       = document.getElementById('input-book').value.trim();
+  const bookId     = document.getElementById('input-book-id').value.trim();
+  const daily      = parseInt(document.getElementById('input-daily').value) || 1;
+  const total      = parseInt(document.getElementById('input-total').value) || 1;
+  const startDate  = document.getElementById('input-start').value || todayStr();
+  const startOffset = parseInt(document.getElementById('input-offset').value) || 1;
+  const unitType   = getSelectedUnitType();
+  const customUnit = document.getElementById('input-custom-unit').value.trim();
+
+  if (!book) {
+    await Otzaria.call('notifications.showInApp', { message: 'נא להזין שם ספר', type: 'error' });
+    return;
+  }
+
+  plan = { book, bookId, unitType, customUnit, daily, total, startDate, startOffset };
+  await savePlan();
+  closeOverlay();
+  render();
+  await Otzaria.call('notifications.showInApp', { message: 'תוכנית הלימוד נשמרה! 🎉', type: 'success' });
+});
+
+// Delete plan
+document.getElementById('btn-delete-plan').addEventListener('click', async () => {
+  const { data } = await Otzaria.call('ui.showConfirm', {
+    title: 'מחק תכנית',
+    content: 'האם למחוק את תכנית הלימוד? ההיסטוריה תישמר.'
+  });
+  if (!data.confirmed) return;
+  plan = null;
+  await Otzaria.call('storage.remove', { key: STORAGE_PLAN });
+  closeOverlay();
+  render();
+});
+
+// Mark done
+document.getElementById('btn-mark-done').addEventListener('click', async () => {
+  const today = todayStr();
+  if (doneMap[today]) return; // already done
+  doneMap[today] = true;
+  await saveDone();
+  render();
+  await Otzaria.call('notifications.showInApp', { message: 'כל הכבוד! הלימוד היומי הושלם ✅', type: 'success' });
+});
+
+// Open in reader (today)
+document.getElementById('btn-open-in-reader').addEventListener('click', () => openInReader());
+
+// ════════════════════════════════════════
+//  Boot
+// ════════════════════════════════════════
+Otzaria.on('plugin.boot', async (payload) => {
+  applyTheme(payload.theme);
+  await loadData();
+  render();
+});
+
+Otzaria.on('theme.changed', applyTheme);
+</script>
+</body>
+</html>

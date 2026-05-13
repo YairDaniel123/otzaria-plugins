@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כלי שבול מרכזי - כלים תורניים מכולת</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;700&display=swap');
+
+    :root {
+        --primary: #6750A4;
+        --on-primary: #ffffff;
+
+        --surface: #fffbfe;
+        --surface-container: #f3edf7;
+        --surface-container-high: #ece6f0;
+
+        --on-surface: #1c1b1f;
+        --on-surface-variant: #49454f;
+
+        --outline: #79747e;
+        --outline-variant: #cac4d0;
+
+        --error: #b3261e;
+        --success: #146c2e;
+        --warning: #7a5901;
+        --info: #00639b;
+    }
+
+    * {
+        font-family: 'Assistant', sans-serif;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+    }
+
+    body {
+        background: var(--surface);
+        color: var(--on-surface);
+        min-height: 100vh;
+        padding: 24px;
+        transition: background-color .2s ease, color .2s ease;
+    }
+
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header,
+    .content-area,
+    .tool-card {
+        background: var(--surface-container);
+        border: 1px solid var(--outline-variant);
+        transition: background-color .2s ease, border-color .2s ease;
+    }
+
+    .header {
+        padding: 30px;
+        border-radius: 28px;
+        margin-bottom: 28px;
+    }
+
+    .header h1 {
+        color: var(--primary);
+        font-size: 2.4em;
+        margin: 0 0 10px 0;
+        font-weight: 700;
+    }
+
+    .header p {
+        color: var(--on-surface-variant);
+        font-size: 1.05em;
+        margin: 0;
+    }
+
+    .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 28px;
+    }
+
+    .tool-card {
+        padding: 22px;
+        border-radius: 24px;
+        cursor: pointer;
+        transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+    }
+
+    .tool-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .tool-card.active {
+        border-color: var(--primary);
+        background: var(--surface-container-high);
+    }
+
+    .tool-card h3 {
+        margin: 0 0 10px 0;
+        color: var(--on-surface);
+        font-size: 1.2em;
+    }
+
+    .tool-card p {
+        color: var(--on-surface-variant);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .content-area {
+        border-radius: 28px;
+        padding: 30px;
+        display: none;
+    }
+
+    .content-area.active {
+        display: block;
+    }
+
+    .api-panel,
+    .config-section,
+    .output-container {
+        background: var(--surface-container-high);
+        border: 1px solid var(--outline-variant);
+        border-radius: 24px;
+    }
+
+    .api-panel,
+    .config-section {
+        padding: 20px;
+        margin-bottom: 22px;
+    }
+
+    .api-panel-grid,
+    .inputs-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label,
+    .output-label,
+    .config-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--on-surface);
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        background: var(--surface);
+        color: var(--on-surface);
+        border: 1px solid var(--outline);
+        border-radius: 16px;
+        padding: 12px 14px;
+        font-size: .96rem;
+        transition: border-color .15s ease, background-color .15s ease;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 200px;
+        font-family: 'SBL Hebrew', serif;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .buttons-group,
+    .config-buttons-group,
+    .preset-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    button,
+    .config-btn,
+    .preset-btn,
+    .copy-btn {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 20px;
+        padding: 11px 20px;
+        font-weight: 600;
+        font-size: .95rem;
+        transition: transform .08s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+    button:active,
+    .config-btn:active,
+    .preset-btn:active,
+    .copy-btn:active {
+        transform: scale(.985);
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-success,
+    .btn-info,
+    .preset-btn {
+        background: var(--primary);
+        color: var(--on-primary);
+    }
+
+    .config-btn,
+    .copy-btn {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid var(--outline);
+    }
+
+    .config-btn.active {
+        background: var(--primary);
+        color: var(--on-primary);
+        border-color: var(--primary);
+    }
+
+    .status-message {
+        padding: 14px 16px;
+        border-radius: 18px;
+        margin-bottom: 18px;
+        display: none;
+        font-weight: 600;
+    }
+
+    .status-working {
+        background: var(--surface-container-high);
+        color: var(--info);
+        border: 1px solid var(--outline-variant);
+    }
+
+    .status-success {
+        background: var(--surface-container-high);
+        color: var(--success);
+        border: 1px solid var(--outline-variant);
+    }
+
+    .status-error {
+        background: var(--surface-container-high);
+        color: var(--error);
+        border: 1px solid var(--outline-variant);
+        white-space: pre-wrap;
+        direction: ltr;
+        text-align: left;
+    }
+
+    .output-area {
+        background: var(--surface);
+        border: 1px solid var(--outline-variant);
+        border-radius: 20px;
+        padding: 16px;
+        min-height: 200px;
+        max-height: 400px;
+        overflow-y: auto;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .explanation-box {
+        background: var(--surface-container-high);
+        border: 1px solid var(--outline-variant);
+        padding: 16px;
+        border-radius: 20px;
+        margin-top: 18px;
+        display: none;
+    }
+
+    .explanation-box.show {
+        display: block;
+    }
+
+    .diff-added,
+    .word.added {
+        background: var(--surface-container-high);
+        color: var(--success);
+        font-weight: 700;
+        border-radius: 8px;
+        padding: 2px 4px;
+    }
+
+    .diff-removed,
+    .word.deleted {
+        background: var(--surface-container-high);
+        color: var(--error);
+        border-radius: 8px;
+        padding: 2px 4px;
+    }
+
+    .word.bracket {
+        background: var(--surface-container-high);
+        color: var(--warning);
+        border-radius: 8px;
+        padding: 2px 4px;
+    }
+
+    .word {
+        cursor: pointer;
+        transition: transform .12s ease;
+    }
+
+    .word:hover:not(.match) {
+        transform: scale(1.03);
+    }
+
+    .loader {
+        border: 3px solid var(--outline-variant);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .inputs-row,
+        .api-panel-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+        }
+    }
+</style>
+
+</head>
+<body>
+
+<div class="main-container">
+    <div class="header">
+        <h1>עוזר תורני</h1>
+        <p>כלים תורניים מתקדמים לעריכה, השוואה וזיהוי מקורות</p>
+    </div>
+
+    <!-- Tool Selection Cards -->
+    <div class="tools-grid">
+        <div class="tool-card active" onclick="switchTool('mugah')">
+            <h3>✎ מגיה AI</h3>
+            <p>תיקון כתיב, פיסוק ודקדוק עם השוואה חזותית</p>
+        </div>
+        <div class="tool-card" onclick="switchTool('compare')">
+            <h3>⌕ השוואת טקסטים</h3>
+            <p>השוואה מתקדמת בין שתי גרסאות עם סנכרון</p>
+        </div>
+        <div class="tool-card" onclick="switchTool('sources')">
+            <h3>▤ מקורות ופיסוק</h3>
+            <p>זיהוי מקורות תורניים וביצוע פיסוק</p>
+        </div>
+        <div class="tool-card" onclick="switchTool('advanced')">
+            <h3>◫ מקורות מתקדם</h3>
+            <p>מקורות + פיסוק + ניקוד + כותרות</p>
+        </div>
+    </div>
+
+    <!-- TOOL 1: MUGAH AI -->
+    <div id="mugah" class="content-area active">
+        <h2>✎ מגיה AI - גרסת הגילוי האוטומטי</h2>
+        
+        <div class="api-panel">
+            <div class="api-panel-grid">
+                <div class="form-group">
+                    <label>מפתח API:</label>
+                    <input type="password" id="mugah-api-key" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label>בחר מודל:</label>
+                    <select id="mugah-model-select">
+                        <option value="">-- לחץ על טען מודלים --</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-secondary" style="margin-top: 15px;" onclick="fetchModels()">
+                ↻ טען מודלים
+            </button>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">טקסט מקורי:</label>
+                <textarea id="mugah-input" placeholder="הדבק טקסט לתיקון..."></textarea>
+            </div>
+            <div>
+                <label class="output-label">תוצאה (השוואה):</label>
+                <div id="mugah-diff" class="output-area" style="background: #f0f8ff;"></div>
+            </div>
+        </div>
+
+        <div id="mugah-status" class="status-message"></div>
+
+        <div class="buttons-group">
+            <button class="btn-primary" id="mugah-btn" onclick="processMugah()">
+                <span>✎ תקן והשווה שינויים</span>
+                <div id="mugah-loader" class="loader hidden" style="margin: 0;"></div>
+            </button>
+            <button class="btn-success btn-small" onclick="copyText('mugah-corrected')">
+                ⧉ העתק טקסט מתוקן
+            </button>
+        </div>
+
+        <div id="mugah-explanation" class="explanation-box">
+            <h4>📝 הערות המגיה:</h4>
+            <p id="mugah-explanation-text"></p>
+        </div>
+    </div>
+
+    <!-- TOOL 2: TEXT COMPARISON -->
+    <div id="compare" class="content-area">
+        <h2>🔍 השוואת טקסטים עם סנכרון תזוזות</h2>
+        
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">טקסט מקור:</label>
+                <textarea id="compare-a" placeholder="הכנס טקסט מקור כאן..."></textarea>
+            </div>
+            <div>
+                <label class="output-label">טקסט להשוואה:</label>
+                <textarea id="compare-b" placeholder="הכנס טקסט עם שינויים..."></textarea>
+            </div>
+        </div>
+
+        <div id="compare-stats" class="output-label" style="background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            אחוזי שינוי: 0% | נמצאו 0 הבדלים
+        </div>
+
+        <div id="compare-status" class="status-message"></div>
+
+        <div class="buttons-group">
+            <button class="btn-primary" onclick="compareTexts()">⌕ השוואה וטעינה</button>
+            <button class="btn-secondary btn-small" onclick="navigateDiff(-1)">⬅️ הקודם</button>
+            <button class="btn-secondary btn-small" onclick="navigateDiff(1)">➡️ הבא</button>
+            <button class="btn-success btn-small" onclick="downloadCompared()">⬇ הורד טקסט</button>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">חלונית עריכה (לחץ על מילים):</label>
+                <div id="compare-diff" class="output-area"></div>
+            </div>
+            <div>
+                <label class="output-label">תוצאה סופית:</label>
+                <div id="compare-preview" class="output-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOL 3: SOURCES & PUNCTUATION -->
+    <div id="sources" class="content-area">
+        <h2>📚 מקורות ופיסוק - כלי מתקדם</h2>
+        
+        <div class="api-panel">
+            <div class="api-panel-grid">
+                <div class="form-group">
+                    <label>מפתח API:</label>
+                    <input type="password" id="sources-api-key" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label>בחר מודל:</label>
+                    <select id="sources-model-select">
+                        <option value="gemini-flash-latest">Gemini 1.5 Flash (יציב)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIG OPTIONS -->
+        <div class="config-section">
+            <div class="config-title">⚙️ הוסף ניקוד?</div>
+            <div class="config-buttons-group">
+                <button class="config-btn active" onclick="toggleSourcesOption('vocalization', true)">✓ כן - עם ניקוד</button>
+                <button class="config-btn" onclick="toggleSourcesOption('vocalization', false)">✗ לא - בלי ניקוד</button>
+            </div>
+            <div id="sources-vocalization-info" class="config-info">✓ הניקוד יתווסף לטקסט</div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-title">📑 הוסף כותרות נושא?</div>
+            <div class="config-buttons-group">
+                <button class="config-btn active" onclick="toggleSourcesOption('titles', true)">✓ כן - עם כותרות</button>
+                <button class="config-btn" onclick="toggleSourcesOption('titles', false)">✗ לא - בלי כותרות</button>
+            </div>
+            <div id="sources-titles-info" class="config-info">✓ כותרות יתווספו בתחילת כל נושא</div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-title">🎯 בחר מצב עיבוד:</div>
+            <div class="config-buttons-group">
+                <button class="config-btn active" onclick="toggleSourcesMode('sources')">📚 מקורות בלבד</button>
+                <button class="config-btn" onclick="toggleSourcesMode('pashan-short')">📖 פרשן קצר</button>
+                <button class="config-btn" onclick="toggleSourcesMode('pashan-long')">📕 פרשן מלא</button>
+            </div>
+            <div id="sources-mode-info" class="config-info">📚 יתווספו מראה מקומות מהתנ"ך, גמרא ורמב"ם</div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-title">⚡ עלייה מהירה:</div>
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="sourcePreset('basic')">🔵 בסיסי (מקורות בלבד)</button>
+                <button class="preset-btn" onclick="sourcePreset('full')">🟢 מלא (מקורות + ניקוד + כותרות)</button>
+                <button class="preset-btn" onclick="sourcePreset('pashan')">🟣 דגם פרשן</button>
+            </div>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">טקסט מקורי:</label>
+                <textarea id="sources-input" placeholder="הדבק טקסט כאן..."></textarea>
+            </div>
+            <div>
+                <label class="output-label">תוצאת ה-AI:</label>
+                <textarea id="sources-output" placeholder="תוצאת ה-AI תופיע כאן..."></textarea>
+            </div>
+        </div>
+
+        <div id="sources-status" class="status-message"></div>
+
+        <div class="buttons-group">
+            <button class="btn-info" id="sources-btn" onclick="processSources()">
+                <span>↻ עיבוד טקסט</span>
+                <div id="sources-loader" class="loader hidden" style="margin: 0;"></div>
+            </button>
+            <button class="btn-primary" onclick="compareSourcesResult()">⌕ שלב ב: השוואה</button>
+            <button class="btn-success btn-small" onclick="downloadSources()">⬇ שמור תוצאה</button>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">חלונית עריכה:</label>
+                <div id="sources-diff" class="output-area"></div>
+            </div>
+            <div>
+                <label class="output-label">תוצאה סופית:</label>
+                <div id="sources-preview" class="output-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOL 4: ADVANCED SOURCES -->
+    <div id="advanced" class="content-area">
+        <h2>🎓 מקורות מתקדם (מקורות + פיסוק + ניקוד + כותרות)</h2>
+        
+        <div class="api-panel">
+            <div class="api-panel-grid">
+                <div class="form-group">
+                    <label>מפתח API:</label>
+                    <input type="password" id="advanced-api-key" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label>בחר מודל:</label>
+                    <select id="advanced-model-select">
+                        <option value="gemini-flash-latest">Gemini 1.5 Flash (יציב)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">טקסט מקורי:</label>
+                <textarea id="advanced-input" placeholder="הדבק טקסט כאן..."></textarea>
+            </div>
+            <div>
+                <label class="output-label">תוצאת ה-AI:</label>
+                <textarea id="advanced-output" placeholder="תוצאת ה-AI תופיע כאן..."></textarea>
+            </div>
+        </div>
+
+        <div id="advanced-status" class="status-message"></div>
+
+        <div class="buttons-group">
+            <button class="btn-info" id="advanced-btn" onclick="processAdvanced()">
+                <span>↻ עיבוד: מקורות + ניקוד + כותרות</span>
+                <div id="advanced-loader" class="loader hidden" style="margin: 0;"></div>
+            </button>
+            <button class="btn-primary" onclick="compareAdvancedResult()">⌕ השוואה</button>
+            <button class="btn-success btn-small" onclick="downloadAdvanced()">💾 שמור תוצאה</button>
+        </div>
+
+        <div class="inputs-row">
+            <div>
+                <label class="output-label">חלונית עריכה:</label>
+                <div id="advanced-diff" class="output-area"></div>
+            </div>
+            <div>
+                <label class="output-label">תוצאה סופית:</label>
+                <div id="advanced-preview" class="output-area"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ======================== TOOL SWITCHING ========================
+    function switchTool(toolName) {
+        document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tool-card').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(toolName).classList.add('active');
+        event.target.closest('.tool-card').classList.add('active');
+    }
+
+    // ======================== TOOL 1: MUGAH AI ========================
+    let mugahCorrectedText = "";
+
+    async function fetchModels() {
+        const key = document.getElementById('mugah-api-key').value;
+        const select = document.getElementById('mugah-model-select');
+        const statusDiv = document.getElementById('mugah-status');
+        
+        if (!key) return alert("הכנס מפתח API קודם!");
+        
+        try {
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status-working';
+            statusDiv.innerText = 'טוען מודלים...';
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+            const data = await res.json();
+            
+            if (!res.ok) throw new Error(data.error?.message || "נכשל בטעינת מודלים");
+
+            select.innerHTML = "";
+            const validModels = data.models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
+            
+            validModels.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name;
+                opt.innerText = m.displayName + " (" + m.name.split('/')[1] + ")";
+                select.appendChild(opt);
+            });
+
+            statusDiv.className = 'status-success';
+            statusDiv.innerText = "✓ רשימת המודלים עודכנה בהצלחה!";
+            setTimeout(() => statusDiv.style.display = 'none', 3000);
+        } catch (err) {
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = "שגיאה: " + err.message;
+        }
+    }
+
+    function createDiff(oldT, newT) {
+        const oldW = oldT.trim().split(/\s+/);
+        const newW = newT.trim().split(/\s+/);
+        let res = "";
+        let i = 0, j = 0;
+        
+        while(i < oldW.length || j < newW.length) {
+            if(oldW[i] === newW[j]) {
+                res += (oldW[i] || "") + " ";
+                i++; j++;
+            } else if(j < newW.length && !oldW.slice(i, i+3).includes(newW[j])) {
+                res += `<span class="diff-added">${newW[j]}</span> `;
+                j++;
+            } else if(i < oldW.length && !newW.slice(j, j+3).includes(oldW[i])) {
+                res += `<span class="diff-removed">${oldW[i]}</span> `;
+                i++;
+            } else {
+                if(oldW[i]) { res += `<span class="diff-removed">${oldW[i]}</span> `; i++; }
+                if(newW[j]) { res += `<span class="diff-added">${newW[j]}</span> `; j++; }
+            }
+        }
+        return res;
+    }
+
+    async function processMugah() {
+        const text = document.getElementById('mugah-input').value;
+        const key = document.getElementById('mugah-api-key').value;
+        const modelName = document.getElementById('mugah-model-select').value;
+        const statusDiv = document.getElementById('mugah-status');
+        const btn = document.getElementById('mugah-btn');
+        const loader = document.getElementById('mugah-loader');
+        
+        if(!text || !modelName) return alert("הכנס טקסט ובחר מודל!");
+
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status-working';
+        statusDiv.innerText = 'מעבד טקסט...';
+        loader.classList.remove('hidden');
+        btn.disabled = true;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `אתה מגיה לשוני מומחה לעברית. תקן את הטקסט הבא (כתיב, פיסוק ודקדוק). 
+                    החזר אך ורק פורמט JSON תקני עם השדות:
+                    "corrected": "הטקסט המתוקן",
+                    "explanation": "הסבר קצר" 
+                    טקסט: ${text}` }]}]
+                })
+            });
+
+            const data = await response.json();
+            if(!response.ok) throw new Error(data.error?.message || "שגיאה ב-AI");
+
+            let rawRes = data.candidates[0].content.parts[0].text;
+            rawRes = rawRes.replace(/```json/g, "").replace(/```/g, "").trim();
+            const parsed = JSON.parse(rawRes);
+            
+            mugahCorrectedText = parsed.corrected;
+            document.getElementById('mugah-diff').innerHTML = createDiff(text, parsed.corrected);
+            document.getElementById('mugah-explanation-text').innerText = parsed.explanation;
+            document.getElementById('mugah-explanation').classList.add('show');
+
+            statusDiv.className = 'status-success';
+            statusDiv.innerText = "✓ התיקון הושלם בהצלחה!";
+            setTimeout(() => statusDiv.style.display = 'none', 3000);
+
+        } catch (err) {
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = "שגיאה: " + err.message;
+        } finally {
+            loader.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+
+    // ======================== TOOL 2: TEXT COMPARISON ========================
+    let compareElements = [];
+    let compareIndex = -1;
+
+    function cleanWord(word) {
+        return word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "").trim();
+    }
+
+    function compareTexts() {
+        const container = document.getElementById('compare-diff');
+        container.innerHTML = '';
+        compareElements = [];
+        compareIndex = -1;
+        let changes = 0;
+        
+        const wordsA = document.getElementById('compare-a').value.split(/\s+/).filter(w => w);
+        const wordsB = document.getElementById('compare-b').value.split(/\s+/).filter(w => w);
+        
+        let i = 0, j = 0;
+        
+        while (i < wordsA.length || j < wordsB.length) {
+            let wA = wordsA[i] || "";
+            let wB = wordsB[j] || "";
+            
+            let cA = cleanWord(wA);
+            let cB = cleanWord(wB);
+            
+            if (i < wordsA.length && j < wordsB.length && cA === cB) {
+                createCompareSpan(wA, 'match', container);
+                i++; j++;
+            } else if (i < wordsA.length && j < wordsB.length) {
+                let lookaheadLimit = 20;
+                let foundInB = -1;
+                let foundInA = -1;
+                
+                for (let k = 1; k <= lookaheadLimit && j + k < wordsB.length; k++) {
+                    if (cleanWord(wordsB[j + k]) === cA) { foundInB = k; break; }
+                }
+                for (let k = 1; k <= lookaheadLimit && i + k < wordsA.length; k++) {
+                    if (cleanWord(wordsA[i + k]) === cB) { foundInA = k; break; }
+                }
+                
+                if (foundInB !== -1 && (foundInA === -1 || foundInB < foundInA)) {
+                    createCompareSpan(wB, 'added', container);
+                    changes++; j++;
+                } else if (foundInA !== -1 && (foundInB === -1 || foundInA < foundInB)) {
+                    createCompareSpan(wA, 'deleted', container);
+                    changes++; i++;
+                } else {
+                    let s1 = createCompareSpan(wA, 'match', container);
+                    let s2 = createCompareSpan(wB, 'added', container);
+                    if (s1 && s2) {
+                        s1.partner = s2;
+                        s2.partner = s1;
+                        s2.classList.add('user-hidden');
+                    }
+                    changes++; i++; j++;
+                }
+            } else if (j < wordsB.length) {
+                createCompareSpan(wB, 'added', container);
+                changes++; j++;
+            } else if (i < wordsA.length) {
+                createCompareSpan(wA, 'deleted', container);
+                changes++; i++;
+            }
+        }
+        
+        const totalWords = Math.max(wordsA.length, wordsB.length);
+        const percent = totalWords > 0 ? ((changes / totalWords) * 100).toFixed(1) : 0;
+        document.getElementById('compare-stats').innerText = `אחוזי שינוי: ${percent}% | נמצאו ${changes} הבדלים`;
+        
+        updateComparePreview();
+    }
+
+    function createCompareSpan(text, type, parent) {
+        if (!text) return null;
+        const span = document.createElement('span');
+        span.innerText = text;
+        
+        if (type === 'match') {
+            span.className = `word match`;
+            parent.appendChild(span);
+            parent.appendChild(document.createTextNode(' '));
+            return span;
+        }
+        
+        span.className = `word ${type}`;
+        span.onclick = () => {
+            span.classList.toggle('user-hidden');
+            if (span.partner) span.partner.classList.toggle('user-hidden');
+            updateComparePreview();
+        };
+        
+        compareElements.push(span);
+        parent.appendChild(span);
+        parent.appendChild(document.createTextNode(' '));
+        return span;
+    }
+
+    function navigateDiff(direction) {
+        if (compareElements.length === 0) return;
+        
+        if (compareIndex >= 0 && compareIndex < compareElements.length) {
+            compareElements[compareIndex].classList.remove('current-focus');
+        }
+
+        compareIndex += direction;
+        
+        if (compareIndex >= compareElements.length) compareIndex = 0;
+        if (compareIndex < 0) compareIndex = compareElements.length - 1;
+
+        const target = compareElements[compareIndex];
+        target.classList.add('current-focus');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function updateComparePreview() {
+        let final = "";
+        document.querySelectorAll('#compare-diff .word').forEach(s => {
+            if (!s.classList.contains('user-hidden')) {
+                final += s.innerText + " ";
+            }
+        });
+        document.getElementById('compare-preview').innerText = final.replace(/\s+/g, ' ').trim();
+    }
+
+    // ======================== TOOL 3: SOURCES & PUNCTUATION ========================
+    let sourcesElements = [];
+    let sourcesConfig = {
+        vocalization: true,
+        titles: true,
+        mode: 'sources'  // 'sources', 'pashan-short', 'pashan-long'
+    };
+
+    function toggleSourcesOption(option, value) {
+        sourcesConfig[option] = value;
+        
+        // Update button states
+        event.target.parentElement.querySelectorAll('.config-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Update info text
+        if (option === 'vocalization') {
+            const info = document.getElementById('sources-vocalization-info');
+            info.innerText = value ? '✓ הניקוד יתווסף לטקסט' : '✗ בלי ניקוד';
+        } else if (option === 'titles') {
+            const info = document.getElementById('sources-titles-info');
+            info.innerText = value ? '✓ כותרות יתווספו בתחילת כל נושא' : '✗ בלי כותרות';
+        }
+    }
+
+    function toggleSourcesMode(mode) {
+        sourcesConfig.mode = mode;
+        
+        // Update button states
+        event.target.parentElement.querySelectorAll('.config-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Update info text
+        const info = document.getElementById('sources-mode-info');
+        if (mode === 'sources') {
+            info.innerText = '📚 יתווספו מראה מקומות מהתנ"ך, גמרא ורמב"ם';
+        } else if (mode === 'pashan-short') {
+            info.innerText = '📖 יינתן פירוש קצר בסגנון מתיבתא';
+        } else if (mode === 'pashan-long') {
+            info.innerText = '📕 יינתן פירוש מלא בסגנון מתיבתא';
+        }
+    }
+
+    function sourcePreset(preset) {
+        if (preset === 'basic') {
+            sourcesConfig.vocalization = false;
+            sourcesConfig.titles = false;
+            sourcesConfig.mode = 'sources';
+        } else if (preset === 'full') {
+            sourcesConfig.vocalization = true;
+            sourcesConfig.titles = true;
+            sourcesConfig.mode = 'sources';
+        } else if (preset === 'pashan') {
+            sourcesConfig.vocalization = true;
+            sourcesConfig.titles = true;
+            sourcesConfig.mode = 'pashan-long';
+        }
+        
+        // Update UI to reflect preset
+        updateSourcesUI();
+    }
+
+    function updateSourcesUI() {
+        // Update vocalization buttons
+        const vocalButtons = document.querySelectorAll('[onclick*="vocalization"]');
+        vocalButtons.forEach(btn => btn.classList.remove('active'));
+        if (sourcesConfig.vocalization) {
+            vocalButtons[0].classList.add('active');
+        } else {
+            vocalButtons[1].classList.add('active');
+        }
+        
+        // Update titles buttons
+        const titleButtons = document.querySelectorAll('[onclick*="titles"]');
+        titleButtons.forEach(btn => btn.classList.remove('active'));
+        if (sourcesConfig.titles) {
+            titleButtons[0].classList.add('active');
+        } else {
+            titleButtons[1].classList.add('active');
+        }
+        
+        // Update mode buttons
+        const modeButtons = document.querySelectorAll('[onclick*="toggleSourcesMode"]');
+        modeButtons.forEach(btn => btn.classList.remove('active'));
+        modeButtons.forEach(btn => {
+            if (btn.onclick.toString().includes(sourcesConfig.mode)) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    function buildSourcesPrompt() {
+        let basePrompt = "";
+        
+        if (sourcesConfig.mode === 'sources') {
+            basePrompt = "אתה עורך תורני מומחה. בצע פיסוק לטקסט הבא והוסף מראה מקומות (תנ\"ך, גמרא, מדרש, רמב\"ם) בסוגריים מסולסלים {}. אל תשנה את המילים המקוריות.";
+        } else if (sourcesConfig.mode === 'pashan-short') {
+            basePrompt = "אתה עורך תורני ודרשן בעל ידע עמוק. הוסף פירוש קצר בסגנון מתיבתא לכל פרק/נושא בטקסט. הפירוש צריך להיות תמציתי וישתמש בביטויים תורניים. הוסף גם מראה מקומות בסוגריים מסולסלים {}.";
+        } else if (sourcesConfig.mode === 'pashan-long') {
+            basePrompt = "אתה עורך תורני ודרשן גדול בעל ידע עמוק בתורה ובמדרשים. הוסף פירוש מלא בסגנון מתיבתא לטקסט זה. הפירוש צריך להיות מפורט, משכנע, ויציג כמה דרכים להבנת הטקסט. הוסף גם מראה מקומות מדויקים בסוגריים מסולסלים {}.";
+        }
+        
+        if (sourcesConfig.vocalization) {
+            basePrompt += " הוסף ניקוד מדויק לכל המילים.";
+        }
+        
+        if (sourcesConfig.titles) {
+            basePrompt += " בתחילת כל נושא הוסף כותרת בתוך סוגרים עגולות. בסוף כל נושא הוסף תקציר בתוך סוגרים עגולים.";
+        }
+        
+        return basePrompt;
+    }
+
+    async function processSources() {
+        const key = document.getElementById('sources-api-key').value;
+        const txt = document.getElementById('sources-input').value.trim();
+        const model = document.getElementById('sources-model-select').value;
+        const statusDiv = document.getElementById('sources-status');
+        const btn = document.getElementById('sources-btn');
+        const loader = document.getElementById('sources-loader');
+        
+        if(!txt) return alert("הכנס טקסט!");
+        
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status-working';
+        statusDiv.innerText = 'מעבד טקסט...';
+        loader.classList.remove('hidden');
+        btn.disabled = true;
+
+        try {
+            const prompt = buildSourcesPrompt();
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    contents: [{ parts: [{
+                        text: prompt + "\n\n" + txt
+                    }]}]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                if (data.error.message.includes("quota")) {
+                    throw new Error("שגיאת מכסה API");
+                }
+                throw new Error(data.error.message);
+            }
+
+            if (data.candidates && data.candidates[0].content) {
+                document.getElementById('sources-output').value = data.candidates[0].content.parts[0].text;
+                statusDiv.className = 'status-success';
+                statusDiv.innerText = "✓ העיבוד הושלם!";
+                setTimeout(() => statusDiv.style.display = 'none', 3000);
+            }
+        } catch (e) {
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = "שגיאה: " + e.message;
+        } finally {
+            loader.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+
+    function compareSourcesResult() {
+        const container = document.getElementById('sources-diff');
+        const rawA = document.getElementById('sources-input').value.trim();
+        const rawB = document.getElementById('sources-output').value.trim();
+        if(!rawB) return;
+        
+        container.innerHTML = '';
+        sourcesElements = [];
+        
+        const wordsA = rawA.split(/\s+/);
+        const wordsB = rawB.match(/\{[^}]+\}|[^\s{}]+/g) || [];
+        
+        let i = 0, j = 0;
+        while (j < wordsB.length) {
+            let wB = wordsB[j];
+            if (wB.startsWith('{') && wB.endsWith('}')) {
+                createSourceSpan(wB, 'bracket', container);
+                j++;
+                continue;
+            }
+            let cleanA = (wordsA[i] || "").replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            let cleanB = wB.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            if (cleanA === cleanB || i >= wordsA.length) {
+                createSourceSpan(wB, (i >= wordsA.length || wordsA[i] !== wB) ? 'added' : 'match', container);
+                if (i < wordsA.length) i++;
+                j++;
+            } else { i++; }
+        }
+        updateSourcesPreview();
+    }
+
+    function createSourceSpan(text, type, parent) {
+        const span = document.createElement('span');
+        span.innerText = text;
+        span.className = `word ${type}`;
+        if (type !== 'match') {
+            span.onclick = () => { span.classList.toggle('user-hidden'); updateSourcesPreview(); };
+        }
+        sourcesElements.push(span);
+        parent.appendChild(span);
+        parent.appendChild(document.createTextNode(' '));
+    }
+
+    function updateSourcesPreview() {
+        let final = "";
+        document.querySelectorAll('#sources-diff .word').forEach(s => {
+            if (!s.classList.contains('user-hidden')) final += s.innerText + " ";
+        });
+        document.getElementById('sources-preview').innerText = final.trim().replace(/\s+([,.])/g, '$1');
+    }
+
+    // ======================== TOOL 4: ADVANCED ========================
+    let advancedElements = [];
+
+    async function processAdvanced() {
+        const key = document.getElementById('advanced-api-key').value;
+        const txt = document.getElementById('advanced-input').value.trim();
+        const model = document.getElementById('advanced-model-select').value;
+        const statusDiv = document.getElementById('advanced-status');
+        const btn = document.getElementById('advanced-btn');
+        const loader = document.getElementById('advanced-loader');
+        
+        if(!txt) return alert("הכנס טקסט!");
+        
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status-working';
+        statusDiv.innerText = 'מעבד טקסט...';
+        loader.classList.remove('hidden');
+        btn.disabled = true;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    contents: [{ parts: [{
+                        text: "אתה עורך תורני מומחה. בצע פיסוק לטקסט הבא, כולל ניקוד מדויק, והוסף מראה מקומות (תנ\"ך, גמרא, מדרש, רמב\"ם) בסוגריים מסולסלים {}. אל תשנה את המילים המקוריות בכלל, בתחילת נושא תהיה כותרת בתוך סוגרים עגולות, ובסוף נושא תוסיף בתוך סוגרים עגולות תקציר של הנושא.\n\n" + txt
+                    }]}]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                if (data.error.message.includes("quota")) {
+                    throw new Error("שגיאת מכסה API");
+                }
+                throw new Error(data.error.message);
+            }
+
+            if (data.candidates && data.candidates[0].content) {
+                document.getElementById('advanced-output').value = data.candidates[0].content.parts[0].text;
+                statusDiv.className = 'status-success';
+                statusDiv.innerText = "✓ העיבוד הושלם!";
+                setTimeout(() => statusDiv.style.display = 'none', 3000);
+            }
+        } catch (e) {
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = "שגיאה: " + e.message;
+        } finally {
+            loader.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+
+    function compareAdvancedResult() {
+        const container = document.getElementById('advanced-diff');
+        const rawA = document.getElementById('advanced-input').value.trim();
+        const rawB = document.getElementById('advanced-output').value.trim();
+        if(!rawB) return;
+        
+        container.innerHTML = '';
+        advancedElements = [];
+        
+        const wordsA = rawA.split(/\s+/);
+        const wordsB = rawB.match(/\{[^}]+\}|[^\s{}]+/g) || [];
+        
+        let i = 0, j = 0;
+        while (j < wordsB.length) {
+            let wB = wordsB[j];
+            if (wB.startsWith('{') && wB.endsWith('}')) {
+                createAdvancedSpan(wB, 'bracket', container);
+                j++;
+                continue;
+            }
+            let cleanA = (wordsA[i] || "").replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            let cleanB = wB.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            if (cleanA === cleanB || i >= wordsA.length) {
+                createAdvancedSpan(wB, (i >= wordsA.length || wordsA[i] !== wB) ? 'added' : 'match', container);
+                if (i < wordsA.length) i++;
+                j++;
+            } else { i++; }
+        }
+        updateAdvancedPreview();
+    }
+
+    function createAdvancedSpan(text, type, parent) {
+        const span = document.createElement('span');
+        span.innerText = text;
+        span.className = `word ${type}`;
+        if (type !== 'match') {
+            span.onclick = () => { span.classList.toggle('user-hidden'); updateAdvancedPreview(); };
+        }
+        advancedElements.push(span);
+        parent.appendChild(span);
+        parent.appendChild(document.createTextNode(' '));
+    }
+
+    function updateAdvancedPreview() {
+        let final = "";
+        document.querySelectorAll('#advanced-diff .word').forEach(s => {
+            if (!s.classList.contains('user-hidden')) final += s.innerText + " ";
+        });
+        document.getElementById('advanced-preview').innerText = final.trim().replace(/\s+([,.])/g, '$1');
+    }
+
+    // ======================== UTILITY FUNCTIONS ========================
+    function copyText(type) {
+        let text = "";
+        if (type === 'mugah-corrected') {
+            text = mugahCorrectedText;
+        } else if (type === 'compare-preview') {
+            text = document.getElementById('compare-preview').innerText;
+        }
+        
+        if (!text) {
+            alert("אין טקסט להעתקה");
+            return;
+        }
+        
+        navigator.clipboard.writeText(text);
+        alert("✓ הטקסט הועתק!");
+    }
+
+    function downloadCompared() {
+        const text = document.getElementById('compare-preview').innerText;
+        if(!text) return alert("אין טקסט להורדה");
+        download('טקסט_משווה.txt', text);
+    }
+
+    function downloadSources() {
+        const text = document.getElementById('sources-preview').innerText;
+        if(!text) return alert("אין טקסט להורדה");
+        download('טקסט_מקורות.txt', text);
+    }
+
+    function downloadAdvanced() {
+        const text = document.getElementById('advanced-preview').innerText;
+        if(!text) return alert("אין טקסט להורדה");
+        download('טקסט_מתקדם.txt', text);
+    }
+
+    function download(filename, text) {
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+    }
+
+    // Load saved API keys on startup
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('mugah-api-key').value = localStorage.getItem('mugah_api_key') || '';
+        document.getElementById('sources-api-key').value = localStorage.getItem('sources_api_key') || '';
+        document.getElementById('advanced-api-key').value = localStorage.getItem('advanced_api_key') || '';
+        
+        document.getElementById('mugah-api-key').addEventListener('change', (e) => {
+            localStorage.setItem('mugah_api_key', e.target.value);
+        });
+        document.getElementById('sources-api-key').addEventListener('change', (e) => {
+            localStorage.setItem('sources_api_key', e.target.value);
+        });
+        document.getElementById('advanced-api-key').addEventListener('change', (e) => {
+            localStorage.setItem('advanced_api_key', e.target.value);
+        });
+        
+        // Initialize sources UI
+        updateSourcesUI();
+    });
+</script>
+
+</body>
+</html>

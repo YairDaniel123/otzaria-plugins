@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנהל הורדות דרייב</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --primary: #6750A4; --surface: #f3edf7; --on-surface: #1c1b1f; }
+        body { background-color: var(--surface); color: var(--on-surface); font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
+        .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #cac4d0; }
+        .btn-download { background: var(--primary); color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold text-[var(--primary)]">הורדות מהדרייב</h1>
+        <p class="opacity-70">הספרים מתעדכנים אוטומטית</p>
+    </header>
+
+    <div id="status" class="text-center py-10">
+        <div class="loader"></div>
+        <p class="mt-2 text-sm">מתחבר למאגר...</p>
+    </div>
+
+    <div id="list"></div>
+
+    <script>
+        const FOLDER_ID = "1KzXbM3rDBsMzIjpJiyNh1pRiVNO8Fg3c";
+
+        async function getFiles() {
+            try {
+                // שיטה שעוקפת את ה-API המורכב ומושכת את רשימת הקבצים הציבורית
+                const url = `https://drive.google.com/embeddedfolderview?id=${FOLDER_ID}`;
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                // שליפת נתוני הקבצים מתוך ה-HTML של גוגל
+                const match = text.match(/window\.viewData\s*=\s*({.+?});/s);
+                if (!match) throw new Error("לא נמצאו נתונים");
+                
+                const data = JSON.parse(match[1]);
+                const files = data.contents;
+                render(files);
+            } catch (e) {
+                document.getElementById('status').innerHTML = "שגיאה בטעינה. וודא שהתיקייה ציבורית.";
+            }
+        }
+
+        function render(files) {
+            const list = document.getElementById('list');
+            const status = document.getElementById('status');
+            status.style.display = 'none';
+            
+            list.innerHTML = files.map(file => `
+                <div class="card">
+                    <div>
+                        <div class="font-bold text-lg">${file.name}</div>
+                        <div class="text-xs opacity-50">${pickIcon(file.name)} קובץ מאגר</div>
+                    </div>
+                    <button onclick="downloadFile('${file.id}')" class="btn-download">הורדה</button>
+                </div>
+            `).join('');
+        }
+
+        function pickIcon(name) {
+            if (name.includes('pdf')) return '📕';
+            return '📖';
+        }
+
+        function downloadFile(id) {
+            const url = `https://drive.google.com/uc?export=download&id=${id}`;
+            window.open(url, '_blank');
+        }
+
+        getFiles();
+    </script>
+</body>
+</html>

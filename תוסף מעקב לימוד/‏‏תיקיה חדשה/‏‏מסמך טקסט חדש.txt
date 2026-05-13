@@ -1,0 +1,16 @@
+index.html
+├── <style>          ← CSS Variables מ-DESIGN_GUIDE בלבד
+├── <!-- HOME -->    ← דף הבית עם קוביות
+├── <!-- SCREEN-1 → ← ההספק להיום
+├── <!-- SCREEN-2 → ← טיימר זמן
+├── <!-- SCREEN-3 → ← מפת ש"ס (עטוף ב-/* SHAS MAP MODULE */)
+├── <!-- SCREEN-4 → ← הגדרות
+├── <!-- DIALOGS --> ← כל הדיאלוגים
+└── <script>
+    ├── applyTheme()          ← לפי DESIGN_GUIDE בדיוק
+    ├── // === CORE ===        ← storage, utils, gematria
+    ├── // === PLANS ===       ← תוכניות לימוד
+    ├── // === TIMER ===       ← מנוע טיימר
+    ├── // === SHAS MAP ===    ← מודול נפרד, ניתן להסרה
+    ├── // === SETTINGS ===    ← הגדרות
+    └── Otzaria.on('plugin.boot', ...)

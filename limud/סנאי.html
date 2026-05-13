@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב לימוד אישי</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #F5F7FA;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #EDF1F7;
+            --accent-blue: #1A5FBF;
+            --accent-gold: #D48806;
+            --accent-green: #0A7A45;
+            --accent-purple: #6B21A8;
+            --accent-teal: #0E7490;
+            --text-primary: #1A1D27;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --btn-learned: #D6F5E8;
+            --btn-reviewed: #D0E4FF;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Rubik', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-sidebar);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed { width: 0; border-left: none; }
+
+        .sidebar-header {
+            padding: 10px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header-title {
+            font-weight: bold;
+            color: var(--accent-blue);
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        /* Track switcher tabs inside sidebar */
+        .track-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 8px 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+
+        .track-tab {
+            flex: 1;
+            padding: 6px 4px;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            background: #DDE3ED;
+            color: var(--text-muted);
+            white-space: nowrap;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .track-tab.active-shas { background: #DBEAFE; color: var(--accent-blue); }
+        .track-tab.active-nach { background: #EDE9FE; color: var(--accent-purple); }
+        .track-tab.active-mishna { background: #D1FAE5; color: var(--accent-green); }
+
+        .track-tab.disabled-tab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .seder-title {
+            padding: 14px 14px 4px 14px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--accent-blue);
+            white-space: nowrap;
+        }
+
+        .seder-title.nach { color: var(--accent-purple); }
+        .seder-title.mishna { color: var(--accent-green); }
+
+        .masechet-btn {
+            padding: 10px 14px;
+            margin: 2px 8px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .masechet-btn:hover { background-color: #E2E8F0; }
+        .masechet-btn.completed { background-color: #CBD5E1; color: #475569; }
+        .masechet-btn.started { background-color: #FFFFFF; color: #1E293B; border: 1px solid var(--border-color); }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .progress-bar-container {
+            height: 4px;
+            background: #E2E8F0;
+            border-radius: 2px;
+            margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent-gold);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .reset-link {
+            display: block;
+            margin-top: 10px;
+            color: #A0AEC0;
+            text-decoration: none;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .reset-link:hover { color: #E74C3C; }
+
+        /* ===== MAIN ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0;
+        }
+
+        .menu-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--accent-blue);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        /* Track selector header */
+        .track-selector-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 60px 0 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .track-sel-btn {
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            background: #DDE3ED;
+            color: var(--text-muted);
+            transition: background 0.2s;
+            position: relative;
+            top: 1px;
+        }
+
+        /* Active tab: white/light bg, colored text, merges with content area */
+        .track-sel-btn.active { background: white; border-bottom: 1px solid white; }
+        .track-sel-btn.active.shas-active { color: var(--accent-blue); }
+        .track-sel-btn.active.nach-active { color: var(--accent-purple); }
+        .track-sel-btn.active.mishna-active { color: var(--accent-green); }
+
+        /* Inactive enabled tabs: slightly muted */
+        .track-sel-btn:not(.active):not(.disabled-track).shas-active { color: #5B8FD4; }
+        .track-sel-btn:not(.active):not(.disabled-track).nach-active { color: #9B6DC8; }
+        .track-sel-btn:not(.active):not(.disabled-track).mishna-active { color: #3DA870; }
+
+        .track-sel-btn.disabled-track { opacity: 0.35; cursor: default; pointer-events: none; }
+
+        .add-track-btn {
+            padding: 8px 12px;
+            border-radius: 8px 8px 0 0;
+            border: 1px dashed var(--border-color);
+            border-bottom: none;
+            cursor: pointer;
+            font-size: 12px;
+            background: transparent;
+            color: var(--text-muted);
+            position: relative;
+            top: 1px;
+        }
+
+        .add-track-btn:hover { background: #F8FAFC; color: var(--accent-blue); }
+
+        .header-section {
+            padding: 12px 20px 8px;
+            text-align: center;
+        }
+
+        #daily-task { color: var(--accent-gold); font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        #current-masechet-title { font-size: 26px; font-weight: bold; margin: 0; }
+        .header-divider { height: 2px; background: var(--accent-gold); opacity: 0.4; width: 80%; margin: 8px auto; }
+
+        .pages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .btn-action {
+            padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;
+            font-weight: bold; font-size: 13px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+            gap: 10px;
+        }
+
+        .daf-btn {
+            width: 62px; height: 62px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-weight: bold; font-size: 14px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.1s;
+        }
+
+        .daf-btn.status-1 { background-color: var(--btn-learned); color: var(--accent-green); border: none; }
+        .daf-btn.status-2 { background-color: var(--btn-reviewed); color: var(--accent-blue); border: none; }
+        .daf-btn.is-today { border: 2.5px solid var(--accent-gold); box-shadow: 0 0 8px rgba(212, 136, 6, 0.2); }
+
+        /* Nach colors */
+        .daf-btn.nach-1 { background-color: #EDE9FE; color: var(--accent-purple); border: none; }
+        .daf-btn.nach-2 { background-color: #DDD6FE; color: var(--accent-purple); border: none; }
+
+        /* Mishna colors */
+        .daf-btn.mishna-1 { background-color: #D1FAE5; color: var(--accent-green); border: none; }
+        .daf-btn.mishna-2 { background-color: #A7F3D0; color: var(--accent-green); border: none; }
+
+        .footer {
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .defer-btn {
+            background-color: #E74C3C; color: white; border: none;
+            padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 13px;
+        }
+
+        /* ===== MODALS ===== */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white; padding: 28px; border-radius: 16px; width: 340px; max-width: 92vw;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 { margin-top: 0; }
+
+        .schedule-list {
+            max-height: 55vh;
+            overflow-y: auto;
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        .schedule-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .schedule-item:last-child { border-bottom: none; }
+
+        select, input[type="number"] {
+            width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px;
+            background: #F8FAFC; color: #1A1D27; border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        /* Setup wizard */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; }
+
+        .study-type-card {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin: 8px 0;
+            cursor: pointer;
+            text-align: right;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .study-type-card:hover { border-color: var(--accent-blue); background: #F0F7FF; }
+        .study-type-card.selected { border-color: var(--accent-blue); background: #EFF6FF; }
+        .study-type-card input[type="checkbox"] { margin-left: 8px; }
+        .study-type-card .card-title { font-weight: bold; font-size: 14px; }
+        .study-type-card .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .section-heading {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin: 14px 0 6px;
+            text-align: right;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue); color: white;
+            border: none; border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer; font-weight: bold; font-size: 14px;
+            width: 100%; margin-top: 12px;
+        }
+
+        .btn-secondary {
+            background: #F1F5F9; color: var(--text-muted);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer; font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* Progress gauge */
+        .gauge-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+
+        .gauge-item {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .gauge-circle {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 13px;
+            margin: 0 auto 4px;
+        }
+
+        .shas-gauge { background: #DBEAFE; color: var(--accent-blue); }
+        .nach-gauge { background: #EDE9FE; color: var(--accent-purple); }
+        .mishna-gauge { background: #D1FAE5; color: var(--accent-green); }
+
+        .track-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .badge-shas { background: #DBEAFE; color: var(--accent-blue); }
+        .badge-nach { background: #EDE9FE; color: var(--accent-purple); }
+        .badge-mishna { background: #D1FAE5; color: var(--accent-green); }
+    </style>
+</head>
+<body>
+
+<!-- ===================== SETUP WIZARD ===================== -->
+<div id="setup-modal" class="modal">
+    <div class="modal-content" style="width: 380px;">
+        <!-- Step 1: choose tracks -->
+        <div class="wizard-step active" id="step-1">
+            <h3>🕮 ברוך הבא!</h3>
+            <p style="font-size:14px; color: var(--text-muted);">אילו לימודים תרצה לעקוב?<br>(ניתן לבחור יותר מאחד)</p>
+            <div class="study-type-card" id="card-shas" onclick="toggleTrackCard('shas')">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; flex-direction: row-reverse;">
+                    <input type="checkbox" id="check-shas" style="width:auto; margin:0;">
+                    <div>
+                        <div class="card-title">📚 ש"ס בבלי</div>
+                        <div class="card-sub">לימוד דף יומי, גמרא</div>
+                    </div>
+                </label>
+            </div>
+            <div class="study-type-card" id="card-nach" onclick="toggleTrackCard('nach')">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; flex-direction: row-reverse;">
+                    <input type="checkbox" id="check-nach" style="width:auto; margin:0;">
+                    <div>
+                        <div class="card-title">📖 נ"ך (נביאים וכתובים)</div>
+                        <div class="card-sub">לפי פרקים</div>
+                    </div>
+                </label>
+            </div>
+            <div class="study-type-card" id="card-mishna" onclick="toggleTrackCard('mishna')">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; flex-direction: row-reverse;">
+                    <input type="checkbox" id="check-mishna" style="width:auto; margin:0;">
+                    <div>
+                        <div class="card-title">📜 משנה</div>
+                        <div class="card-sub">לפי פרקים</div>
+                    </div>
+                </label>
+            </div>
+            <button class="btn-primary" onclick="wizardNext1()">המשך ←</button>
+        </div>
+
+        <!-- Step 2: setup per-track -->
+        <div class="wizard-step" id="step-2">
+            <h3>📍 היכן אתה אוחז?</h3>
+            <div id="setup-shas-section" style="display:none;">
+                <div style="background:#EFF6FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                    <strong>📚 ש"ס בבלי</strong>
+                    <div class="section-heading">מסכת נוכחית</div>
+                    <select id="setup-masechet"></select>
+                    <div class="section-heading">דף</div>
+                    <input type="number" id="setup-daf" value="2" min="2">
+                    <div class="section-heading">קצב (דפים ליום)</div>
+                    <input type="number" id="setup-pace-shas" value="1" min="0.5" step="0.5">
+                </div>
+            </div>
+            <div id="setup-nach-section" style="display:none;">
+                <div style="background:#F5F3FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                    <strong>📖 נ"ך</strong>
+                    <div class="section-heading">ספר נוכחי</div>
+                    <select id="setup-nach-book"></select>
+                    <div class="section-heading">פרק</div>
+                    <input type="number" id="setup-nach-chapter" value="1" min="1">
+                    <div class="section-heading">קצב (פרקים ליום)</div>
+                    <input type="number" id="setup-pace-nach" value="1" min="0.5" step="0.5">
+                </div>
+            </div>
+            <div id="setup-mishna-section" style="display:none;">
+                <div style="background:#F0FDF4; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                    <strong>📜 משנה</strong>
+                    <div class="section-heading">מסכת נוכחית</div>
+                    <select id="setup-mishna-masechet"></select>
+                    <div class="section-heading">פרק</div>
+                    <input type="number" id="setup-mishna-chapter" value="1" min="1">
+                    <div class="section-heading">קצב (פרקים ליום)</div>
+                    <input type="number" id="setup-pace-mishna" value="1" min="0.5" step="0.5">
+                </div>
+            </div>
+            <button class="btn-primary" onclick="completeSetup()">✔ התחל ללמוד!</button>
+            <button class="btn-secondary" style="width:100%;" onclick="wizardBack()">← חזור</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== ADD TRACK MODAL ===================== -->
+<div id="add-track-modal" class="modal">
+    <div class="modal-content" style="width: 380px;">
+        <h3>➕ הוסף לימוד</h3>
+        <div id="add-shas-section" style="display:none;">
+            <div style="background:#EFF6FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📚 ש"ס בבלי</strong>
+                <div class="section-heading">מסכת נוכחית</div>
+                <select id="add-masechet"></select>
+                <div class="section-heading">דף</div>
+                <input type="number" id="add-daf" value="2" min="2">
+                <div class="section-heading">קצב (דפים ליום)</div>
+                <input type="number" id="add-pace-shas" value="1" min="0.5" step="0.5">
+            </div>
+        </div>
+        <div id="add-nach-section" style="display:none;">
+            <div style="background:#F5F3FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📖 נ"ך</strong>
+                <div class="section-heading">ספר נוכחי</div>
+                <select id="add-nach-book"></select>
+                <div class="section-heading">פרק</div>
+                <input type="number" id="add-nach-chapter" value="1" min="1">
+                <div class="section-heading">קצב (פרקים ליום)</div>
+                <input type="number" id="add-pace-nach" value="1" min="0.5" step="0.5">
+            </div>
+        </div>
+        <div id="add-mishna-section" style="display:none;">
+            <div style="background:#F0FDF4; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📜 משנה</strong>
+                <div class="section-heading">מסכת נוכחית</div>
+                <select id="add-mishna-masechet"></select>
+                <div class="section-heading">פרק</div>
+                <input type="number" id="add-mishna-chapter" value="1" min="1">
+                <div class="section-heading">קצב (פרקים ליום)</div>
+                <input type="number" id="add-pace-mishna" value="1" min="0.5" step="0.5">
+            </div>
+        </div>
+        <button class="btn-primary" onclick="completeAddTrack()">✔ הוסף לימוד</button>
+        <button class="btn-secondary" style="width:100%;" onclick="closeModal('add-track-modal')">סגור</button>
+    </div>
+</div>
+
+<!-- ===================== SCHEDULE MODAL ===================== -->
+<div id="schedule-modal" class="modal">
+    <div class="modal-content" style="width: 440px;">
+        <h3>📅 לוח זמנים לסיומים</h3>
+        <div id="schedule-list" class="schedule-list"></div>
+        <button class="btn-action" onclick="closeModal('schedule-modal')"
+            style="margin-top: 15px; background: var(--accent-blue); color: white; width:100%;">
+            סגור
+        </button>
+    </div>
+</div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div id="settings-modal" class="modal">
+    <div class="modal-content" style="width: 380px;">
+        <h3>⚙️ הגדרות</h3>
+
+        <div id="settings-shas-section" style="display:none;">
+            <div style="background:#EFF6FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📚 ש"ס בבלי</strong>
+                <div class="section-heading">קצב לימוד (דפים ליום)</div>
+                <input type="number" id="settings-pace-shas" min="0.5" step="0.5" value="1">
+            </div>
+        </div>
+
+        <div id="settings-nach-section" style="display:none;">
+            <div style="background:#F5F3FF; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📖 נ"ך</strong>
+                <div class="section-heading">קצב לימוד (פרקים ליום)</div>
+                <input type="number" id="settings-pace-nach" min="0.5" step="0.5" value="1">
+            </div>
+        </div>
+
+        <div id="settings-mishna-section" style="display:none;">
+            <div style="background:#F0FDF4; border-radius:10px; padding:14px; margin-bottom:12px; text-align:right;">
+                <strong>📜 משנה</strong>
+                <div class="section-heading">קצב לימוד (פרקים ליום)</div>
+                <input type="number" id="settings-pace-mishna" min="0.5" step="0.5" value="1">
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="saveSettings()"
+            style="background: var(--accent-green); color: white; width:100%; margin-top:8px;">
+            שמור
+        </button>
+        <button class="btn-secondary" onclick="closeModal('settings-modal')" style="width:100%;">סגור</button>
+    </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header-title" id="sidebar-title">מעקב לימוד</div>
+        </div>
+
+        <div class="track-tabs" id="sidebar-tabs">
+            <div class="track-tab disabled-tab" id="tab-shas" onclick="switchTrack('shas')">ש"ס</div>
+            <div class="track-tab disabled-tab" id="tab-nach" onclick="switchTrack('nach')">נ"ך</div>
+            <div class="track-tab disabled-tab" id="tab-mishna" onclick="switchTrack('mishna')">משנה</div>
+        </div>
+
+        <div class="sidebar-content" id="sidebar-list"></div>
+
+        <div class="sidebar-footer">
+            <div id="pace-label" style="margin-bottom: 5px; color: var(--text-muted);"></div>
+            <div id="progress-text" style="font-weight: bold;"></div>
+            <div class="progress-bar-container">
+                <div id="progress-fill" class="progress-bar-fill"></div>
+            </div>
+            <div class="gauge-container" id="gauge-container"></div>
+            <span class="reset-link" onclick="resetAllData()">↻ איפוס נתונים</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+        <!-- Track selector bar -->
+        <div class="track-selector-bar" id="track-selector-bar">
+            <div class="track-sel-btn disabled-track shas-active" id="sel-shas" onclick="switchTrack('shas')">📚 ש"ס</div>
+            <div class="track-sel-btn disabled-track nach-active" id="sel-nach" onclick="switchTrack('nach')">📖 נ"ך</div>
+            <div class="track-sel-btn disabled-track mishna-active" id="sel-mishna" onclick="switchTrack('mishna')">📜 משנה</div>
+            <div style="flex:1;"></div>
+            <div class="add-track-btn" id="schedule-bar-btn" onclick="showScheduleModal()" style="border-color:#D48806;color:#92400E;">📅 לוח סיומים</div>
+            <div class="add-track-btn" id="add-track-btn" onclick="openAddTrack()" style="display:none;">+ הוסף לימוד</div>
+        </div>
+
+        <div class="header-section">
+            <div id="daily-task"></div>
+            <h1 id="current-masechet-title">טוען...</h1>
+            <div class="header-divider"></div>
+        </div>
+
+        <div class="pages-container">
+            <div class="toolbar">
+                <button class="btn-action" style="background: var(--btn-reviewed); color: var(--accent-blue);" onclick="bulkAction(2)">✔ סמן הכל</button>
+                <button class="btn-action" style="background: #F1F5F9; color: var(--text-muted);" onclick="bulkAction(0)">↺ אפס</button>
+                <button class="btn-action" style="background: #E0F2FE; color: #075985;" onclick="openSettingsModal()">⚙️ הגדרות</button>
+            </div>
+            <div id="pages-grid" class="grid"></div>
+        </div>
+
+        <div class="footer">
+            <button class="defer-btn" onclick="deferDay()">⏩ דחייה (יום אחד)</button>
+            <div id="status-label" style="font-weight: bold; color: var(--accent-blue);"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const SHAS_DB = {
+    "זרעים": {"ברכות": 64},
+    "מועד": {"שבת": 157, "עירובין": 105, "פסחים": 121, "ראש השנה": 35, "יומא": 88, "סוכה": 56, "ביצה": 40, "תענית": 31, "מגילה": 32, "מועד קטן": 29, "חגיגה": 27},
+    "נשים": {"יבמות": 122, "כתובות": 112, "נדרים": 91, "נזיר": 66, "סוטה": 49, "גיטין": 90, "קידושין": 82},
+    "נזיקין": {"בבא קמא": 119, "בבא מציעא": 119, "בבא בתרא": 176, "סנהדרין": 113, "מכות": 24, "שבועות": 49, "עבודה זרה": 76, "הוריות": 14},
+    "קדשים": {"זבחים": 120, "מנחות": 110, "חולין": 142, "בכורות": 61, "ערכין": 34, "תמורה": 34, "כריתות": 28, "מעילה": 22, "תמיד": 33},
+    "טהרות": {"נידה": 73}
+};
+
+const NACH_DB = {
+    "נביאים": {
+        "יהושע": 24, "שופטים": 21, "שמואל א": 31, "שמואל ב": 24,
+        "מלכים א": 22, "מלכים ב": 25, "ישעיהו": 66, "ירמיהו": 52, "יחזקאל": 48
+    },
+    "תרי עשר": {
+        "הושע": 14, "יואל": 4, "עמוס": 9, "עובדיה": 1, "יונה": 4,
+        "מיכה": 7, "נחום": 3, "חבקוק": 3, "צפניה": 3, "חגי": 2, "זכריה": 14, "מלאכי": 3
+    },
+    "כתובים": {
+        "תהילים": 150, "משלי": 31, "איוב": 42, "שיר השירים": 8, "רות": 4,
+        "איכה": 5, "קהלת": 12, "אסתר": 10, "דניאל": 12, "עזרא": 10, "נחמיה": 13,
+        "דברי הימים א": 29, "דברי הימים ב": 36
+    }
+};
+
+const MISHNA_DB = {
+    "זרעים": {"ברכות": 9, "פאה": 8, "דמאי": 7, "כלאיים": 9, "שביעית": 10, "תרומות": 11, "מעשרות": 5, "מעשר שני": 5, "חלה": 4, "ערלה": 3, "ביכורים": 3},
+    "מועד": {"שבת": 24, "עירובין": 10, "פסחים": 10, "שקלים": 8, "יומא": 8, "סוכה": 5, "ביצה": 5, "ראש השנה": 4, "תענית": 4, "מגילה": 4, "מועד קטן": 3, "חגיגה": 3},
+    "נשים": {"יבמות": 16, "כתובות": 13, "נדרים": 11, "נזיר": 9, "סוטה": 9, "גיטין": 9, "קידושין": 4},
+    "נזיקין": {"בבא קמא": 10, "בבא מציעא": 10, "בבא בתרא": 10, "סנהדרין": 11, "מכות": 3, "שבועות": 8, "עדיות": 8, "עבודה זרה": 5, "אבות": 5, "הוריות": 3},
+    "קדשים": {"זבחים": 13, "מנחות": 13, "חולין": 12, "בכורות": 9, "ערכין": 9, "תמורה": 7, "כריתות": 6, "מעילה": 6, "תמיד": 7, "מידות": 5, "קינים": 3},
+    "טהרות": {"כלים": 30, "אהלות": 18, "נגעים": 14, "פרה": 12, "טהרות": 10, "מקואות": 10, "נידה": 10, "מכשירין": 6, "זבים": 5, "טבול יום": 4, "ידיים": 4, "עוקצין": 3}
+};
+
+// Build flat lists
+function buildFlatList(db, keyFn) {
+    // keyFn(seder, name, idx) => {seder, name, idx}
+    let list = [];
+    for (let seder in db) {
+        for (let name in db[seder]) {
+            const count = db[seder][name];
+            for (let i = 1; i <= count; i++) {
+                list.push({seder, name, idx: i});
+            }
+        }
+    }
+    return list;
+}
+
+// For Shas: daf starts at 2
+function buildFlatShas() {
+    let list = [];
+    for (let seder in SHAS_DB) {
+        for (let m in SHAS_DB[seder]) {
+            for (let p = 2; p <= SHAS_DB[seder][m]; p++) {
+                list.push({seder, name: m, idx: p});
+            }
+        }
+    }
+    return list;
+}
+
+const FLAT_SHAS = buildFlatShas();
+const FLAT_NACH = buildFlatList(NACH_DB);
+const FLAT_MISHNA = buildFlatList(MISHNA_DB);
+
+// ===================== STATE =====================
+function defaultTrackData(startName, startIdx, pace) {
+    return {
+        holding_point: {name: startName, idx: startIdx},
+        defer_days: 0,
+        setup_date: new Date().toISOString().split('T')[0],
+        pace: pace,
+        progress: {}
+    };
+}
+
+function loadAppData() {
+    try {
+        return JSON.parse(localStorage.getItem('multi_tracker_v2')) || null;
+    } catch(e) { return null; }
+}
+
+function saveAppData() {
+    localStorage.setItem('multi_tracker_v2', JSON.stringify(appData));
+}
+
+let appData = loadAppData() || {
+    active_tracks: [],   // ['shas','nach','mishna']
+    current_track: 'shas',
+    shas: null,
+    nach: null,
+    mishna: null
+};
+
+// current item (masechet/book name) per track
+let currentItem = {shas: null, nach: null, mishna: null};
+
+// ===================== UTILS =====================
+function getAdjustedToday() {
+    let now = new Date();
+    if (now.getHours() < 4) now.setDate(now.getDate() - 1);
+    now.setHours(0, 0, 0, 0);
+    return now;
+}
+
+function intToGematria(num) {
+    if (num <= 0) return num.toString();
+    const values = [[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+    if (num === 15) return 'טו'; if (num === 16) return 'טז';
+    let result = ''; let n = num % 1000;
+    for (let [val, letter] of values) {
+        while (n >= val) {
+            if (n === 15) { result += 'טו'; n = 0; }
+            else if (n === 16) { result += 'טז'; n = 0; }
+            else { result += letter; n -= val; }
+        }
+    }
+    return result;
+}
+
+function getHebrewDateString(date) {
+    const formatter = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'});
+    const parts = formatter.formatToParts(date);
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year = parts.find(p => p.type === 'year').value;
+    return `${intToGematria(parseInt(day))} ${month} ${intToGematria(parseInt(year) % 1000)}`;
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ===================== TRACK LOGIC =====================
+function getTrackPace(track) {
+    return parseFloat(appData[track].pace || 1);
+}
+
+function getEffectiveProgress(track) {
+    const td = appData[track];
+    const setupDt = new Date(td.setup_date);
+    setupDt.setHours(0,0,0,0);
+    const today = getAdjustedToday();
+    const diffDays = Math.floor((today - setupDt) / 86400000);
+    return Math.floor((diffDays - (td.defer_days||0)) * getTrackPace(track));
+}
+
+function getFlatList(track) {
+    if (track === 'shas') return FLAT_SHAS;
+    if (track === 'nach') return FLAT_NACH;
+    return FLAT_MISHNA;
+}
+
+function getStartIdx(track) {
+    const flat = getFlatList(track);
+    const hp = appData[track].holding_point;
+    return flat.findIndex(x => x.name === hp.name && x.idx === hp.idx);
+}
+
+function getCurrentIndices(track) {
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const daysPassed = getEffectiveProgress(track);
+    const startIdx = getStartIdx(track);
+    if (startIdx === -1) return [];
+    let indices = [];
+    const mainCycleSize = flat.length - startIdx;
+    if (daysPassed < mainCycleSize) {
+        for (let i = startIdx; i <= startIdx + daysPassed; i++) {
+            if (i < flat.length) indices.push(i);
+        }
+    } else {
+        for (let i = startIdx; i < flat.length; i++) indices.push(i);
+        const overflow = daysPassed - mainCycleSize + 1;
+        let debts = [];
+        for (let i = 0; i < startIdx; i++) {
+            if (!td.progress[itemKey(flat[i])]) debts.push(i);
+        }
+        indices.push(...debts.slice(0, overflow));
+    }
+    return indices;
+}
+
+function itemKey(item) {
+    return `${item.name}_${item.idx}`;
+}
+
+function getItemStatus(track, name) {
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const items = flat.filter(x => x.name === name);
+    if (!items.length) return 'none';
+    const total = items.length;
+    let learned = 0, completed = 0;
+    items.forEach(item => {
+        const s = td.progress[itemKey(item)] || 0;
+        if (s > 0) learned++;
+        if (s === 2) completed++;
+    });
+    if (completed === total) return 'completed';
+    if (learned > 0) return 'started';
+    return 'none';
+}
+
+// ===================== SETUP WIZARD =====================
+function toggleTrackCard(track) {
+    const cb = document.getElementById(`check-${track}`);
+    cb.checked = !cb.checked;
+    document.getElementById(`card-${track}`).classList.toggle('selected', cb.checked);
+}
+
+function wizardNext1() {
+    const shas = document.getElementById('check-shas').checked;
+    const nach = document.getElementById('check-nach').checked;
+    const mishna = document.getElementById('check-mishna').checked;
+    if (!shas && !nach && !mishna) { alert('נא לבחור לפחות לימוד אחד'); return; }
+
+    document.getElementById('setup-shas-section').style.display = shas ? 'block' : 'none';
+    document.getElementById('setup-nach-section').style.display = nach ? 'block' : 'none';
+    document.getElementById('setup-mishna-section').style.display = mishna ? 'block' : 'none';
+
+    if (shas) populateSelect('setup-masechet', SHAS_DB);
+    if (nach) populateSelect('setup-nach-book', NACH_DB);
+    if (mishna) populateSelect('setup-mishna-masechet', MISHNA_DB);
+
+    document.getElementById('step-1').classList.remove('active');
+    document.getElementById('step-2').classList.add('active');
+}
+
+function wizardBack() {
+    document.getElementById('step-2').classList.remove('active');
+    document.getElementById('step-1').classList.add('active');
+}
+
+function populateSelect(selectId, db) {
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = '';
+    for (let seder in db) {
+        const grp = document.createElement('optgroup');
+        grp.label = seder;
+        for (let name in db[seder]) {
+            const opt = document.createElement('option');
+            opt.value = name; opt.innerText = name;
+            grp.appendChild(opt);
+        }
+        sel.appendChild(grp);
+    }
+}
+
+function completeSetup() {
+    const today = new Date().toISOString().split('T')[0];
+    const shas = document.getElementById('check-shas').checked;
+    const nach = document.getElementById('check-nach').checked;
+    const mishna = document.getElementById('check-mishna').checked;
+
+    appData.active_tracks = [];
+
+    if (shas) {
+        const m = document.getElementById('setup-masechet').value;
+        const d = parseInt(document.getElementById('setup-daf').value) || 2;
+        const pace = parseFloat(document.getElementById('setup-pace-shas').value) || 1;
+        appData.shas = defaultTrackData(m, d, pace);
+        // mark prior pages as reviewed
+        const startIdx = FLAT_SHAS.findIndex(x => x.name === m && x.idx === d);
+        for (let i = 0; i < startIdx; i++) appData.shas.progress[itemKey(FLAT_SHAS[i])] = 2;
+        appData.active_tracks.push('shas');
+        currentItem.shas = m;
+    }
+    if (nach) {
+        const b = document.getElementById('setup-nach-book').value;
+        const ch = parseInt(document.getElementById('setup-nach-chapter').value) || 1;
+        const pace = parseFloat(document.getElementById('setup-pace-nach').value) || 1;
+        appData.nach = defaultTrackData(b, ch, pace);
+        const startIdx = FLAT_NACH.findIndex(x => x.name === b && x.idx === ch);
+        for (let i = 0; i < startIdx; i++) appData.nach.progress[itemKey(FLAT_NACH[i])] = 2;
+        appData.active_tracks.push('nach');
+        currentItem.nach = b;
+    }
+    if (mishna) {
+        const ms = document.getElementById('setup-mishna-masechet').value;
+        const ch = parseInt(document.getElementById('setup-mishna-chapter').value) || 1;
+        const pace = parseFloat(document.getElementById('setup-pace-mishna').value) || 1;
+        appData.mishna = defaultTrackData(ms, ch, pace);
+        const startIdx = FLAT_MISHNA.findIndex(x => x.name === ms && x.idx === ch);
+        for (let i = 0; i < startIdx; i++) appData.mishna.progress[itemKey(FLAT_MISHNA[i])] = 2;
+        appData.active_tracks.push('mishna');
+        currentItem.mishna = ms;
+    }
+
+    appData.current_track = appData.active_tracks[0];
+    saveAppData();
+    closeModal('setup-modal');
+    initCurrentItems();
+    refreshUI();
+}
+
+// ===================== ADD TRACK =====================
+function openAddTrack() {
+    const inactive = ['shas','nach','mishna'].filter(t => !appData.active_tracks.includes(t));
+    if (!inactive.length) { alert('כל הלימודים כבר פעילים!'); return; }
+
+    document.getElementById('add-shas-section').style.display = inactive.includes('shas') ? 'block' : 'none';
+    document.getElementById('add-nach-section').style.display = inactive.includes('nach') ? 'block' : 'none';
+    document.getElementById('add-mishna-section').style.display = inactive.includes('mishna') ? 'block' : 'none';
+
+    if (inactive.includes('shas')) populateSelect('add-masechet', SHAS_DB);
+    if (inactive.includes('nach')) populateSelect('add-nach-book', NACH_DB);
+    if (inactive.includes('mishna')) populateSelect('add-mishna-masechet', MISHNA_DB);
+
+    document.getElementById('add-track-modal').style.display = 'flex';
+}
+
+function completeAddTrack() {
+    const inactive = ['shas','nach','mishna'].filter(t => !appData.active_tracks.includes(t));
+
+    if (inactive.includes('shas') && document.getElementById('add-shas-section').style.display !== 'none') {
+        const m = document.getElementById('add-masechet').value;
+        const d = parseInt(document.getElementById('add-daf').value) || 2;
+        const pace = parseFloat(document.getElementById('add-pace-shas').value) || 1;
+        appData.shas = defaultTrackData(m, d, pace);
+        const startIdx = FLAT_SHAS.findIndex(x => x.name === m && x.idx === d);
+        for (let i = 0; i < startIdx; i++) appData.shas.progress[itemKey(FLAT_SHAS[i])] = 2;
+        appData.active_tracks.push('shas');
+        currentItem.shas = m;
+    }
+    if (inactive.includes('nach') && document.getElementById('add-nach-section').style.display !== 'none') {
+        const b = document.getElementById('add-nach-book').value;
+        const ch = parseInt(document.getElementById('add-nach-chapter').value) || 1;
+        const pace = parseFloat(document.getElementById('add-pace-nach').value) || 1;
+        appData.nach = defaultTrackData(b, ch, pace);
+        const startIdx = FLAT_NACH.findIndex(x => x.name === b && x.idx === ch);
+        for (let i = 0; i < startIdx; i++) appData.nach.progress[itemKey(FLAT_NACH[i])] = 2;
+        appData.active_tracks.push('nach');
+        currentItem.nach = b;
+    }
+    if (inactive.includes('mishna') && document.getElementById('add-mishna-section').style.display !== 'none') {
+        const ms = document.getElementById('add-mishna-masechet').value;
+        const ch = parseInt(document.getElementById('add-mishna-chapter').value) || 1;
+        const pace = parseFloat(document.getElementById('add-pace-mishna').value) || 1;
+        appData.mishna = defaultTrackData(ms, ch, pace);
+        const startIdx = FLAT_MISHNA.findIndex(x => x.name === ms && x.idx === ch);
+        for (let i = 0; i < startIdx; i++) appData.mishna.progress[itemKey(FLAT_MISHNA[i])] = 2;
+        appData.active_tracks.push('mishna');
+        currentItem.mishna = ms;
+    }
+
+    saveAppData();
+    closeModal('add-track-modal');
+    refreshUI();
+}
+
+// ===================== TRACK SWITCHING =====================
+function switchTrack(track) {
+    if (!appData.active_tracks.includes(track)) return;
+    appData.current_track = track;
+    saveAppData();
+    refreshUI();
+}
+
+// ===================== MAIN DISPLAY =====================
+function getTrackDB(track) {
+    if (track === 'shas') return SHAS_DB;
+    if (track === 'nach') return NACH_DB;
+    return MISHNA_DB;
+}
+
+function getTrackLabel(track) {
+    if (track === 'shas') return 'ש"ס';
+    if (track === 'nach') return 'נ"ך';
+    return 'משנה';
+}
+
+function getUnitLabel(track) {
+    return track === 'shas' ? 'דף' : 'פרק';
+}
+
+function initCurrentItems() {
+    for (let t of ['shas','nach','mishna']) {
+        if (appData[t]) {
+            const flat = getFlatList(t);
+            const indices = getCurrentIndices(t);
+            const missing = indices.filter(i => !appData[t].progress[itemKey(flat[i])]);
+            if (missing.length > 0) currentItem[t] = flat[missing[0]].name;
+            else if (indices.length > 0) currentItem[t] = flat[indices[indices.length-1]].name;
+            else currentItem[t] = appData[t].holding_point.name;
+        }
+    }
+}
+
+function refreshUI() {
+    const track = appData.current_track;
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const db = getTrackDB(track);
+
+    // Track selector bar
+    for (let t of ['shas','nach','mishna']) {
+        const btn = document.getElementById(`sel-${t}`);
+        if (appData.active_tracks.includes(t)) {
+            btn.classList.remove('disabled-track');
+            btn.classList.toggle('active', t === track);
+        } else {
+            btn.classList.add('disabled-track');
+            btn.classList.remove('active');
+        }
+    }
+
+    // Show "add track" button if not all tracks are active
+    const addBtn = document.getElementById('add-track-btn');
+    addBtn.style.display = appData.active_tracks.length < 3 ? 'block' : 'none';
+
+    // Sidebar tabs
+    for (let t of ['shas','nach','mishna']) {
+        const tab = document.getElementById(`tab-${t}`);
+        tab.className = 'track-tab';
+        if (!appData.active_tracks.includes(t)) {
+            tab.classList.add('disabled-tab');
+        } else if (t === track) {
+            tab.classList.add(`active-${t}`);
+        }
+        // inactive-but-enabled tabs get no extra class (default muted style)
+    }
+
+    // Sidebar list
+    const sidebar = document.getElementById('sidebar-list');
+    sidebar.innerHTML = '';
+    for (let seder in db) {
+        const title = document.createElement('div');
+        title.className = 'seder-title' + (track === 'nach' ? ' nach' : track === 'mishna' ? ' mishna' : '');
+        title.innerText = seder;
+        sidebar.appendChild(title);
+        for (let name in db[seder]) {
+            const btn = document.createElement('div');
+            btn.className = 'masechet-btn';
+            const status = getItemStatus(track, name);
+            if (status === 'completed') btn.classList.add('completed');
+            else if (status === 'started') btn.classList.add('started');
+            btn.innerText = name;
+            btn.onclick = () => { currentItem[track] = name; loadItems(track, name); };
+            sidebar.appendChild(btn);
+        }
+    }
+
+    // Daily task
+    const indices = getCurrentIndices(track);
+    const missing = indices.filter(i => !td.progress[itemKey(flat[i])]);
+    const unit = getUnitLabel(track);
+    const dailyTask = document.getElementById('daily-task');
+
+    if (missing.length > 0) {
+        let displayStr = '';
+        if (missing.length === 1) {
+            const p = flat[missing[0]];
+            displayStr = `${p.name} ${intToGematria(p.idx)}`;
+        } else if (missing.length <= 3) {
+            displayStr = missing.map(idx => {
+                const p = flat[idx];
+                return `${p.name} ${intToGematria(p.idx)}`;
+            }).join(', ');
+        } else {
+            const first = flat[missing[0]];
+            const last = flat[missing[missing.length-1]];
+            displayStr = `${first.name} ${intToGematria(first.idx)} ... ${last.name} ${intToGematria(last.idx)}`;
+        }
+        dailyTask.innerText = `ה${unit} שלך היום: ${displayStr}`;
+
+        // auto-navigate to relevant item
+        if (missing.length > 0) currentItem[track] = flat[missing[0]].name;
+    } else {
+        dailyTask.innerText = '✅ סיימת את המכסה להיום! אשריך!';
+    }
+
+    // Progress bar
+    const learnedCount = Object.values(td.progress).filter(v => v > 0).length;
+    const totalItems = flat.length;
+    const pct = Math.floor((learnedCount / totalItems) * 100);
+    document.getElementById('progress-text').innerText = `${learnedCount.toLocaleString()} / ${totalItems.toLocaleString()} ${unit}ים (${pct}%)`;
+    document.getElementById('progress-fill').style.width = pct + '%';
+
+    // Pace label
+    document.getElementById('pace-label').innerText = `${getTrackPace(track)} ${unit}/יום`;
+
+    // Status label
+    updateStatus(track);
+
+    // Gauge (all active tracks)
+    const gc = document.getElementById('gauge-container');
+    gc.innerHTML = '';
+    for (let t of appData.active_tracks) {
+        const fl = getFlatList(t);
+        const learned2 = Object.values(appData[t].progress).filter(v => v > 0).length;
+        const pct2 = Math.floor((learned2 / fl.length) * 100);
+        const div = document.createElement('div');
+        div.className = 'gauge-item';
+        div.innerHTML = `<div class="gauge-circle ${t}-gauge">${pct2}%</div>${getTrackLabel(t)}`;
+        gc.appendChild(div);
+    }
+
+    // Load current items grid
+    const name = currentItem[track] || appData[track].holding_point.name;
+    loadItems(track, name);
+}
+
+function loadItems(track, name) {
+    currentItem[track] = name;
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const db = getTrackDB(track);
+
+    // Title
+    const prefix = track === 'shas' ? 'מסכת' : track === 'mishna' ? 'מסכת' : 'ספר';
+    document.getElementById('current-masechet-title').innerText = `${prefix} ${name}`;
+
+    const grid = document.getElementById('pages-grid');
+    grid.innerHTML = '';
+
+    const indices = getCurrentIndices(track);
+    const dailyKeys = new Set(indices.map(i => itemKey(flat[i])));
+
+    // get count for this name
+    let count = 0;
+    for (let seder in db) if (db[seder][name]) count = db[seder][name];
+
+    const start = track === 'shas' ? 2 : 1;
+    for (let p = start; p <= count; p++) {
+        const key = `${name}_${p}`;
+        const status = td.progress[key] || 0;
+        const btn = document.createElement('div');
+
+        let statusClass = `status-${status}`;
+        if (status === 1 && track === 'nach') statusClass = 'nach-1';
+        else if (status === 2 && track === 'nach') statusClass = 'nach-2';
+        else if (status === 1 && track === 'mishna') statusClass = 'mishna-1';
+        else if (status === 2 && track === 'mishna') statusClass = 'mishna-2';
+
+        btn.className = `daf-btn ${statusClass}`;
+        if (dailyKeys.has(key) && status === 0) btn.classList.add('is-today');
+        btn.innerText = track === 'shas' ? intToGematria(p) : intToGematria(p);
+        btn.onclick = () => toggleItem(track, key);
+        grid.appendChild(btn);
+    }
+}
+
+function toggleItem(track, key) {
+    const td = appData[track];
+    td.progress[key] = ((td.progress[key] || 0) + 1) % 3;
+    if (td.progress[key] === 0) delete td.progress[key];
+    saveAppData();
+    refreshUI();
+}
+
+function bulkAction(status) {
+    const track = appData.current_track;
+    const td = appData[track];
+    const db = getTrackDB(track);
+    const name = currentItem[track];
+    let count = 0;
+    for (let seder in db) if (db[seder][name]) count = db[seder][name];
+    const start = track === 'shas' ? 2 : 1;
+    for (let p = start; p <= count; p++) {
+        const key = `${name}_${p}`;
+        if (status === 0) delete td.progress[key];
+        else td.progress[key] = status;
+    }
+    saveAppData();
+    refreshUI();
+}
+
+function deferDay() {
+    const track = appData.current_track;
+    appData[track].defer_days = (appData[track].defer_days || 0) + 1;
+    saveAppData();
+    refreshUI();
+}
+
+// ===================== STATUS & SCHEDULE =====================
+function updateStatus(track) {
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const setupDt = new Date(td.setup_date);
+    setupDt.setHours(0,0,0,0);
+    const today = getAdjustedToday();
+    const totalDays = Math.max(1, Math.floor((today - setupDt) / 86400000));
+    const pace = getTrackPace(track);
+
+    // How many items should have been learned by now
+    const expectedItems = totalDays * pace;
+    // How many were actually marked
+    const learnedCount = Object.values(td.progress).filter(v => v > 0).length;
+    const startIdx = getStartIdx(track);
+    // Items learned after the holding point (new learning)
+    const itemsLearnedFromStart = Math.max(0, learnedCount - startIdx);
+
+    const ratio = expectedItems > 0 ? itemsLearnedFromStart / expectedItems : 1;
+    let evalTxt = ratio >= 0.85 ? "בקצב טוב 👍" : (ratio >= 0.5 ? "כדאי להגביר קצב" : "מאחר מהיעד...");
+
+    let debts = 0;
+    for (let i = 0; i < startIdx; i++) {
+        if (!td.progress[itemKey(flat[i])]) debts++;
+    }
+    const studiedItems = getEffectiveProgress(track);
+    const currentPos = Math.max(0, startIdx + studiedItems);
+    const remaining = Math.max(0, flat.length - currentPos);
+    const totalLeft = debts + remaining;
+    const finishDate = getAdjustedToday();
+    finishDate.setDate(finishDate.getDate() + Math.ceil(totalLeft / pace));
+
+    document.getElementById('status-label').innerText =
+        `סיום משוער: ${getHebrewDateString(finishDate)} | דחיות: ${td.defer_days || 0}`;
+    document.getElementById('pace-label').innerText =
+        `${pace} ${getUnitLabel(track)}/יום • ${evalTxt}`;
+}
+
+function calculateFinishDates(track) {
+    const flat = getFlatList(track);
+    const td = appData[track];
+    const db = getTrackDB(track);
+    const result = [];
+    const effectiveDays = getEffectiveProgress(track);
+    const startIdx = getStartIdx(track);
+
+    let runningIndex = 0;
+    for (let seder in db) {
+        for (let name in db[seder]) {
+            const count = db[seder][name];
+            const start = track === 'shas' ? 2 : 1;
+            const size = count - start + 1;
+            const firstIndex = runningIndex;
+            const lastIndex = runningIndex + size - 1;
+            runningIndex = lastIndex + 1;
+
+            if (lastIndex < startIdx) continue;
+
+            const finishOffset = Math.max(0, lastIndex - (startIdx + effectiveDays));
+            const finishDate = getAdjustedToday();
+            finishDate.setDate(finishDate.getDate() + Math.ceil(finishOffset / getTrackPace(track)));
+            result.push({ name, date: getHebrewDateString(finishDate) });
+        }
+    }
+
+    // debts
+    const debtGroups = {};
+    for (let i = 0; i < startIdx; i++) {
+        const item = flat[i];
+        const key = itemKey(item);
+        if (!td.progress[key]) {
+            if (!debtGroups[item.name]) debtGroups[item.name] = [];
+            debtGroups[item.name].push(item.idx);
+        }
+    }
+
+    const endOffset = Math.max(0, (flat.length - 1) - (startIdx + effectiveDays));
+    let debtDayOffset = 1;
+    for (let name in debtGroups) {
+        const pages = debtGroups[name];
+        debtDayOffset += pages.length - 1;
+        const finishDate = getAdjustedToday();
+        finishDate.setDate(finishDate.getDate() + Math.ceil((endOffset + debtDayOffset) / getTrackPace(track)));
+        result.push({ name: `חוב – ${name} (${pages.length})`, date: getHebrewDateString(finishDate) });
+        debtDayOffset++;
+    }
+
+    return result;
+}
+
+function showScheduleModal() {
+    const list = document.getElementById('schedule-list');
+    list.innerHTML = '';
+
+    for (let t of appData.active_tracks) {
+        const header = document.createElement('div');
+        header.style.cssText = 'font-weight:bold; padding:10px 0 4px; font-size:15px;';
+        header.innerHTML = `<span class="track-badge badge-${t}">${getTrackLabel(t)}</span>`;
+        list.appendChild(header);
+
+        const schedule = calculateFinishDates(t);
+        schedule.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'schedule-item';
+            const prefix = t === 'shas' || t === 'mishna' ? 'מסכת' : 'ספר';
+            row.innerHTML = `<strong>${prefix} ${item.name}</strong><br>${item.date}`;
+            list.appendChild(row);
+        });
+    }
+
+    document.getElementById('schedule-modal').style.display = 'flex';
+}
+
+// ===================== SETTINGS =====================
+function openSettingsModal() {
+    document.getElementById('settings-shas-section').style.display = appData.active_tracks.includes('shas') ? 'block' : 'none';
+    document.getElementById('settings-nach-section').style.display = appData.active_tracks.includes('nach') ? 'block' : 'none';
+    document.getElementById('settings-mishna-section').style.display = appData.active_tracks.includes('mishna') ? 'block' : 'none';
+
+    if (appData.shas) document.getElementById('settings-pace-shas').value = appData.shas.pace;
+    if (appData.nach) document.getElementById('settings-pace-nach').value = appData.nach.pace;
+    if (appData.mishna) document.getElementById('settings-pace-mishna').value = appData.mishna.pace;
+
+    document.getElementById('settings-modal').style.display = 'flex';
+}
+
+function saveSettings() {
+    if (appData.shas) {
+        const v = parseFloat(document.getElementById('settings-pace-shas').value);
+        appData.shas.pace = isNaN(v) || v <= 0 ? 1 : v;
+    }
+    if (appData.nach) {
+        const v = parseFloat(document.getElementById('settings-pace-nach').value);
+        appData.nach.pace = isNaN(v) || v <= 0 ? 1 : v;
+    }
+    if (appData.mishna) {
+        const v = parseFloat(document.getElementById('settings-pace-mishna').value);
+        appData.mishna.pace = isNaN(v) || v <= 0 ? 1 : v;
+    }
+    saveAppData();
+    closeModal('settings-modal');
+    refreshUI();
+}
+
+// ===================== RESET =====================
+function resetAllData() {
+    if (confirm('האם אתה בטוח שברצונך לאפס את כל הנתונים? פעולה זו אינה ניתנת לביטול.')) {
+        localStorage.removeItem('multi_tracker_v2');
+        location.reload();
+    }
+}
+
+// ===================== INIT =====================
+window.onload = () => {
+    if (!appData.active_tracks || appData.active_tracks.length === 0) {
+        document.getElementById('setup-modal').style.display = 'flex';
+    } else {
+        initCurrentItems();
+        refreshUI();
+    }
+};
+</script>
+</body>
+</html>

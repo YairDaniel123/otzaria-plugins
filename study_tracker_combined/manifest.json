@@ -1,0 +1,14 @@
+{
+  "id": "com.study_tracker_combined.newplugin",
+  "name": "מעקב לימוד",
+  "version": "1.0.0",
+  "description": "מעקב לימוד יומי, מפת ש\"ס/נ\"ך/משנה, טיימר זמן לימוד",
+  "author": "סנאי",
+  "type": "webapp",
+  "entrypoint": "index.html",
+  "icon": "",
+  "category": "Utilities",
+  "stability": "beta",
+  "minAppVersion": "0.9.91",
+  "permissions": ["events.subscribe:theme.changed"]
+}

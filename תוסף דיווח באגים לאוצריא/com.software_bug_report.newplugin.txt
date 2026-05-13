@@ -13,3 +13,7 @@ Yair Daniel
 
 
 bug_24_regular
+
+
+
+הרשאות:

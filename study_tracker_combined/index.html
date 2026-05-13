@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מעקב לימוד</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-primary:    #6750A4; --color-on-primary: #FFFFFF;
+  --color-secondary:  #625B71; --color-on-secondary: #FFFFFF;
+  --color-surface:    #FFFBFE; --color-on-surface: #1C1B1F;
+  --color-surface-container-highest: #E6E0E9;
+  --color-error: #B3261E; --color-on-error: #FFFFFF;
+  --color-outline: #79747E;
+  --color-primary-subtle:   rgba(103,80,164,.12);
+  --color-secondary-subtle: rgba(98,91,113,.12);
+  --font-main: 'Frank Ruhl Libre','David',serif;
+  --font-size-base: 18px; --line-height: 1.5;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-pill: 999px;
+}
+
+body {
+  font-family: var(--font-main); font-size: var(--font-size-base);
+  line-height: var(--line-height); background: var(--color-surface);
+  color: var(--color-on-surface); direction: rtl;
+  height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── NAV ── */
+.bottom-nav {
+  display: flex; background: var(--color-surface);
+  border-top: 1px solid var(--color-outline); flex-shrink: 0;
+}
+.nav-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 8px 4px; cursor: pointer;
+  font-size: 0.65em; font-weight: 600; color: var(--color-outline);
+  transition: color .15s, background .15s; gap: 3px;
+  border: none; background: none; font-family: var(--font-main);
+}
+.nav-tab svg { width: 22px; height: 22px; }
+.nav-tab.active { color: var(--color-primary); }
+.nav-tab.active .nav-icon-bg {
+  background: var(--color-primary-subtle); border-radius: var(--radius-pill);
+  padding: 4px 16px;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.screen.active { display: flex; }
+
+.screen-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--color-surface); border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md); padding: 14px 16px;
+}
+.card-title {
+  font-size: 0.82em; font-weight: 700; color: var(--color-primary); margin-bottom: 10px;
+}
+
+/* ── HOME TILES ── */
+.tiles-grid { display: flex; flex-direction: column; gap: 12px; }
+
+.plan-tile {
+  background: var(--color-surface); border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md); padding: 16px;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.plan-tile:hover { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+.plan-tile.done-today { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+.plan-tile-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.plan-tile-name { font-size: 1em; font-weight: 700; color: var(--color-on-surface); }
+.plan-tile-type { font-size: 0.72em; color: var(--color-outline); margin-top: 2px; }
+.done-badge {
+  font-size: 0.72em; font-weight: 700; padding: 2px 9px;
+  border-radius: var(--radius-pill); background: var(--color-primary); color: var(--color-on-primary);
+}
+.plan-tile-quota { font-size: 0.88em; font-weight: 600; color: var(--color-primary); margin-bottom: 8px; }
+.plan-tile-stats { display: flex; gap: 12px; font-size: 0.72em; color: var(--color-outline); }
+.mini-progress { height: 5px; background: var(--color-secondary-subtle); border-radius: var(--radius-pill); margin: 8px 0 6px; overflow: hidden; }
+.mini-progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-pill); transition: width .4s; }
+
+/* ── TODAY CARD ── */
+.today-card {
+  border: 1px solid var(--color-primary); background: var(--color-primary-subtle);
+  border-radius: var(--radius-lg); padding: 18px;
+}
+.today-label { font-size: 0.75em; font-weight: 600; color: var(--color-primary); margin-bottom: 3px; }
+.today-ref { font-size: 1.15em; font-weight: 700; color: var(--color-on-surface); line-height: 1.35; margin-bottom: 12px; min-height: 1.4em; }
+.today-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip {
+  border-radius: var(--radius-pill); background: var(--color-secondary-subtle);
+  color: var(--color-on-surface); border: 1px solid var(--color-outline);
+  padding: 3px 10px; font-size: 0.72em; font-weight: 600;
+}
+.chip.primary { background: var(--color-primary-subtle); color: var(--color-primary); border-color: var(--color-primary); }
+.today-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── PLAN NAV (quota screen top) ── */
+.plan-nav {
+  display: flex; gap: 6px; padding: 10px 16px 0; overflow-x: auto;
+  background: var(--color-surface); border-bottom: 1px solid var(--color-outline);
+  flex-shrink: 0;
+}
+.plan-nav-btn {
+  padding: 7px 14px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid var(--color-outline); border-bottom: none;
+  font-size: 0.78em; font-weight: 700; cursor: pointer; white-space: nowrap;
+  background: color-mix(in srgb, var(--color-outline) 12%, var(--color-surface));
+  color: var(--color-outline); font-family: var(--font-main);
+  transition: background .15s; position: relative; top: 1px;
+}
+.plan-nav-btn.active { background: var(--color-surface); color: var(--color-primary); border-bottom: 1px solid var(--color-surface); }
+.plan-nav-add { border-style: dashed; }
+.plan-nav-add:hover { background: var(--color-primary-subtle); color: var(--color-primary); }
+
+/* ── PROGRESS ── */
+.progress-wrap { margin-top: 2px; }
+.progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font-size: 0.78em; }
+.progress-label { font-weight: 600; }
+.progress-pct { color: var(--color-primary); font-weight: 700; }
+.progress-bar-bg { height: 8px; border-radius: var(--radius-pill); background: var(--color-secondary-subtle); overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); transition: width .4s cubic-bezier(.4,0,.2,1); }
+
+/* ── STATS ROW ── */
+.stats-row { display: flex; gap: 8px; }
+.stat-box {
+  flex: 1; background: var(--color-surface); border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md); padding: 10px; text-align: center;
+}
+.stat-num { font-size: 1.4em; font-weight: 700; color: var(--color-primary); line-height: 1.1; }
+.stat-label { font-size: 0.68em; color: var(--color-outline); margin-top: 2px; }
+
+/* ── HISTORY ── */
+.history-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+.history-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  background: var(--color-surface); border: 1px solid var(--color-outline);
+  font-size: 0.82em; cursor: pointer; transition: background .15s;
+}
+.history-item:hover { background: var(--color-secondary-subtle); }
+.history-item.today-done { border-color: var(--color-primary); background: var(--color-primary-subtle); }
+.history-item .day-label { font-weight: 600; }
+.history-item .day-ref { color: var(--color-outline); font-size: 0.88em; }
+.history-badge {
+  font-size: 0.72em; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-pill);
+}
+.badge-done { background: var(--color-primary); color: var(--color-on-primary); }
+.badge-pending { background: var(--color-secondary-subtle); color: var(--color-outline); }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  background: var(--color-primary); color: var(--color-on-primary);
+  border: none; border-radius: var(--radius-sm); padding: 9px 18px;
+  font-family: var(--font-main); font-size: 0.9em; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:disabled { opacity: .45; cursor: default; }
+
+.btn-secondary {
+  background: var(--color-secondary-subtle); color: var(--color-on-surface);
+  border: 1px solid var(--color-outline); border-radius: var(--radius-sm);
+  padding: 9px 18px; font-family: var(--font-main); font-size: 0.9em;
+  font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.btn-secondary:hover { opacity: .85; }
+
+.btn-danger {
+  background: var(--color-error); color: var(--color-on-error);
+  border: none; border-radius: var(--radius-sm); padding: 9px 18px;
+  font-family: var(--font-main); font-size: 0.9em; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-danger:hover { opacity: .88; }
+
+.btn-icon {
+  background: none; border: none; cursor: pointer; color: var(--color-on-surface);
+  padding: 6px; border-radius: var(--radius-sm); display: flex; align-items: center;
+  transition: background .15s; font-size: 1em;
+}
+.btn-icon:hover { background: var(--color-secondary-subtle); }
+
+/* ── INPUTS ── */
+.input {
+  padding: 9px 12px; border: 1.5px solid var(--color-outline);
+  border-radius: var(--radius-sm); font-family: var(--font-main);
+  font-size: 0.9em; color: var(--color-on-surface); background: var(--color-surface);
+  direction: rtl; outline: none; transition: border-color .15s; width: 100%;
+}
+.input:focus { border-color: var(--color-primary); }
+.input-label { font-size: 0.75em; font-weight: 600; color: var(--color-outline); margin-bottom: 4px; display: block; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+.form-row { display: flex; gap: 10px; }
+.form-row .input-group { flex: 1; }
+.input-hint { font-size: 0.72em; color: var(--color-outline); margin-top: 3px; }
+
+/* ── SEGMENT ── */
+.segment-group {
+  display: flex; border: 1.5px solid var(--color-outline);
+  border-radius: var(--radius-sm); overflow: hidden;
+}
+.segment-btn {
+  flex: 1; padding: 8px 4px; font-family: var(--font-main); font-size: 0.78em;
+  font-weight: 600; cursor: pointer; border: none;
+  background: var(--color-surface); color: var(--color-on-surface);
+  border-left: 1px solid var(--color-outline); transition: background .15s, color .15s;
+}
+.segment-btn:first-child { border-left: none; }
+.segment-btn.active { background: var(--color-primary); color: var(--color-on-primary); }
+
+/* ── MAP SCREEN ── */
+.map-layout { display: flex; flex: 1; overflow: hidden; }
+.map-sidebar {
+  width: 200px; background: color-mix(in srgb, var(--color-secondary) 8%, var(--color-surface));
+  border-left: 1px solid var(--color-outline); display: flex; flex-direction: column;
+  flex-shrink: 0; overflow: hidden; transition: width .3s;
+}
+.map-sidebar.collapsed { width: 0; border-left: none; }
+.map-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.map-track-bar {
+  display: flex; gap: 6px; padding: 10px 50px 0 14px;
+  border-bottom: 1px solid var(--color-outline); background: var(--color-surface); flex-shrink: 0;
+}
+.map-track-btn {
+  padding: 7px 14px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid var(--color-outline); border-bottom: none;
+  font-size: 0.78em; font-weight: 700; cursor: pointer;
+  background: color-mix(in srgb, var(--color-outline) 12%, var(--color-surface));
+  color: var(--color-outline); font-family: var(--font-main); transition: background .15s;
+  position: relative; top: 1px;
+}
+.map-track-btn.active { background: var(--color-surface); border-bottom: 1px solid var(--color-surface); }
+.map-track-btn.shas.active   { color: var(--color-primary); }
+.map-track-btn.nach.active   { color: var(--color-secondary); }
+.map-track-btn.mishna.active { color: var(--color-primary); }
+.map-track-btn.disabled { opacity: .35; cursor: default; pointer-events: none; }
+
+.map-toggle {
+  position: absolute; top: 12px; right: 12px; z-index: 10;
+  background: var(--color-surface); border: 1px solid var(--color-outline);
+  border-radius: var(--radius-sm); padding: 6px 10px; cursor: pointer;
+  color: var(--color-primary); font-size: 1em; transition: background .15s;
+}
+.map-toggle:hover { background: var(--color-primary-subtle); }
+
+.map-header {
+  padding: 10px 16px 6px; text-align: center;
+  border-bottom: 1px solid var(--color-outline); flex-shrink: 0;
+  position: relative;
+}
+.map-header h2 { font-size: 1.2em; font-weight: 700; }
+.map-daily-task { font-size: 0.78em; font-weight: 600; color: var(--color-secondary); margin-top: 2px; }
+
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: 8px 0; }
+.seder-label { padding: 10px 12px 3px; font-size: 0.72em; font-weight: 700; color: var(--color-primary); }
+.seder-label.nach   { color: var(--color-secondary); }
+.seder-label.mishna { color: var(--color-primary); }
+.masechet-item {
+  padding: 8px 12px; margin: 1px 6px; cursor: pointer; border-radius: var(--radius-sm);
+  font-size: 0.78em; transition: background .15s; white-space: nowrap;
+}
+.masechet-item:hover { background: var(--color-secondary-subtle); }
+.masechet-item.completed { background: var(--color-primary-subtle); color: var(--color-primary); font-weight: 700; }
+.masechet-item.started   { border: 1px solid var(--color-outline); }
+
+.map-sidebar-footer {
+  padding: 10px 12px; border-top: 1px solid var(--color-outline);
+  font-size: 0.68em; text-align: center;
+}
+.map-progress-bar { height: 4px; background: var(--color-secondary-subtle); border-radius: var(--radius-pill); margin: 6px 0; overflow: hidden; }
+.map-progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-pill); transition: width .4s; }
+
+.map-grid-area { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.map-toolbar { display: flex; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px,1fr)); gap: 8px; }
+
+.daf-btn {
+  width: 56px; height: 56px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; cursor: pointer;
+  font-weight: 700; font-size: 0.82em; transition: transform .1s, background .15s;
+  border: 1.5px solid var(--color-outline); background: var(--color-surface); color: var(--color-on-surface);
+}
+.daf-btn:hover { transform: scale(1.06); }
+.daf-btn.s1 { background: var(--color-primary-subtle);  color: var(--color-primary);    border-color: transparent; }
+.daf-btn.s2 { background: var(--color-primary);         color: var(--color-on-primary); border-color: transparent; }
+.daf-btn.n1 { background: var(--color-secondary-subtle); color: var(--color-secondary);    border-color: transparent; }
+.daf-btn.n2 { background: var(--color-secondary);        color: var(--color-on-secondary); border-color: transparent; }
+.daf-btn.m1 { background: var(--color-primary-subtle);  color: var(--color-primary);    border-color: transparent; }
+.daf-btn.m2 { background: var(--color-primary);         color: var(--color-on-primary); border-color: transparent; }
+.daf-btn.is-today { border: 2.5px solid var(--color-secondary); box-shadow: 0 0 0 2px var(--color-secondary-subtle); }
+
+.map-footer {
+  padding: 8px 14px; background: var(--color-surface); border-top: 1px solid var(--color-outline);
+  display: flex; justify-content: space-between; align-items: center; font-size: 0.78em; flex-shrink: 0;
+}
+.gauge-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.gauge-item { text-align: center; font-size: 0.68em; color: var(--color-outline); }
+.gauge-circle {
+  width: 46px; height: 46px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-weight: 700; font-size: 0.78em; margin: 0 auto 3px;
+}
+.shas-g   { background: var(--color-primary-subtle);   color: var(--color-primary); }
+.nach-g   { background: var(--color-secondary-subtle);  color: var(--color-secondary); }
+.mishna-g { background: var(--color-primary-subtle);   color: var(--color-primary); }
+
+/* ── TIMER ── */
+.timer-display {
+  text-align: center; padding: 24px 16px 16px;
+  border-bottom: 1px solid var(--color-outline); flex-shrink: 0;
+}
+.timer-clock { font-size: 3em; font-weight: 700; color: var(--color-primary); letter-spacing: .05em; font-variant-numeric: tabular-nums; }
+.timer-subject-label { font-size: 0.82em; color: var(--color-outline); margin-top: 4px; }
+.timer-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.timer-sessions { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.session-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--color-surface); border: 1px solid var(--color-outline); font-size: 0.82em;
+}
+.session-subject { font-weight: 600; }
+.session-dur { color: var(--color-primary); font-weight: 700; }
+.timer-today-total {
+  padding: 10px 16px; border-top: 1px solid var(--color-outline);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.82em; flex-shrink: 0; background: var(--color-surface);
+}
+.subject-chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--color-outline); flex-shrink: 0; }
+.subject-chip {
+  border-radius: var(--radius-pill); padding: 4px 12px; font-size: 0.78em; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--color-outline); background: var(--color-surface);
+  color: var(--color-on-surface); transition: background .15s, color .15s;
+  font-family: var(--font-main);
+}
+.subject-chip.active { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
+
+/* ── SETTINGS ── */
+.settings-section { border-radius: var(--radius-md); border: 1px solid var(--color-outline); overflow: hidden; }
+.settings-section-title {
+  padding: 10px 14px; background: var(--color-secondary-subtle);
+  font-size: 0.82em; font-weight: 700; color: var(--color-primary);
+}
+.settings-item {
+  padding: 12px 14px; border-top: 1px solid var(--color-outline);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.88em; cursor: pointer; transition: background .15s;
+  background: var(--color-surface);
+}
+.settings-item:first-of-type { border-top: none; }
+.settings-item:hover { background: var(--color-secondary-subtle); }
+.settings-item-label { font-weight: 600; }
+.settings-item-sub { font-size: 0.78em; color: var(--color-outline); margin-top: 2px; }
+
+/* ── OVERLAY ── */
+.overlay-scrim {
+  position: fixed; inset: 0; background: rgba(0,0,0,.3);
+  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 100;
+}
+.overlay-scrim.open { opacity: 1; pointer-events: auto; }
+
+.overlay-panel {
+  position: fixed; top: 10px; bottom: 12px; right: 10px;
+  width: min(380px, calc(100vw - 20px));
+  background: color-mix(in srgb, var(--color-secondary) 12%, var(--color-surface));
+  border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,.18);
+  padding: 20px; overflow-y: auto; z-index: 101;
+  opacity: 0; transform: translateX(30px); pointer-events: none;
+  transition: opacity .2s, transform .25s cubic-bezier(.4,0,.2,1);
+}
+.overlay-panel.open { opacity: 1; transform: translateX(0); pointer-events: auto; }
+.overlay-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.overlay-title { font-size: 1em; font-weight: 700; color: var(--color-primary); }
+.overlay-body { display: flex; flex-direction: column; gap: 12px; }
+.divider { height: 1px; background: var(--color-outline); opacity: .25; margin: 4px 0; }
+
+/* ── MAP SETUP DIALOG ── */
+.dialog {
+  position: fixed; inset: 0; background: rgba(0,0,0,.38);
+  display: none; align-items: center; justify-content: center; z-index: 200;
+}
+.dialog.open { display: flex; }
+.dialog-box {
+  background: var(--color-surface-container-highest); border-radius: var(--radius-lg);
+  padding: 24px; width: min(400px, 94vw); max-height: 90vh; overflow-y: auto;
+  border: 1px solid var(--color-outline); box-shadow: 0 8px 28px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.dialog-title { font-size: 1.05em; font-weight: 700; color: var(--color-primary); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 28px 16px; color: var(--color-outline); }
+.empty-state .icon { font-size: 2.5em; margin-bottom: 8px; }
+.empty-state p { font-size: 0.88em; }
+
+/* ── MISC ── */
+.fade-in { animation: fadeIn .2s ease-out; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px);} to { opacity:1; transform:translateY(0);} }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 99px; }
+
+.screen-header {
+  padding: 12px 16px 10px; border-bottom: 1px solid var(--color-outline);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.screen-header h1 { font-size: 1em; font-weight: 700; color: var(--color-primary); }
+.screen-header .subtitle { font-size: 0.75em; color: var(--color-outline); margin-top: 1px; }
+
+.toggle-switch {
+  width: 44px; height: 24px; background: var(--color-outline); border-radius: var(--radius-pill);
+  position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0;
+}
+.toggle-switch.on { background: var(--color-primary); }
+.toggle-switch::after {
+  content:''; position: absolute; width: 18px; height: 18px; background: white;
+  border-radius: 50%; top: 3px; right: 3px; transition: right .2s;
+}
+.toggle-switch.on::after { right: calc(100% - 21px); }
+
+.map-setup-section {
+  border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px;
+}
+.map-setup-section.shas   { background: var(--color-primary-subtle); }
+.map-setup-section.nach   { background: var(--color-secondary-subtle); }
+.map-setup-section.mishna { background: var(--color-primary-subtle); }
+.map-setup-label { font-size: 0.78em; font-weight: 700; color: var(--color-outline); margin: 10px 0 4px; }
+</style>
+</head>
+<body>
+
+<!-- ════════ SCREEN: HOME ════════ -->
+<div class="screen active" id="screen-home">
+  <div class="screen-header">
+    <div>
+      <h1>מעקב לימוד</h1>
+      <div class="subtitle" id="home-date"></div>
+    </div>
+    <button class="btn-primary" id="btn-home-add" style="font-size:0.82em;padding:7px 14px;">+ תוכנית</button>
+  </div>
+  <div class="screen-body fade-in" id="home-body">
+    <div class="tiles-grid" id="home-tiles"></div>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: QUOTA ════════ -->
+<div class="screen" id="screen-quota">
+  <div class="plan-nav" id="plan-nav">
+    <button class="plan-nav-btn plan-nav-add" id="btn-quota-add">+ חדש</button>
+  </div>
+  <div class="screen-body fade-in" id="quota-body"></div>
+</div>
+
+<!-- ════════ SCREEN: MAP ════════ -->
+<div class="screen" id="screen-map">
+  <div class="map-layout" style="position:relative; flex:1; overflow:hidden;">
+    <div class="map-sidebar" id="map-sidebar">
+      <div class="sidebar-scroll" id="map-sidebar-list"></div>
+      <div class="map-sidebar-footer">
+        <div id="map-pace-label" style="color:var(--color-outline); margin-bottom:4px;"></div>
+        <div id="map-progress-text" style="font-weight:700;"></div>
+        <div class="map-progress-bar"><div id="map-progress-fill" class="map-progress-fill"></div></div>
+        <div class="gauge-row" id="map-gauges"></div>
+        <div style="margin-top:8px;">
+          <button class="btn-secondary" style="width:100%;font-size:0.72em;padding:6px;" onclick="openMapSetup()">הגדר מסלולים</button>
+        </div>
+      </div>
+    </div>
+    <div class="map-main">
+      <button class="map-toggle" onclick="toggleMapSidebar()">☰</button>
+      <div class="map-track-bar" id="map-track-bar">
+        <button class="map-track-btn shas disabled" id="mtrack-shas" onclick="switchMapTrack('shas')">ש"ס</button>
+        <button class="map-track-btn nach disabled" id="mtrack-nach" onclick="switchMapTrack('nach')">נ"ך</button>
+        <button class="map-track-btn mishna disabled" id="mtrack-mishna" onclick="switchMapTrack('mishna')">משנה</button>
+        <div style="flex:1;"></div>
+        <button class="plan-nav-btn" style="font-size:0.72em;padding:6px 10px;position:relative;top:1px;" onclick="showScheduleDialog()">לוח סיומים</button>
+      </div>
+      <div class="map-header">
+        <h2 id="map-masechet-title">—</h2>
+        <div class="map-daily-task" id="map-daily-task"></div>
+      </div>
+      <div class="map-grid-area">
+        <div class="map-toolbar">
+          <button class="btn-secondary" style="font-size:0.78em;padding:7px 12px;" onclick="mapBulkAction(2)">✔ סמן הכל</button>
+          <button class="btn-secondary" style="font-size:0.78em;padding:7px 12px;" onclick="mapBulkAction(0)">↺ אפס</button>
+          <button class="btn-secondary" style="font-size:0.78em;padding:7px 12px;" onclick="mapDeferDay()">⏩ דחה יום</button>
+        </div>
+        <div class="map-grid" id="map-grid"></div>
+      </div>
+      <div class="map-footer">
+        <div id="map-status-label" style="color:var(--color-primary); font-weight:700;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: TIMER ════════ -->
+<div class="screen" id="screen-timer">
+  <div class="screen-header">
+    <div><h1>טיימר לימוד</h1><div class="subtitle" id="timer-today-label"></div></div>
+  </div>
+  <div class="subject-chips" id="subject-chips"></div>
+  <div class="timer-display">
+    <div class="timer-clock" id="timer-clock">00:00:00</div>
+    <div class="timer-subject-label" id="timer-sub-label">בחר נושא והתחל</div>
+    <div class="timer-actions">
+      <button class="btn-primary" id="btn-timer-start" onclick="timerStart()">התחל</button>
+      <button class="btn-secondary" id="btn-timer-pause" onclick="timerPause()" style="display:none;">השהה</button>
+      <button class="btn-danger" id="btn-timer-stop" onclick="timerStop()" style="display:none;">עצור ושמור</button>
+    </div>
+  </div>
+  <div style="padding:10px 16px 6px; font-size:0.78em; font-weight:700; color:var(--color-outline);">סשנים היום</div>
+  <div class="timer-sessions" id="timer-sessions"></div>
+  <div class="timer-today-total">
+    <span style="font-weight:700; color:var(--color-outline);">סה"כ היום</span>
+    <span style="font-weight:700; color:var(--color-primary);" id="timer-total-today">00:00:00</span>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: SETTINGS ════════ -->
+<div class="screen" id="screen-settings">
+  <div class="screen-header"><div><h1>הגדרות</h1></div></div>
+  <div class="screen-body">
+
+    <div class="settings-section">
+      <div class="settings-section-title">תוכניות לימוד</div>
+      <div id="settings-plans-list"></div>
+      <div class="settings-item" onclick="openPlanOverlay(null)">
+        <span class="settings-item-label" style="color:var(--color-primary);">+ הוסף תוכנית</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">מפת ש"ס / נ"ך / משנה</div>
+      <div class="settings-item" onclick="openMapSetup()">
+        <div>
+          <div class="settings-item-label">הגדר מסלולים</div>
+          <div class="settings-item-sub" id="settings-map-status">טרם הוגדר</div>
+        </div>
+        <span style="color:var(--color-outline);">←</span>
+      </div>
+      <div class="settings-item" id="settings-map-toggle-item">
+        <div class="settings-item-label">הצג מפה בניווט</div>
+        <div class="toggle-switch" id="toggle-show-map" onclick="toggleMapVisibility()"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">נושאי טיימר</div>
+      <div class="settings-item" id="settings-timer-subjects">
+        <div class="settings-item-label">ערוך נושאים</div>
+        <span style="color:var(--color-outline);">←</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">גיבוי</div>
+      <div class="settings-item" onclick="exportData()">
+        <div class="settings-item-label">ייצוא לקובץ JSON</div>
+        <span style="color:var(--color-outline);">↓</span>
+      </div>
+      <div class="settings-item" onclick="document.getElementById('import-input').click()">
+        <div class="settings-item-label">ייבוא מקובץ JSON</div>
+        <span style="color:var(--color-outline);">↑</span>
+      </div>
+      <input type="file" id="import-input" accept=".json" style="display:none;" onchange="importData(event)" />
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════ BOTTOM NAV ════════ -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="ntab-home" onclick="goScreen('home')">
+    <span class="nav-icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+    בית
+  </button>
+  <button class="nav-tab" id="ntab-quota" onclick="goScreen('quota')">
+    <span class="nav-icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+    </span>
+    ההספק
+  </button>
+  <button class="nav-tab" id="ntab-map" onclick="goScreen('map')">
+    <span class="nav-icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+    </span>
+    מפה
+  </button>
+  <button class="nav-tab" id="ntab-timer" onclick="goScreen('timer')">
+    <span class="nav-icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </span>
+    טיימר
+  </button>
+  <button class="nav-tab" id="ntab-settings" onclick="goScreen('settings')">
+    <span class="nav-icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </span>
+    הגדרות
+  </button>
+</nav>
+
+<!-- ════════ OVERLAY: PLAN EDITOR ════════ -->
+<div class="overlay-scrim" id="plan-scrim" onclick="closePlanOverlay()"></div>
+<div class="overlay-panel" id="plan-panel">
+  <div class="overlay-header">
+    <div class="overlay-title" id="plan-overlay-title">תוכנית חדשה</div>
+    <button class="btn-icon" onclick="closePlanOverlay()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="overlay-body">
+    <input type="hidden" id="plan-edit-id" />
+
+    <div class="input-group">
+      <label class="input-label" for="plan-book">שם הספר / מסכת / חיבור</label>
+      <input class="input" type="text" id="plan-book" placeholder="משנה, אבות, תהילים..." />
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="plan-book-id">שם הספר באוצריא (לפתיחה בקורא)</label>
+      <input class="input" type="text" id="plan-book-id" placeholder="משנה מסכת אבות" />
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">יחידת לימוד</label>
+      <div class="segment-group" id="unit-seg">
+        <button class="segment-btn active" data-val="daf">דפים</button>
+        <button class="segment-btn" data-val="perek">פרקים</button>
+        <button class="segment-btn" data-val="siman">סימנים</button>
+        <button class="segment-btn" data-val="custom">אחר</button>
+      </div>
+    </div>
+
+    <div class="input-group" id="custom-unit-wrap" style="display:none;">
+      <label class="input-label" for="plan-custom-unit">שם היחידה</label>
+      <input class="input" type="text" id="plan-custom-unit" placeholder="עמוד, סעיף, הלכה..." />
+    </div>
+
+    <div class="form-row">
+      <div class="input-group">
+        <label class="input-label" for="plan-daily">כמות יומית</label>
+        <input class="input" type="number" id="plan-daily" min="1" max="200" value="2" style="direction:ltr;" />
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="plan-total">סה"כ יחידות</label>
+        <input class="input" type="number" id="plan-total" min="1" value="63" style="direction:ltr;" />
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="plan-start">תאריך התחלה</label>
+      <input class="input" type="date" id="plan-start" style="direction:ltr;" />
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="plan-offset">יחידה להתחלה (ברירת מחדל: 1)</label>
+      <input class="input" type="number" id="plan-offset" min="1" value="1" style="direction:ltr;" />
+      <span class="input-hint">אם כבר למדת חלק — הזן מספר היחידה הבאה</span>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn-primary" style="width:100%;" id="btn-plan-save" onclick="savePlan()">שמור תוכנית</button>
+    <button class="btn-danger" style="width:100%;display:none;" id="btn-plan-delete" onclick="deletePlan()">מחק תוכנית</button>
+  </div>
+</div>
+
+<!-- ════════ DIALOG: MAP SETUP ════════ -->
+<div class="dialog" id="map-setup-dialog">
+  <div class="dialog-box">
+    <div class="dialog-title">הגדר מסלולי לימוד</div>
+
+    <div style="font-size:0.78em; color:var(--color-outline);">בחר אילו מסלולים לעקוב:</div>
+
+    <div class="map-setup-section shas">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:0.88em;">
+        <input type="checkbox" id="ms-check-shas"> ש"ס בבלי
+      </label>
+      <div id="ms-shas-fields">
+        <div class="map-setup-label">מסכת נוכחית</div>
+        <select class="input" id="ms-shas-masechet" style="direction:rtl;"></select>
+        <div class="map-setup-label">דף</div>
+        <input class="input" type="number" id="ms-shas-daf" value="2" min="2" style="direction:ltr;" />
+        <div class="map-setup-label">דפים ליום</div>
+        <input class="input" type="number" id="ms-shas-pace" value="1" min="0.5" step="0.5" style="direction:ltr;" />
+      </div>
+    </div>
+
+    <div class="map-setup-section nach">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:0.88em;">
+        <input type="checkbox" id="ms-check-nach"> נ"ך
+      </label>
+      <div id="ms-nach-fields">
+        <div class="map-setup-label">ספר נוכחי</div>
+        <select class="input" id="ms-nach-book" style="direction:rtl;"></select>
+        <div class="map-setup-label">פרק</div>
+        <input class="input" type="number" id="ms-nach-chapter" value="1" min="1" style="direction:ltr;" />
+        <div class="map-setup-label">פרקים ליום</div>
+        <input class="input" type="number" id="ms-nach-pace" value="1" min="0.5" step="0.5" style="direction:ltr;" />
+      </div>
+    </div>
+
+    <div class="map-setup-section mishna">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:0.88em;">
+        <input type="checkbox" id="ms-check-mishna"> משנה
+      </label>
+      <div id="ms-mishna-fields">
+        <div class="map-setup-label">מסכת נוכחית</div>
+        <select class="input" id="ms-mishna-masechet" style="direction:rtl;"></select>
+        <div class="map-setup-label">פרק</div>
+        <input class="input" type="number" id="ms-mishna-chapter" value="1" min="1" style="direction:ltr;" />
+        <div class="map-setup-label">פרקים ליום</div>
+        <input class="input" type="number" id="ms-mishna-pace" value="1" min="0.5" step="0.5" style="direction:ltr;" />
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn-primary" style="flex:1;" onclick="saveMapSetup()">שמור</button>
+      <button class="btn-secondary" style="flex:1;" onclick="closeDialog('map-setup-dialog')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ DIALOG: SCHEDULE ════════ -->
+<div class="dialog" id="schedule-dialog">
+  <div class="dialog-box">
+    <div class="dialog-title">לוח זמנים לסיומים</div>
+    <div id="schedule-content" style="max-height:60vh;overflow-y:auto;"></div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="closeDialog('schedule-dialog')">סגור</button>
+  </div>
+</div>
+
+<!-- ════════ DIALOG: TIMER SUBJECTS ════════ -->
+<div class="dialog" id="subjects-dialog">
+  <div class="dialog-box">
+    <div class="dialog-title">נושאי טיימר</div>
+    <div class="input-group">
+      <label class="input-label">נושאים (אחד בכל שורה)</label>
+      <textarea class="input" id="subjects-textarea" rows="6" style="resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn-primary" style="flex:1;" onclick="saveSubjects()">שמור</button>
+      <button class="btn-secondary" style="flex:1;" onclick="closeDialog('subjects-dialog')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ════════════════════════════════════════
+//  THEME
+// ════════════════════════════════════════
+function hexToRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function applyTheme(theme) {
+  if (!theme?.colorScheme) return;
+  const cs=theme.colorScheme, root=document.documentElement;
+  root.style.setProperty('--color-primary',    cs.primary);
+  root.style.setProperty('--color-on-primary',  cs.onPrimary);
+  root.style.setProperty('--color-secondary',   cs.secondary);
+  root.style.setProperty('--color-on-secondary',cs.onSecondary);
+  root.style.setProperty('--color-surface',     cs.surface);
+  root.style.setProperty('--color-on-surface',  cs.onSurface);
+  root.style.setProperty('--color-surface-container-highest', cs.surfaceContainerHighest);
+  root.style.setProperty('--color-error',    cs.error);
+  root.style.setProperty('--color-on-error', cs.onError);
+  root.style.setProperty('--color-outline',  cs.outline);
+  root.style.setProperty('--color-primary-subtle',   hexToRgba(cs.primary,  0.12));
+  root.style.setProperty('--color-secondary-subtle', hexToRgba(cs.secondary,0.12));
+  document.body.classList.toggle('dark-mode', theme.mode==='dark');
+  if (theme.typography) {
+    const t=theme.typography;
+    root.style.setProperty('--font-main',       `'${t.fontFamily}','David',serif`);
+    root.style.setProperty('--font-size-base',  `${t.fontSize}px`);
+    root.style.setProperty('--line-height',     String(t.lineHeight));
+  }
+}
+
+// ════════════════════════════════════════
+//  DATA LAYER
+// ════════════════════════════════════════
+const KEY_PLANS    = 'mlr_plans_v1';
+const KEY_MAP      = 'mlr_map_v1';
+const KEY_TIMER    = 'mlr_timer_v1';
+const KEY_SETTINGS = 'mlr_settings_v1';
+
+let plans    = [];   // [{id,book,bookId,unitType,customUnit,daily,total,startDate,startOffset,done:{}}]
+let mapData  = { active_tracks:[], current_track:'shas', shas:null, nach:null, mishna:null };
+let timerData= { sessions:[], subjects:['ש"ס','נ"ך','משנה','הלכה','אחר'] };
+let settings = { showMap:true };
+
+async function loadAll() {
+  try {
+    const r1=await Otzaria.call('storage.get',{key:KEY_PLANS});
+    if (r1.success && r1.data) plans=r1.data;
+  } catch(e){}
+  try {
+    const r2=await Otzaria.call('storage.get',{key:KEY_MAP});
+    if (r2.success && r2.data) mapData=r2.data;
+  } catch(e){}
+  try {
+    const r3=await Otzaria.call('storage.get',{key:KEY_TIMER});
+    if (r3.success && r3.data) timerData=r3.data;
+  } catch(e){}
+  try {
+    const r4=await Otzaria.call('storage.get',{key:KEY_SETTINGS});
+    if (r4.success && r4.data) settings={...settings,...r4.data};
+  } catch(e){}
+}
+
+async function savePlans() { try{ await Otzaria.call('storage.set',{key:KEY_PLANS,value:plans}); }catch(e){} }
+async function saveMap()   { try{ await Otzaria.call('storage.set',{key:KEY_MAP,  value:mapData}); }catch(e){} }
+async function saveTimer() { try{ await Otzaria.call('storage.set',{key:KEY_TIMER,value:timerData}); }catch(e){} }
+async function saveSettings(){ try{ await Otzaria.call('storage.set',{key:KEY_SETTINGS,value:settings}); }catch(e){} }
+
+// ════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function daysBetween(a,b) {
+  return Math.round((new Date(b).setHours(0,0,0,0)-new Date(a).setHours(0,0,0,0))/86400000);
+}
+
+function hebrewDate(dateStr) {
+  try {
+    return new Date(dateStr+'T12:00:00').toLocaleDateString('he-IL-u-ca-hebrew',
+      {day:'numeric',month:'long',year:'numeric'});
+  } catch(e){ return dateStr; }
+}
+
+function hebrewDateShort(dateStr) {
+  try {
+    return new Date(dateStr+'T12:00:00').toLocaleDateString('he-IL-u-ca-hebrew',
+      {day:'numeric',month:'long'});
+  } catch(e){ return dateStr; }
+}
+
+function intToGematria(num) {
+  if(num<=0) return num.toString();
+  const vals=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+  if(num===15) return 'טו'; if(num===16) return 'טז';
+  let r='',n=num%1000;
+  for(const[v,l] of vals) while(n>=v){ if(n===15){r+='טו';n=0;}else if(n===16){r+='טז';n=0;}else{r+=l;n-=v;} }
+  return r;
+}
+
+function unitLabel(unitType, customUnit, n) {
+  const m={daf:['דף','דפים'],perek:['פרק','פרקים'],siman:['סימן','סימנים'],custom:[customUnit||'יחידה',customUnit||'יחידות']};
+  const pair=m[unitType]||m.custom;
+  return n===1?pair[0]:pair[1];
+}
+
+function fmtDuration(sec) {
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+let currentScreen = 'home';
+
+function goScreen(name) {
+  currentScreen = name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('ntab-'+name).classList.add('active');
+  if(name==='home')     renderHome();
+  if(name==='quota')    renderQuota();
+  if(name==='map')      renderMap();
+  if(name==='timer')    renderTimer();
+  if(name==='settings') renderSettings();
+}
+
+// ════════════════════════════════════════
+//  PLANS — LOGIC
+// ════════════════════════════════════════
+function calcRangeForDay(plan, dayOffset) {
+  const base=(plan.startOffset||1)-1;
+  const from=base+dayOffset*plan.daily+1;
+  const to  =Math.min(base+(dayOffset+1)*plan.daily, plan.total);
+  return {from,to};
+}
+
+function calcDoneUnitsUpToToday(plan) {
+  const today=todayStr();
+  const offset=daysBetween(plan.startDate, today);
+  if(offset<0) return 0;
+  const base=(plan.startOffset||1)-1;
+  return Math.min(offset*plan.daily, plan.total-base);
+}
+
+function calcStreak(plan) {
+  let streak=0, cur=new Date();
+  while(true) {
+    const s=cur.toISOString().slice(0,10);
+    if(plan.done?.[s]){ streak++; cur.setDate(cur.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function calcTotalDays(plan) {
+  return Math.ceil((plan.total-(plan.startOffset-1))/plan.daily);
+}
+
+let currentPlanId = null;
+
+function getActivePlan() {
+  if(!plans.length) return null;
+  if(currentPlanId && plans.find(p=>p.id===currentPlanId)) return plans.find(p=>p.id===currentPlanId);
+  currentPlanId=plans[0].id;
+  return plans[0];
+}
+
+// ════════════════════════════════════════
+//  RENDER: HOME
+// ════════════════════════════════════════
+function renderHome() {
+  document.getElementById('home-date').textContent=hebrewDate(todayStr());
+  const tiles=document.getElementById('home-tiles');
+  tiles.innerHTML='';
+  const today=todayStr();
+
+  if(!plans.length && !mapData.active_tracks.length) {
+    tiles.innerHTML=`<div class="empty-state fade-in">
+      <div class="icon">📚</div>
+      <div style="font-size:1em;font-weight:700;margin-bottom:8px;">אין תוכניות עדיין</div>
+      <p style="margin-bottom:16px;">לחץ "+ תוכנית" כדי להגדיר את תוכנית הלימוד הראשונה שלך</p>
+    </div>`;
+    return;
+  }
+
+  // Custom plan tiles
+  plans.forEach(plan=>{
+    const offset=daysBetween(plan.startDate,today);
+    const isDone=!!plan.done?.[today];
+    let quotaText='—';
+    if(offset>=0){
+      const {from,to}=calcRangeForDay(plan,offset);
+      if(from>plan.total) quotaText='✅ סיימת את הספר!';
+      else if(from===to) quotaText=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;
+      else quotaText=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;
+    } else {
+      quotaText='מתחיל ב-'+hebrewDateShort(plan.startDate);
+    }
+
+    const doneUnits=calcDoneUnitsUpToToday(plan);
+    const totalUnits=plan.total-(plan.startOffset-1);
+    const pct=totalUnits>0?Math.round((doneUnits/totalUnits)*100):0;
+    const totalDays=calcTotalDays(plan);
+    const doneCount=Object.keys(plan.done||{}).filter(d=>plan.done[d]).length;
+    const remaining=Math.max(0,totalDays-Math.max(0,offset+1));
+
+    const tile=document.createElement('div');
+    tile.className='plan-tile fade-in'+(isDone?' done-today':'');
+    tile.innerHTML=`
+      <div class="plan-tile-header">
+        <div>
+          <div class="plan-tile-name">${plan.book}</div>
+          <div class="plan-tile-type">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</div>
+        </div>
+        ${isDone?'<span class="done-badge">✓ נלמד</span>':''}
+      </div>
+      <div class="plan-tile-quota">${quotaText}</div>
+      <div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%"></div></div>
+      <div class="plan-tile-stats">
+        <span>${pct}%</span>
+        <span>·</span>
+        <span>✓ ${doneCount} ימים</span>
+        <span>·</span>
+        <span>${remaining>0?remaining+' נותרו':'✅ הסתיים'}</span>
+      </div>`;
+    tile.addEventListener('click',()=>{ currentPlanId=plan.id; goScreen('quota'); });
+    tiles.appendChild(tile);
+  });
+
+  // Map track tiles
+  mapData.active_tracks.forEach(track=>{
+    const td=mapData[track];
+    if(!td) return;
+    const flat=getFlatList(track);
+    const learned=Object.values(td.progress||{}).filter(v=>v>0).length;
+    const pct=Math.floor((learned/flat.length)*100);
+    const label=track==='shas'?'ש"ס':track==='nach'?'נ"ך':'משנה';
+    const tile=document.createElement('div');
+    tile.className='plan-tile fade-in';
+    tile.innerHTML=`
+      <div class="plan-tile-header">
+        <div>
+          <div class="plan-tile-name">${label}</div>
+          <div class="plan-tile-type">${td.pace||1} ${track==='shas'?'דף':'פרק'} ליום</div>
+        </div>
+        <span class="chip primary">${label}</span>
+      </div>
+      <div class="plan-tile-quota" id="map-tile-quota-${track}"></div>
+      <div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%"></div></div>
+      <div class="plan-tile-stats">
+        <span>${pct}% הושלם</span>
+        <span>·</span>
+        <span>${learned.toLocaleString()} / ${flat.length.toLocaleString()} ${track==='shas'?'דפים':'פרקים'}</span>
+      </div>`;
+    tile.addEventListener('click',()=>{ mapData.current_track=track; goScreen('map'); });
+    tiles.appendChild(tile);
+    // fill daily task
+    const indices=getMapCurrentIndices(track);
+    const missing=indices.filter(i=>!(td.progress||{})[mapItemKey(flat[i])]);
+    const el=document.getElementById(`map-tile-quota-${track}`);
+    if(el) el.textContent=missing.length>0
+      ? `${track==='shas'?'דף':'פרק'} היום: ${missing.slice(0,2).map(i=>`${flat[i].name} ${intToGematria(flat[i].idx)}`).join(', ')}${missing.length>2?'...':''}`
+      : '✅ המכסה הושלמה!';
+  });
+}
+
+// ════════════════════════════════════════
+//  RENDER: QUOTA
+// ════════════════════════════════════════
+function renderQuota() {
+  // rebuild plan nav
+  const nav=document.getElementById('plan-nav');
+  // keep the "+" button, remove plan buttons
+  const addBtn=document.getElementById('btn-quota-add');
+  nav.innerHTML='';
+  plans.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className='plan-nav-btn'+(p.id===currentPlanId?' active':'');
+    btn.textContent=p.book;
+    btn.addEventListener('click',()=>{ currentPlanId=p.id; renderQuota(); });
+    nav.appendChild(btn);
+  });
+  const addBtnNew=document.createElement('button');
+  addBtnNew.id='btn-quota-add';
+  addBtnNew.className='plan-nav-btn plan-nav-add';
+  addBtnNew.textContent='+ חדש';
+  addBtnNew.addEventListener('click',()=>openPlanOverlay(null));
+  nav.appendChild(addBtnNew);
+
+  const body=document.getElementById('quota-body');
+  const plan=getActivePlan();
+
+  if(!plan) {
+    body.innerHTML=`<div class="empty-state fade-in">
+      <div class="icon">📚</div>
+      <div style="font-size:1em;font-weight:700;margin-bottom:8px;">אין תוכנית לימוד</div>
+      <p style="margin-bottom:16px;">לחץ "+ חדש" כדי להגדיר תוכנית</p>
+      <button class="btn-primary" onclick="openPlanOverlay(null)">הגדר תוכנית</button>
+    </div>`;
+    return;
+  }
+
+  const today=todayStr();
+  const offset=daysBetween(plan.startDate,today);
+  const isDone=!!plan.done?.[today];
+  const totalDays=calcTotalDays(plan);
+
+  // today ref
+  let refText='—';
+  if(offset<0) refText='התוכנית מתחילה ב-'+hebrewDate(plan.startDate);
+  else {
+    const {from,to}=calcRangeForDay(plan,offset);
+    if(from>plan.total) refText='✅ סיימת את הספר!';
+    else if(from===to) refText=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;
+    else refText=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;
+  }
+
+  // progress
+  const doneUnits=calcDoneUnitsUpToToday(plan);
+  const totalUnits=plan.total-(plan.startOffset-1);
+  const pct=totalUnits>0?Math.round((doneUnits/totalUnits)*100):0;
+  const streak=calcStreak(plan);
+  const doneCount=Object.keys(plan.done||{}).filter(d=>plan.done[d]).length;
+  const remaining=Math.max(0,totalDays-Math.max(0,offset+1));
+
+  body.innerHTML='';
+
+  // today card
+  const tc=document.createElement('div');
+  tc.className='today-card fade-in';
+  tc.innerHTML=`
+    <div class="today-label">היום · ${hebrewDate(today)}</div>
+    <div class="today-ref">${refText}</div>
+    <div class="today-meta">
+      <span class="chip primary">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</span>
+      ${offset>=0?`<span class="chip">יום ${offset+1}</span>`:''}
+      <span class="chip">${plan.book}</span>
+    </div>
+    <div class="today-actions">
+      <button class="btn-primary" onclick="openInReader()">פתח בקורא ←</button>
+      ${offset>=0&&!isDone?`<button class="btn-secondary" id="btn-mark-done" onclick="markDone()">✓ סמן כלמוד</button>`:''}
+      ${isDone?'<span style="font-size:0.82em;color:var(--color-primary);font-weight:700;align-self:center;">✓ נלמד היום!</span>':''}
+    </div>`;
+  body.appendChild(tc);
+
+  // progress card
+  const pc=document.createElement('div');
+  pc.className='card';
+  pc.innerHTML=`
+    <div class="card-title">התקדמות</div>
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">${doneUnits} מתוך ${totalUnits} ${unitLabel(plan.unitType,plan.customUnit,totalUnits)}</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  body.appendChild(pc);
+
+  // stats
+  const sr=document.createElement('div');
+  sr.className='stats-row';
+  sr.innerHTML=`
+    <div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-label">🔥 רצף ימים</div></div>
+    <div class="stat-box"><div class="stat-num">${doneCount}</div><div class="stat-label">✓ ימים שהושלמו</div></div>
+    <div class="stat-box"><div class="stat-num">${remaining>0?remaining:'✅'}</div><div class="stat-label">ימים נותרו</div></div>`;
+  body.appendChild(sr);
+
+  // history
+  const hc=document.createElement('div');
+  hc.className='card';
+  hc.innerHTML='<div class="card-title">ימים אחרונים</div>';
+  const hl=document.createElement('div');
+  hl.className='history-list';
+
+  if(offset<0) {
+    hl.innerHTML='<div class="empty-state" style="padding:12px 0"><p>הלימוד עוד לא התחיל</p></div>';
+  } else {
+    const count=Math.min(offset+1,14);
+    for(let i=0;i<count;i++) {
+      const off=offset-i;
+      const d=new Date(plan.startDate+'T12:00:00');
+      d.setDate(d.getDate()+off);
+      const ds=d.toISOString().slice(0,10);
+      const done=!!plan.done?.[ds];
+      const isToday=(i===0);
+      const {from,to}=calcRangeForDay(plan,off);
+      const label=isToday?'היום':hebrewDateShort(ds);
+      const refStr=from>plan.total?'(סיום)':from===to
+        ?`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`
+        :`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;
+      const item=document.createElement('div');
+      item.className='history-item'+(isToday&&done?' today-done':'');
+      item.innerHTML=`
+        <div><div class="day-label">${label}</div><div class="day-ref">${refStr}</div></div>
+        ${done?'<span class="history-badge badge-done">✓ נלמד</span>':'<span class="history-badge badge-pending">טרם נלמד</span>'}`;
+      item.addEventListener('click',()=>openInReaderOffset(off));
+      hl.appendChild(item);
+    }
+  }
+  hc.appendChild(hl);
+
+  // edit button
+  const editWrap=document.createElement('div');
+  editWrap.style.cssText='margin-top:8px;';
+  editWrap.innerHTML=`<button class="btn-secondary" style="width:100%;font-size:0.82em;" onclick="openPlanOverlay('${plan.id}')">ערוך תוכנית</button>`;
+  hc.appendChild(editWrap);
+  body.appendChild(hc);
+}
+
+async function markDone() {
+  const plan=getActivePlan(); if(!plan) return;
+  plan.done = plan.done||{};
+  plan.done[todayStr()]=true;
+  await savePlans();
+  renderQuota();
+  try{ await Otzaria.call('notifications.showInApp',{message:'כל הכבוד! הלימוד היומי הושלם ✅',type:'success'}); }catch(e){}
+}
+
+async function openInReader(dayOffset) {
+  const plan=getActivePlan(); if(!plan||!plan.bookId) return;
+  const today=todayStr();
+  const off=dayOffset??daysBetween(plan.startDate,today);
+  const {from}=calcRangeForDay(plan,Math.max(0,off));
+  try { await Otzaria.call('reader.openBook',{bookId:plan.bookId,index:Math.max(0,from-1)}); }
+  catch(e){ try{await Otzaria.call('notifications.showInApp',{message:'לא ניתן לפתוח את הספר',type:'error'});}catch(ee){} }
+}
+function openInReaderOffset(off){ openInReader(off); }
+
+// ════════════════════════════════════════
+//  PLAN OVERLAY (add / edit)
+// ════════════════════════════════════════
+function openPlanOverlay(planId) {
+  document.getElementById('plan-edit-id').value=planId||'';
+  const plan=planId?plans.find(p=>p.id===planId):null;
+  document.getElementById('plan-overlay-title').textContent=plan?'ערוך תוכנית':'תוכנית חדשה';
+  document.getElementById('plan-book').value=plan?.book||'';
+  document.getElementById('plan-book-id').value=plan?.bookId||'';
+  document.getElementById('plan-daily').value=plan?.daily||2;
+  document.getElementById('plan-total').value=plan?.total||63;
+  document.getElementById('plan-start').value=plan?.startDate||todayStr();
+  document.getElementById('plan-offset').value=plan?.startOffset||1;
+  document.getElementById('plan-custom-unit').value=plan?.customUnit||'';
+  setUnitSeg(plan?.unitType||'daf');
+  document.getElementById('btn-plan-delete').style.display=plan?'block':'none';
+  document.getElementById('plan-scrim').classList.add('open');
+  document.getElementById('plan-panel').classList.add('open');
+}
+function closePlanOverlay() {
+  document.getElementById('plan-scrim').classList.remove('open');
+  document.getElementById('plan-panel').classList.remove('open');
+}
+
+function setUnitSeg(val) {
+  document.querySelectorAll('#unit-seg .segment-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
+  document.getElementById('custom-unit-wrap').style.display=val==='custom'?'':'none';
+}
+function getUnitSeg(){ return document.querySelector('#unit-seg .segment-btn.active')?.dataset.val||'daf'; }
+
+document.querySelectorAll('#unit-seg .segment-btn').forEach(b=>{
+  b.addEventListener('click',()=>setUnitSeg(b.dataset.val));
+});
+
+async function savePlan() {
+  const id=document.getElementById('plan-edit-id').value;
+  const book=document.getElementById('plan-book').value.trim();
+  if(!book){
+    try{await Otzaria.call('notifications.showInApp',{message:'נא להזין שם ספר',type:'error'});}catch(e){}
+    return;
+  }
+  const data={
+    id:id||uid(), book,
+    bookId:document.getElementById('plan-book-id').value.trim(),
+    unitType:getUnitSeg(),
+    customUnit:document.getElementById('plan-custom-unit').value.trim(),
+    daily:parseInt(document.getElementById('plan-daily').value)||1,
+    total:parseInt(document.getElementById('plan-total').value)||1,
+    startDate:document.getElementById('plan-start').value||todayStr(),
+    startOffset:parseInt(document.getElementById('plan-offset').value)||1,
+    done:{}
+  };
+  if(id) {
+    const idx=plans.findIndex(p=>p.id===id);
+    if(idx>=0){ data.done=plans[idx].done||{}; plans[idx]=data; }
+  } else {
+    plans.push(data);
+  }
+  currentPlanId=data.id;
+  await savePlans();
+  closePlanOverlay();
+  if(currentScreen==='quota') renderQuota();
+  else if(currentScreen==='home') renderHome();
+  try{await Otzaria.call('notifications.showInApp',{message:'התוכנית נשמרה!',type:'success'});}catch(e){}
+}
+
+async function deletePlan() {
+  const id=document.getElementById('plan-edit-id').value;
+  if(!id) return;
+  try {
+    const {data}=await Otzaria.call('ui.showConfirm',{title:'מחק תוכנית',content:'למחוק את תוכנית הלימוד?'});
+    if(!data.confirmed) return;
+  } catch(e) {}
+  plans=plans.filter(p=>p.id!==id);
+  currentPlanId=plans[0]?.id||null;
+  await savePlans();
+  closePlanOverlay();
+  if(currentScreen==='quota') renderQuota();
+  else renderHome();
+}
+
+// ════════════════════════════════════════
+//  MAP — DATABASES
+// ════════════════════════════════════════
+const SHAS_DB = {
+  "זרעים":{"ברכות":64},
+  "מועד":{"שבת":157,"עירובין":105,"פסחים":121,"ראש השנה":35,"יומא":88,"סוכה":56,"ביצה":40,"תענית":31,"מגילה":32,"מועד קטן":29,"חגיגה":27},
+  "נשים":{"יבמות":122,"כתובות":112,"נדרים":91,"נזיר":66,"סוטה":49,"גיטין":90,"קידושין":82},
+  "נזיקין":{"בבא קמא":119,"בבא מציעא":119,"בבא בתרא":176,"סנהדרין":113,"מכות":24,"שבועות":49,"עבודה זרה":76,"הוריות":14},
+  "קדשים":{"זבחים":120,"מנחות":110,"חולין":142,"בכורות":61,"ערכין":34,"תמורה":34,"כריתות":28,"מעילה":22,"תמיד":33},
+  "טהרות":{"נידה":73}
+};
+const NACH_DB = {
+  "נביאים":{"יהושע":24,"שופטים":21,"שמואל א":31,"שמואל ב":24,"מלכים א":22,"מלכים ב":25,"ישעיהו":66,"ירמיהו":52,"יחזקאל":48},
+  "תרי עשר":{"הושע":14,"יואל":4,"עמוס":9,"עובדיה":1,"יונה":4,"מיכה":7,"נחום":3,"חבקוק":3,"צפניה":3,"חגי":2,"זכריה":14,"מלאכי":3},
+  "כתובים":{"תהילים":150,"משלי":31,"איוב":42,"שיר השירים":8,"רות":4,"איכה":5,"קהלת":12,"אסתר":10,"דניאל":12,"עזרא":10,"נחמיה":13,"דברי הימים א":29,"דברי הימים ב":36}
+};
+const MISHNA_DB = {
+  "זרעים":{"ברכות":9,"פאה":8,"דמאי":7,"כלאיים":9,"שביעית":10,"תרומות":11,"מעשרות":5,"מעשר שני":5,"חלה":4,"ערלה":3,"ביכורים":3},
+  "מועד":{"שבת":24,"עירובין":10,"פסחים":10,"שקלים":8,"יומא":8,"סוכה":5,"ביצה":5,"ראש השנה":4,"תענית":4,"מגילה":4,"מועד קטן":3,"חגיגה":3},
+  "נשים":{"יבמות":16,"כתובות":13,"נדרים":11,"נזיר":9,"סוטה":9,"גיטין":9,"קידושין":4},
+  "נזיקין":{"בבא קמא":10,"בבא מציעא":10,"בבא בתרא":10,"סנהדרין":11,"מכות":3,"שבועות":8,"עדיות":8,"עבודה זרה":5,"אבות":5,"הוריות":3},
+  "קדשים":{"זבחים":13,"מנחות":13,"חולין":12,"בכורות":9,"ערכין":9,"תמורה":7,"כריתות":6,"מעילה":6,"תמיד":7,"מידות":5,"קינים":3},
+  "טהרות":{"כלים":30,"אהלות":18,"נגעים":14,"פרה":12,"טהרות":10,"מקואות":10,"נידה":10,"מכשירין":6,"זבים":5,"טבול יום":4,"ידיים":4,"עוקצין":3}
+};
+
+function buildFlatShas() {
+  let l=[];
+  for(const s in SHAS_DB) for(const m in SHAS_DB[s]) for(let p=2;p<=SHAS_DB[s][m];p++) l.push({seder:s,name:m,idx:p});
+  return l;
+}
+function buildFlat(db) {
+  let l=[];
+  for(const s in db) for(const n in db[s]) for(let i=1;i<=db[s][n];i++) l.push({seder:s,name:n,idx:i});
+  return l;
+}
+const FLAT_SHAS=buildFlatShas(), FLAT_NACH=buildFlat(NACH_DB), FLAT_MISHNA=buildFlat(MISHNA_DB);
+function getFlatList(t){ return t==='shas'?FLAT_SHAS:t==='nach'?FLAT_NACH:FLAT_MISHNA; }
+function getMapDB(t){ return t==='shas'?SHAS_DB:t==='nach'?NACH_DB:MISHNA_DB; }
+function mapItemKey(item){ return `${item.name}_${item.idx}`; }
+
+function getMapAdjustedToday(){let n=new Date();if(n.getHours()<4)n.setDate(n.getDate()-1);n.setHours(0,0,0,0);return n;}
+
+function getMapEffectiveProgress(track) {
+  const td=mapData[track];
+  const setup=new Date(td.setup_date); setup.setHours(0,0,0,0);
+  const today=getMapAdjustedToday();
+  const diff=Math.floor((today-setup)/86400000);
+  return Math.floor((diff-(td.defer_days||0))*(td.pace||1));
+}
+
+function getMapStartIdx(track) {
+  const flat=getFlatList(track), hp=mapData[track].holding_point;
+  return flat.findIndex(x=>x.name===hp.name&&x.idx===hp.idx);
+}
+
+function getMapCurrentIndices(track) {
+  if(!mapData[track]) return [];
+  const flat=getFlatList(track), td=mapData[track];
+  const days=getMapEffectiveProgress(track), startIdx=getMapStartIdx(track);
+  if(startIdx===-1) return [];
+  let indices=[];
+  const mainCycle=flat.length-startIdx;
+  if(days<mainCycle){ for(let i=startIdx;i<=startIdx+days;i++) if(i<flat.length) indices.push(i); }
+  else {
+    for(let i=startIdx;i<flat.length;i++) indices.push(i);
+    const overflow=days-mainCycle+1;
+    let debts=[];
+    for(let i=0;i<startIdx;i++) if(!(td.progress||{})[mapItemKey(flat[i])]) debts.push(i);
+    indices.push(...debts.slice(0,overflow));
+  }
+  return indices;
+}
+
+let mapCurrentItem={shas:null,nach:null,mishna:null};
+
+// ════════════════════════════════════════
+//  RENDER: MAP
+// ════════════════════════════════════════
+function renderMap() {
+  const track=mapData.current_track||'shas';
+  // track buttons
+  ['shas','nach','mishna'].forEach(t=>{
+    const btn=document.getElementById('mtrack-'+t);
+    const active=mapData.active_tracks.includes(t);
+    btn.classList.toggle('disabled',!active);
+    btn.classList.toggle('active',t===track&&active);
+  });
+  if(!mapData.active_tracks.length){
+    document.getElementById('map-masechet-title').textContent='לא הוגדרו מסלולים';
+    document.getElementById('map-daily-task').textContent='';
+    document.getElementById('map-grid').innerHTML='';
+    renderMapSidebar();
+    return;
+  }
+  if(!mapData.active_tracks.includes(track)){
+    mapData.current_track=mapData.active_tracks[0];
+  }
+  renderMapSidebar();
+  renderMapGrid(mapData.current_track);
+  renderMapFooter(mapData.current_track);
+}
+
+function renderMapSidebar() {
+  const track=mapData.current_track;
+  const list=document.getElementById('map-sidebar-list');
+  list.innerHTML='';
+  if(!mapData.active_tracks.length) return;
+  const db=getMapDB(track);
+  for(const seder in db){
+    const sl=document.createElement('div');
+    sl.className='seder-label'+(track==='nach'?' nach':track==='mishna'?' mishna':'');
+    sl.textContent=seder; list.appendChild(sl);
+    for(const name in db[seder]){
+      const item=document.createElement('div');
+      item.className='masechet-item';
+      const td=mapData[track];
+      const flat=getFlatList(track);
+      const items=flat.filter(x=>x.name===name);
+      const total=items.length;
+      const learned=items.filter(x=>(td?.progress||{})[mapItemKey(x)]>0).length;
+      const completed=items.filter(x=>(td?.progress||{})[mapItemKey(x)]===2).length;
+      if(completed===total) item.classList.add('completed');
+      else if(learned>0) item.classList.add('started');
+      item.textContent=name;
+      item.addEventListener('click',()=>{ mapCurrentItem[track]=name; renderMapGrid(track); });
+      list.appendChild(item);
+    }
+  }
+  // footer
+  const td=mapData[track];
+  const flat=getFlatList(track);
+  if(td){
+    const learned=Object.values(td.progress||{}).filter(v=>v>0).length;
+    const pct=Math.floor((learned/flat.length)*100);
+    const unit=track==='shas'?'דף':'פרק';
+    document.getElementById('map-progress-text').textContent=`${learned.toLocaleString()}/${flat.length.toLocaleString()} ${unit}ים (${pct}%)`;
+    document.getElementById('map-progress-fill').style.width=pct+'%';
+    document.getElementById('map-pace-label').textContent=`${td.pace||1} ${unit}/יום`;
+  }
+  // gauges
+  const gc=document.getElementById('map-gauges');
+  gc.innerHTML='';
+  mapData.active_tracks.forEach(t=>{
+    const fl=getFlatList(t);
+    const ln=Object.values(mapData[t]?.progress||{}).filter(v=>v>0).length;
+    const p=Math.floor((ln/fl.length)*100);
+    const lbl=t==='shas'?'ש"ס':t==='nach'?'נ"ך':'משנה';
+    const d=document.createElement('div'); d.className='gauge-item';
+    d.innerHTML=`<div class="gauge-circle ${t}-g">${p}%</div>${lbl}`;
+    gc.appendChild(d);
+  });
+}
+
+function renderMapGrid(track) {
+  const td=mapData[track];
+  const flat=getFlatList(track);
+  const db=getMapDB(track);
+  const name=mapCurrentItem[track]||(td?.holding_point?.name)||Object.keys(Object.values(db)[0])[0];
+  mapCurrentItem[track]=name;
+
+  const prefix=(track==='shas'||track==='mishna')?'מסכת':'ספר';
+  document.getElementById('map-masechet-title').textContent=`${prefix} ${name}`;
+
+  const indices=getMapCurrentIndices(track);
+  const dailyKeys=new Set(indices.map(i=>mapItemKey(flat[i])));
+
+  const grid=document.getElementById('map-grid');
+  grid.innerHTML='';
+
+  let count=0;
+  for(const s in db) if(db[s][name]) count=db[s][name];
+  const start=track==='shas'?2:1;
+  for(let p=start;p<=count;p++){
+    const key=`${name}_${p}`;
+    const status=(td?.progress||{})[key]||0;
+    let cls='';
+    if(track==='shas')        cls=status===1?'s1':status===2?'s2':'';
+    else if(track==='nach')   cls=status===1?'n1':status===2?'n2':'';
+    else                      cls=status===1?'m1':status===2?'m2':'';
+    const btn=document.createElement('div');
+    btn.className='daf-btn '+cls;
+    if(dailyKeys.has(key)&&status===0) btn.classList.add('is-today');
+    btn.textContent=intToGematria(p);
+    btn.addEventListener('click',()=>{ mapToggleItem(track,key); });
+    grid.appendChild(btn);
+  }
+
+  // daily task
+  const missing=indices.filter(i=>!(td?.progress||{})[mapItemKey(flat[i])]);
+  const unit=track==='shas'?'דף':'פרק';
+  if(missing.length>0){
+    const p=flat[missing[0]];
+    const more=missing.length>1?` (+${missing.length-1} נוספים)`:'';
+    document.getElementById('map-daily-task').textContent=`${unit} היום: ${p.name} ${intToGematria(p.idx)}${more}`;
+    mapCurrentItem[track]=flat[missing[0]].name;
+  } else {
+    document.getElementById('map-daily-task').textContent='✅ המכסה הושלמה!';
+  }
+}
+
+function renderMapFooter(track) {
+  const td=mapData[track];
+  const flat=getFlatList(track);
+  const setup=new Date(td.setup_date||new Date()); setup.setHours(0,0,0,0);
+  const today=getMapAdjustedToday();
+  const totalDays=Math.max(1,Math.floor((today-setup)/86400000));
+  const pace=td.pace||1;
+  const learned=Object.values(td.progress||{}).filter(v=>v>0).length;
+  const startIdx=getMapStartIdx(track);
+  const debts=Array.from({length:startIdx},(_,i)=>i).filter(i=>!(td.progress||{})[mapItemKey(flat[i])]).length;
+  const eff=getMapEffectiveProgress(track);
+  const rem=Math.max(0,flat.length-(startIdx+eff));
+  const total=debts+rem;
+  const finish=getMapAdjustedToday();
+  finish.setDate(finish.getDate()+Math.ceil(total/pace));
+
+  const formatter=new Intl.DateTimeFormat('he-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+  const parts=formatter.formatToParts(finish);
+  const fStr=parts.map(p=>p.value).join('');
+  const ratio=totalDays>0?learned/(totalDays*pace):1;
+  const eval_=ratio>=0.85?'בקצב טוב':ratio>=0.5?'כדאי להגביר':'מאחר מהיעד';
+  document.getElementById('map-status-label').textContent=`סיום משוער: ${fStr} | ${eval_} | דחיות: ${td.defer_days||0}`;
+}
+
+async function mapToggleItem(track,key) {
+  if(!mapData[track]) return;
+  mapData[track].progress=mapData[track].progress||{};
+  const cur=mapData[track].progress[key]||0;
+  const next=(cur+1)%3;
+  if(next===0) delete mapData[track].progress[key];
+  else mapData[track].progress[key]=next;
+  await saveMap();
+  renderMap();
+}
+
+async function mapBulkAction(status) {
+  const track=mapData.current_track;
+  const name=mapCurrentItem[track]; if(!name) return;
+  const db=getMapDB(track);
+  let count=0; for(const s in db) if(db[s][name]) count=db[s][name];
+  const start=track==='shas'?2:1;
+  mapData[track].progress=mapData[track].progress||{};
+  for(let p=start;p<=count;p++){
+    const key=`${name}_${p}`;
+    if(status===0) delete mapData[track].progress[key];
+    else mapData[track].progress[key]=status;
+  }
+  await saveMap();
+  renderMap();
+}
+
+async function mapDeferDay() {
+  const track=mapData.current_track;
+  mapData[track].defer_days=(mapData[track].defer_days||0)+1;
+  await saveMap();
+  renderMap();
+}
+
+function switchMapTrack(track) {
+  if(!mapData.active_tracks.includes(track)) return;
+  mapData.current_track=track;
+  renderMap();
+}
+
+function toggleMapSidebar() {
+  document.getElementById('map-sidebar').classList.toggle('collapsed');
+}
+
+// MAP SETUP DIALOG
+function openMapSetup() {
+  populateMapSelect('ms-shas-masechet',SHAS_DB);
+  populateMapSelect('ms-nach-book',NACH_DB);
+  populateMapSelect('ms-mishna-masechet',MISHNA_DB);
+  // pre-fill
+  ['shas','nach','mishna'].forEach(t=>{
+    const cb=document.getElementById(`ms-check-${t}`);
+    cb.checked=mapData.active_tracks.includes(t);
+    if(mapData[t]){
+      if(t==='shas'){ document.getElementById('ms-shas-masechet').value=mapData[t].holding_point?.name||''; document.getElementById('ms-shas-daf').value=mapData[t].holding_point?.idx||2; document.getElementById('ms-shas-pace').value=mapData[t].pace||1; }
+      if(t==='nach'){ document.getElementById('ms-nach-book').value=mapData[t].holding_point?.name||''; document.getElementById('ms-nach-chapter').value=mapData[t].holding_point?.idx||1; document.getElementById('ms-nach-pace').value=mapData[t].pace||1; }
+      if(t==='mishna'){ document.getElementById('ms-mishna-masechet').value=mapData[t].holding_point?.name||''; document.getElementById('ms-mishna-chapter').value=mapData[t].holding_point?.idx||1; document.getElementById('ms-mishna-pace').value=mapData[t].pace||1; }
+    }
+  });
+  document.getElementById('map-setup-dialog').classList.add('open');
+}
+
+function populateMapSelect(id,db){
+  const sel=document.getElementById(id); sel.innerHTML='';
+  for(const s in db){ const g=document.createElement('optgroup'); g.label=s; for(const n in db[s]){ const o=document.createElement('option'); o.value=n; o.textContent=n; g.appendChild(o); } sel.appendChild(g); }
+}
+
+async function saveMapSetup() {
+  const today=new Date().toISOString().split('T')[0];
+  mapData.active_tracks=[];
+  for(const t of['shas','nach','mishna']){
+    if(!document.getElementById(`ms-check-${t}`).checked){ mapData[t]=null; continue; }
+    mapData.active_tracks.push(t);
+    let name,idx,pace;
+    if(t==='shas'){ name=document.getElementById('ms-shas-masechet').value; idx=parseInt(document.getElementById('ms-shas-daf').value)||2; pace=parseFloat(document.getElementById('ms-shas-pace').value)||1; }
+    else if(t==='nach'){ name=document.getElementById('ms-nach-book').value; idx=parseInt(document.getElementById('ms-nach-chapter').value)||1; pace=parseFloat(document.getElementById('ms-nach-pace').value)||1; }
+    else { name=document.getElementById('ms-mishna-masechet').value; idx=parseInt(document.getElementById('ms-mishna-chapter').value)||1; pace=parseFloat(document.getElementById('ms-mishna-pace').value)||1; }
+    const flat=getFlatList(t);
+    const startIdx=flat.findIndex(x=>x.name===name&&x.idx===idx);
+    if(!mapData[t]||mapData[t].holding_point?.name!==name) {
+      const prog={};
+      for(let i=0;i<startIdx;i++) prog[mapItemKey(flat[i])]=2;
+      mapData[t]={holding_point:{name,idx},defer_days:0,setup_date:today,pace,progress:prog};
+    } else {
+      mapData[t].pace=pace;
+    }
+  }
+  if(!mapData.active_tracks.includes(mapData.current_track) && mapData.active_tracks.length)
+    mapData.current_track=mapData.active_tracks[0];
+  await saveMap();
+  closeDialog('map-setup-dialog');
+  renderMap();
+  renderSettings();
+}
+
+// SCHEDULE DIALOG
+function showScheduleDialog() {
+  const content=document.getElementById('schedule-content');
+  content.innerHTML='';
+  mapData.active_tracks.forEach(track=>{
+    const td=mapData[track]; if(!td) return;
+    const flat=getFlatList(track), db=getMapDB(track);
+    const label=track==='shas'?'ש"ס':track==='nach'?'נ"ך':'משנה';
+    const hdr=document.createElement('div');
+    hdr.style.cssText='font-weight:700;padding:10px 0 4px;font-size:0.95em;color:var(--color-primary);';
+    hdr.textContent=label; content.appendChild(hdr);
+    const eff=getMapEffectiveProgress(track), startIdx=getMapStartIdx(track);
+    let running=0;
+    for(const s in db) for(const n in db[s]){
+      const count=db[s][n], start=track==='shas'?2:1, size=count-start+1;
+      const lastIdx=running+size-1; running=lastIdx+1;
+      if(lastIdx<startIdx) continue;
+      const off=Math.max(0,lastIdx-(startIdx+eff));
+      const fin=getMapAdjustedToday(); fin.setDate(fin.getDate()+Math.ceil(off/(td.pace||1)));
+      const row=document.createElement('div');
+      row.style.cssText='padding:6px 0;border-bottom:1px solid var(--color-outline);font-size:0.82em;';
+      const prefix=(track==='shas'||track==='mishna')?'מסכת':'ספר';
+      row.innerHTML=`<strong>${prefix} ${n}</strong> — ${hebrewDate(fin.toISOString().slice(0,10))}`;
+      content.appendChild(row);
+    }
+  });
+  document.getElementById('schedule-dialog').classList.add('open');
+}
+
+// ════════════════════════════════════════
+//  TIMER
+// ════════════════════════════════════════
+let timerState={running:false,paused:false,subject:'',startTime:null,elapsed:0,intervalId:null};
+
+function renderTimer() {
+  const today=todayStr();
+  document.getElementById('timer-today-label').textContent=hebrewDate(today);
+  // subject chips
+  const chips=document.getElementById('subject-chips');
+  chips.innerHTML='';
+  timerData.subjects.forEach(s=>{
+    const c=document.createElement('button');
+    c.className='subject-chip'+(s===timerState.subject?' active':'');
+    c.textContent=s;
+    c.addEventListener('click',()=>{ if(!timerState.running){ timerState.subject=s; renderTimerChips(); } });
+    chips.appendChild(c);
+  });
+  // sessions today
+  const sessionsEl=document.getElementById('timer-sessions');
+  sessionsEl.innerHTML='';
+  const todaySessions=timerData.sessions.filter(s=>s.date===today);
+  if(!todaySessions.length){
+    sessionsEl.innerHTML='<div style="padding:12px;font-size:0.82em;color:var(--color-outline);text-align:center;">אין סשנים היום עדיין</div>';
+  } else {
+    todaySessions.slice().reverse().forEach(s=>{
+      const item=document.createElement('div');
+      item.className='session-item';
+      item.innerHTML=`<span class="session-subject">${s.subject}</span><span class="session-dur">${fmtDuration(s.duration)}</span>`;
+      sessionsEl.appendChild(item);
+    });
+  }
+  // total
+  const totalSec=todaySessions.reduce((a,s)=>a+s.duration,0);
+  document.getElementById('timer-total-today').textContent=fmtDuration(totalSec);
+  renderTimerClock();
+}
+
+function renderTimerChips(){
+  document.querySelectorAll('.subject-chip').forEach(c=>{
+    c.classList.toggle('active',c.textContent===timerState.subject);
+  });
+}
+
+function renderTimerClock() {
+  const sec=timerState.elapsed+( timerState.running&&timerState.startTime? Math.floor((Date.now()-timerState.startTime)/1000):0 );
+  document.getElementById('timer-clock').textContent=fmtDuration(sec);
+  document.getElementById('timer-sub-label').textContent=timerState.subject||'בחר נושא והתחל';
+}
+
+function timerStart(){
+  if(!timerState.subject){
+    try{Otzaria.call('notifications.showInApp',{message:'בחר נושא קודם',type:'error'});}catch(e){}
+    return;
+  }
+  timerState.running=true; timerState.startTime=Date.now();
+  document.getElementById('btn-timer-start').style.display='none';
+  document.getElementById('btn-timer-pause').style.display='';
+  document.getElementById('btn-timer-stop').style.display='';
+  timerState.intervalId=setInterval(()=>renderTimerClock(),1000);
+}
+
+function timerPause(){
+  if(timerState.running){
+    timerState.elapsed+=Math.floor((Date.now()-timerState.startTime)/1000);
+    timerState.startTime=null; timerState.running=false;
+    clearInterval(timerState.intervalId);
+    document.getElementById('btn-timer-pause').textContent='המשך';
+  } else {
+    timerState.running=true; timerState.startTime=Date.now();
+    timerState.intervalId=setInterval(()=>renderTimerClock(),1000);
+    document.getElementById('btn-timer-pause').textContent='השהה';
+  }
+}
+
+async function timerStop(){
+  if(timerState.running){ timerState.elapsed+=Math.floor((Date.now()-timerState.startTime)/1000); }
+  clearInterval(timerState.intervalId);
+  const dur=timerState.elapsed;
+  if(dur>0){
+    timerData.sessions.push({subject:timerState.subject,date:todayStr(),duration:dur});
+    await saveTimer();
+    try{await Otzaria.call('notifications.showInApp',{message:`נשמר: ${fmtDuration(dur)} של ${timerState.subject}`,type:'success'});}catch(e){}
+  }
+  timerState={running:false,paused:false,subject:timerState.subject,startTime:null,elapsed:0,intervalId:null};
+  document.getElementById('btn-timer-start').style.display='';
+  document.getElementById('btn-timer-pause').style.display='none';
+  document.getElementById('btn-timer-stop').style.display='none';
+  document.getElementById('btn-timer-pause').textContent='השהה';
+  renderTimer();
+}
+
+// ════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════
+function renderSettings() {
+  // plans list
+  const list=document.getElementById('settings-plans-list');
+  list.innerHTML='';
+  plans.forEach(p=>{
+    const item=document.createElement('div');
+    item.className='settings-item';
+    item.innerHTML=`
+      <div>
+        <div class="settings-item-label">${p.book}</div>
+        <div class="settings-item-sub">${p.daily} ${unitLabel(p.unitType,p.customUnit,p.daily)} ליום · ${p.total} יחידות</div>
+      </div>
+      <span style="color:var(--color-outline);">←</span>`;
+    item.addEventListener('click',()=>openPlanOverlay(p.id));
+    list.appendChild(item);
+  });
+  // map status
+  document.getElementById('settings-map-status').textContent=
+    mapData.active_tracks.length?`פעיל: ${mapData.active_tracks.map(t=>t==='shas'?'ש"ס':t==='nach'?'נ"ך':'משנה').join(', ')}` :'טרם הוגדר';
+  // toggle
+  const tog=document.getElementById('toggle-show-map');
+  tog.classList.toggle('on',settings.showMap);
+  // timer subjects
+  document.getElementById('settings-timer-subjects').addEventListener('click',openSubjectsDialog);
+}
+
+async function toggleMapVisibility(){
+  settings.showMap=!settings.showMap;
+  document.getElementById('toggle-show-map').classList.toggle('on',settings.showMap);
+  document.getElementById('ntab-map').style.display=settings.showMap?'':'none';
+  await saveSettings();
+}
+
+// EXPORT / IMPORT
+function exportData(){
+  const data={plans,mapData,timerData,settings,exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`מעקב_לימוד_גיבוי_${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importData(event){
+  const file=event.target.files[0]; if(!file) return;
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+    if(data.plans)    plans=data.plans;
+    if(data.mapData)  mapData=data.mapData;
+    if(data.timerData)timerData=data.timerData;
+    if(data.settings) settings={...settings,...data.settings};
+    await savePlans(); await saveMap(); await saveTimer(); await saveSettings();
+    try{await Otzaria.call('notifications.showInApp',{message:'הנתונים יובאו בהצלחה!',type:'success'});}catch(e){}
+    goScreen(currentScreen);
+  } catch(e){
+    try{await Otzaria.call('notifications.showInApp',{message:'שגיאה בייבוא הקובץ',type:'error'});}catch(ee){}
+  }
+  event.target.value='';
+}
+
+// SUBJECTS DIALOG
+function openSubjectsDialog(){
+  document.getElementById('subjects-textarea').value=timerData.subjects.join('\n');
+  document.getElementById('subjects-dialog').classList.add('open');
+}
+async function saveSubjects(){
+  const lines=document.getElementById('subjects-textarea').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length) timerData.subjects=lines;
+  await saveTimer();
+  closeDialog('subjects-dialog');
+  if(currentScreen==='timer') renderTimer();
+}
+
+// ════════════════════════════════════════
+//  DIALOG HELPERS
+// ════════════════════════════════════════
+function closeDialog(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.dialog').forEach(d=>{
+  d.addEventListener('click', e=>{ if(e.target===d) d.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════
+Otzaria.on('plugin.boot', async function(payload) {
+  applyTheme(payload.theme);
+  await loadAll();
+  document.getElementById('btn-home-add').addEventListener('click',()=>openPlanOverlay(null));
+  if(!settings.showMap) document.getElementById('ntab-map').style.display='none';
+  renderHome();
+});
+
+Otzaria.on('theme.changed', applyTheme);
+</script>
+</body>
+</html>

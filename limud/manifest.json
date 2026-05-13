@@ -1,0 +1,14 @@
+{
+  "id": "shas_1tracker",
+  "name": "מעקב לימוד אישי",
+  "version": "0.9.91",
+  "description": "תוסף למעקב אחרי הלימוד",
+  "author": "סנאי",
+  "type": "webapp",
+  "entrypoint": "index.html",
+  "icon": "",
+  "category": "Utilities",
+  "stability": "beta",
+  "minAppVersion": "0.9.91",
+  "permissions": ["events.subscribe:theme.changed"]
+}

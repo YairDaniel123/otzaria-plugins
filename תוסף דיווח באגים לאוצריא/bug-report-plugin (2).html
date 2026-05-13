@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* ── CSS Variables (M3 defaults — יוחלפו ע"י applyTheme) ── */
+    :root {
+      --color-primary:                   #6750A4;
+      --color-on-primary:                #FFFFFF;
+      --color-secondary:                 #625B71;
+      --color-on-secondary:              #FFFFFF;
+      --color-surface:                   #FFFBFE;
+      --color-on-surface:                #1C1B1F;
+      --color-surface-container-highest: #E6E0E9;
+      --color-error:                     #B3261E;
+      --color-on-error:                  #FFFFFF;
+      --color-outline:                   #79747E;
+      --color-primary-subtle:            rgba(103, 80, 164, 0.12);
+      --color-secondary-subtle:          rgba(98, 91, 113, 0.12);
+      --color-on-surface-variant:        rgba(28, 27, 31, 0.6);
+      --color-warning:                   #7D5700;
+      --color-warning-subtle:            rgba(125, 87, 0, 0.10);
+
+      --font-main:       'Frank Ruhl Libre', 'David', serif;
+      --font-size-base:  18px;
+      --line-height:     1.5;
+
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --radius-pill: 999px;
+
+      --transition-standard: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height);
+      background: var(--color-surface);
+      color: var(--color-on-surface);
+      direction: rtl;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    /* ── Page Layout ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-outline);
+    }
+
+    .page-header h1 {
+      font-size: 1.1em;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .page-header p {
+      font-size: 0.78em;
+      color: var(--color-on-surface-variant);
+      margin-top: 1px;
+    }
+
+    /* ── Offline Banner ── */
+    .offline-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-warning-subtle);
+      border: 1px solid rgba(125, 87, 0, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 0.82em;
+      color: var(--color-warning);
+      font-weight: 600;
+    }
+
+    .offline-banner.visible { display: flex; }
+
+    .offline-banner svg { flex-shrink: 0; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+    }
+
+    /* ── Section Label ── */
+    .section-label {
+      font-size: 0.75em;
+      font-weight: 600;
+      color: var(--color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* ── Saved User Chip ── */
+    .saved-user-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-primary-subtle);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .saved-user-banner .saved-info { flex: 1; }
+
+    .saved-user-banner .saved-name {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: var(--color-on-surface);
+    }
+
+    .saved-user-banner .saved-email {
+      font-size: 0.78em;
+      color: var(--color-on-surface-variant);
+    }
+
+    .btn-text-sm {
+      background: none;
+      border: none;
+      color: var(--color-primary);
+      cursor: pointer;
+      font-family: var(--font-main);
+      font-size: 0.78em;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      transition: background var(--transition-standard);
+    }
+
+    .btn-text-sm:hover { background: var(--color-primary-subtle); }
+
+    /* ── Outlined Input Fields (M3 style) ── */
+    .field-group { margin-bottom: 14px; }
+
+    .field-label {
+      display: block;
+      font-size: 0.78em;
+      font-weight: 600;
+      color: var(--color-on-surface-variant);
+      margin-bottom: 5px;
+    }
+
+    .field-label .required {
+      color: var(--color-error);
+      margin-right: 2px;
+    }
+
+    .input-outlined {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-main);
+      font-size: 0.9em;
+      color: var(--color-on-surface);
+      outline: none;
+      transition: border-color var(--transition-standard), box-shadow var(--transition-standard);
+      direction: rtl;
+    }
+
+    .input-outlined:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary-subtle);
+    }
+
+    .input-outlined::placeholder {
+      color: var(--color-on-surface-variant);
+      opacity: 0.7;
+    }
+
+    textarea.input-outlined {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    /* ── File Upload Area ── */
+    .upload-area {
+      border: 2px dashed var(--color-outline);
+      border-radius: var(--radius-sm);
+      padding: 18px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition-standard), background var(--transition-standard);
+      background: transparent;
+    }
+
+    .upload-area:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-subtle);
+    }
+
+    .upload-area .upload-label {
+      font-size: 0.85em;
+      color: var(--color-on-surface-variant);
+    }
+
+    .upload-area .upload-label strong { color: var(--color-primary); }
+
+    /* ── Image Chips ── */
+    .images-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .image-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--color-secondary-subtle);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-pill);
+      padding: 4px 10px 4px 6px;
+      font-size: 0.78em;
+      color: var(--color-on-surface);
+    }
+
+    .image-chip img {
+      width: 22px;
+      height: 22px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .image-chip .chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-on-surface-variant);
+      padding: 0 2px;
+      font-size: 1em;
+      line-height: 1;
+      border-radius: var(--radius-pill);
+      transition: color var(--transition-standard), background var(--transition-standard);
+    }
+
+    .image-chip .chip-remove:hover {
+      color: var(--color-error);
+      background: rgba(179, 38, 30, 0.1);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--color-outline);
+      margin: 16px 0;
+      opacity: 0.5;
+    }
+
+    /* ── Primary Button (Filled) ── */
+    .btn-filled {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px 24px;
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border: none;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-main);
+      font-size: 0.95em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity var(--transition-standard), box-shadow var(--transition-standard);
+      letter-spacing: 0.01em;
+    }
+
+    .btn-filled:hover:not(:disabled) {
+      opacity: 0.88;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+
+    .btn-filled:active:not(:disabled) { opacity: 0.76; }
+
+    .btn-filled:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    /* ── Outlined Button (Secondary) ── */
+    .btn-outlined {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px 24px;
+      background: transparent;
+      color: var(--color-primary);
+      border: 1.5px solid var(--color-primary);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-main);
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-standard), opacity var(--transition-standard);
+      letter-spacing: 0.01em;
+      margin-top: 10px;
+    }
+
+    .btn-outlined:hover:not(:disabled) { background: var(--color-primary-subtle); }
+
+    .btn-outlined:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: var(--color-on-primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status Message ── */
+    .status-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    .status-msg.success {
+      display: flex;
+      background: rgba(0, 120, 0, 0.1);
+      color: #1a6b1a;
+      border: 1px solid rgba(0, 120, 0, 0.25);
+    }
+
+    .status-msg.error {
+      display: flex;
+      background: rgba(179, 38, 30, 0.1);
+      color: var(--color-error);
+      border: 1px solid rgba(179, 38, 30, 0.25);
+    }
+
+    body.dark-mode .status-msg.success { color: #7dda7d; }
+
+    body.dark-mode .card { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+
+    /* ── Modal Overlay ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      direction: rtl;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal-box {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: 24px 22px 20px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      animation: modalIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0);   }
+    }
+
+    .modal-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--color-warning-subtle);
+      margin: 0 auto 14px;
+    }
+
+    .modal-title {
+      font-size: 1em;
+      font-weight: 700;
+      color: var(--color-on-surface);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-body {
+      font-size: 0.85em;
+      color: var(--color-on-surface-variant);
+      text-align: center;
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .modal-actions .btn-filled { margin: 0; }
+
+    .modal-btn-cancel {
+      background: none;
+      border: none;
+      color: var(--color-on-surface-variant);
+      font-family: var(--font-main);
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-standard);
+      text-align: center;
+    }
+
+    .modal-btn-cancel:hover { background: var(--color-secondary-subtle); }
+
+    /* ── Saved Reports Panel ── */
+    .saved-reports-panel {
+      display: none;
+      margin-top: 18px;
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .saved-reports-panel.visible { display: block; }
+
+    .saved-reports-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--color-primary-subtle);
+      border-bottom: 1px solid var(--color-outline);
+      font-size: 0.85em;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .saved-reports-list { padding: 8px 0; }
+
+    .saved-report-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background var(--transition-standard);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .saved-report-item:last-child { border-bottom: none; }
+
+    .saved-report-item:hover { background: var(--color-primary-subtle); }
+
+    .saved-report-item .report-info { flex: 1; min-width: 0; }
+
+    .saved-report-item .report-date {
+      font-size: 0.8em;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .saved-report-item .report-desc {
+      font-size: 0.78em;
+      color: var(--color-on-surface-variant);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .saved-report-item .report-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-icon-sm {
+      background: none;
+      border: 1.5px solid var(--color-outline);
+      cursor: pointer;
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      color: var(--color-on-surface-variant);
+      transition: background var(--transition-standard), color var(--transition-standard), border-color var(--transition-standard);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-main);
+      font-size: 0.82em;
+      font-weight: 600;
+    }
+
+    .btn-icon-sm:hover { background: var(--color-primary-subtle); color: var(--color-primary); border-color: var(--color-primary); }
+
+    .btn-icon-sm.delete:hover { background: rgba(179,38,30,0.1); color: var(--color-error); border-color: var(--color-error); }
+
+    .saved-reports-empty {
+      padding: 20px 16px;
+      text-align: center;
+      font-size: 0.82em;
+      color: var(--color-on-surface-variant);
+    }
+
+    /* ── Thank You Modal ── */
+    .thank-you-logo-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .thank-you-logo-img {
+      max-width: 90px;
+      max-height: 65px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .thank-you-logo-svg {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>דיווח על תקלה</h1>
+      <p>עזור לנו לשפר את אוצריא</p>
+    </div>
+  </div>
+
+  <!-- Offline indicator -->
+  <div id="offline-banner" class="offline-banner">
+    <!-- Fluent: wifi-off-24-regular -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2.22 2.22a.75.75 0 0 1 1.06 0l18.5 18.5a.75.75 0 0 1-1.06 1.06l-2.47-2.47A6.48 6.48 0 0 0 12 17.5a6.48 6.48 0 0 0-4.5 1.83.75.75 0 0 1-1.04-1.08A7.98 7.98 0 0 1 10.94 16.5l-2.3-2.3a11.22 11.22 0 0 0-3.87 2.56.75.75 0 0 1-1.06-1.06 12.72 12.72 0 0 1 3.77-2.6L5.96 11.6A14.97 14.97 0 0 0 2 13.97a.75.75 0 0 1-1.03-1.09 16.47 16.47 0 0 1 4.01-2.48L3.2 8.62A19.56 19.56 0 0 0 1 9.97a.75.75 0 1 1-1-1.12c.6-.53 1.24-1.02 1.9-1.47L.22 5.6a.75.75 0 1 1 1.06-1.06l1 1ZM12 19a5 5 0 0 1 3.54 1.47.75.75 0 0 1-1.04 1.08A3.5 3.5 0 0 0 12 20.5a3.5 3.5 0 0 0-2.5 1.05.75.75 0 0 1-1.04-1.08A5 5 0 0 1 12 19Zm0-8.5c1.38 0 2.69.23 3.91.65l-1.14-1.14A10.5 10.5 0 0 0 7.4 11.88L5.96 10.44A12 12 0 0 1 12 10.5Zm4.57-1.05-1.12-1.12A13.47 13.47 0 0 0 12 8c-2.13 0-4.14.5-5.93 1.38L4.85 8.16A14.97 14.97 0 0 1 12 6.5c1.86 0 3.64.35 5.27.98l-.7-.7ZM22 13.97a.75.75 0 0 1-.04 1.06 16.5 16.5 0 0 1-2.3 1.76.75.75 0 0 1-.82-1.26 15 15 0 0 0 2.1-1.6.75.75 0 0 1 1.06.04ZM12 8c1.97 0 3.85.4 5.55 1.12l-1.1-1.1A14.97 14.97 0 0 0 12 7.5a14.97 14.97 0 0 0-7.6 2.07.75.75 0 0 1-.78-1.28A16.47 16.47 0 0 1 12 6.5Z" fill="currentColor"/>
+    </svg>
+    <span>אין חיבור לרשת — שליחה תתאפשר כשתחבר</span>
+  </div>
+
+  <!-- Saved user banner -->
+  <div id="saved-banner" class="saved-user-banner hidden">
+    <div class="saved-info">
+      <div class="saved-name" id="saved-name-display"></div>
+      <div class="saved-email" id="saved-email-display"></div>
+    </div>
+    <button class="btn-text-sm" onclick="clearSavedUser()">שנה</button>
+  </div>
+
+  <!-- User fields -->
+  <div id="user-fields">
+    <div class="field-group">
+      <label class="field-label" for="username">שם מלא <span class="required">*</span></label>
+      <input class="input-outlined" type="text" id="username" placeholder="ישראל ישראלי" autocomplete="name">
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="email">אימייל <span class="required">*</span></label>
+      <input class="input-outlined" type="email" id="email" placeholder="israel@example.com" autocomplete="email">
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Bug description -->
+  <div class="field-group">
+    <label class="field-label" for="bug-desc">תיאור התקלה <span class="required">*</span></label>
+    <textarea
+      class="input-outlined"
+      id="bug-desc"
+      placeholder="תאר את התקלה — מה עשית, מה קרה, ומה ציפית שיקרה. ניתן גם להדביק תמונה עם Ctrl+V"
+    ></textarea>
+  </div>
+
+  <!-- File upload -->
+  <div class="field-group">
+    <label class="field-label">צירוף תמונות <span style="font-weight:400">(אופציונלי)</span></label>
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+      <div class="upload-label">
+        <strong>לחץ לבחירת קובץ</strong> או גרור לכאן<br>
+        <span style="font-size:0.85em;">PNG, JPG, GIF עד 10MB</span>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" multiple style="display:none">
+    <div id="images-list" class="images-list"></div>
+  </div>
+
+  <!-- Submit -->
+  <button class="btn-filled" id="send-btn" onclick="submitReport()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.694 12 2.299 3.272c-.236-.607.356-1.188.953-.938l18 7.5a.75.75 0 0 1 0 1.382l-18 7.5c-.597.25-1.189-.33-.953-.938L5.694 12Zm0 0 6.556.001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span id="btn-label">שלח דיווח</span>
+  </button>
+
+  <!-- Import saved reports button -->
+  <button class="btn-outlined" id="import-btn" onclick="toggleSavedPanel()">
+    <!-- Fluent: folder-open-24-regular -->
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 6.25C2 5.007 3.007 4 4.25 4h4.215c.694 0 1.353.305 1.807.835l.943 1.09c.213.246.522.387.847.387H19.75c1.243 0 2.25 1.007 2.25 2.25V17.75A2.25 2.25 0 0 1 19.75 20H4.25A2.25 2.25 0 0 1 2 17.75V6.25Zm2.25-.75a.75.75 0 0 0-.75.75V10h17V8.562a.75.75 0 0 0-.75-.75H12.062a2.25 2.25 0 0 1-1.695-.774l-.942-1.09a.75.75 0 0 0-.56-.248H4.25Zm-1.5 12.25c0 .414.336.75.75.75H19.75a.75.75 0 0 0 .75-.75v-7.25h-17v7.25Z" fill="currentColor"/>
+    </svg>
+    <span id="import-btn-label">דיווחים שנשמרו במחשב</span>
+  </button>
+
+  <!-- Saved reports panel -->
+  <div id="saved-reports-panel" class="saved-reports-panel">
+    <div class="saved-reports-header">
+      <span>דיווחים שמורים</span>
+      <button class="btn-text-sm" onclick="loadFromJsonFile()">
+        <!-- Fluent: arrow-upload-24-regular -->
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-left:4px;">
+          <path d="M12 2.25a.75.75 0 0 1 .75.75v12.189l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75ZM3 17.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 0 .75.75h15a.75.75 0 0 0 .75-.75V18a.75.75 0 0 1 1.5 0v1.5A2.25 2.25 0 0 1 19.5 21.75h-15A2.25 2.25 0 0 1 2.25 19.5V18a.75.75 0 0 1 .75-.75Z" fill="currentColor"/>
+        </svg>
+        טען קובץ JSON
+      </button>
+    </div>
+    <div id="saved-reports-list" class="saved-reports-list">
+      <div class="saved-reports-empty">אין דיווחים שמורים</div>
+    </div>
+  </div>
+
+  <div id="status-msg" class="status-msg"></div>
+
+  <!-- ── Offline confirm modal ── -->
+  <div id="offline-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon">
+        <!-- Fluent: save-24-regular -->
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6.25A2.25 2.25 0 0 0 4 4.25v15.5A2.25 2.25 0 0 0 6.25 22h11.5A2.25 2.25 0 0 0 20 19.75V8l-6-6ZM8.5 7h4a.75.75 0 0 1 0 1.5h-4A.75.75 0 0 1 8.5 7Zm0 3.5h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5Zm0 3.5h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5ZM14 2v5.25c0 .414.336.75.75.75H20" stroke="#7D5700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="modal-title">לא זוהה חיבור לרשת</div>
+      <div class="modal-body">
+        לא זוהה כרגע חיבור לרשת.<br>
+        האם אתה מעוניין לשמור את הדיווח כעת ולשלוח אותו מאוחר יותר כשתהיה מחובר לרשת?
+      </div>
+      <div class="modal-actions">
+        <button class="btn-filled" onclick="confirmSaveLocally()" style="background:var(--color-warning);color:#fff;">
+          <!-- Fluent: save-24-regular filled -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6.25A2.25 2.25 0 0 0 4 4.25v15.5A2.25 2.25 0 0 0 6.25 22h11.5A2.25 2.25 0 0 0 20 19.75V8l-6-6Zm-5.5 5h4a.75.75 0 0 1 0 1.5h-4A.75.75 0 0 1 8.5 7Z" fill="currentColor"/>
+          </svg>
+          שמור דיווח כעת
+        </button>
+        <button class="modal-btn-cancel" onclick="closeOfflineModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Thank you modal ── -->
+  <div id="thank-you-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="thank-you-logo-wrap">
+        <img
+          alt="לוגו אוצריא"
+          class="thank-you-logo-img"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAABHNCSVQICAgIfAhkiAAAIABJREFUeJztvXmQZdbd3/n5nXPuve+9fLlUZtbSVd1VXb2otauZlkRLFhKyjbDMCM3IssADQ5tgGMWMAoNlUAwOQwgPAV4wtmfwBpjAkkNCYWF7CGMJDQY1Aq2DukG9qtWL1HttWVmZ+ZZ77zm/+eOcc+/LUnWjlGdCOFw3oiqzMt9799zf+v19f79zCq5eV6+r19Xr6nX1unpdva5eV6+r19Xr6vWn8Pp/AW6ob1kI1xpIAAAAAElFTkSuQmCC"
+        >
+      </div>
+      <div class="modal-title">תודה רבה על העזרה שלך!</div>
+      <div class="modal-body">
+        בזכותך, כולנו נוכל ללמוד טוב יותר.<br><br>
+        בברכה: צוות אוצריא, ועשרות אלפי המשתמשים!
+      </div>
+      <div class="modal-actions">
+        <button class="btn-filled" onclick="closeThankYouModal()">סגור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for JSON import -->
+  <input type="file" id="json-file-input" accept=".json" style="display:none" onchange="importJsonFile(event)">
+
+  <script>
+    // ── Google Apps Script URL ──
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwU7ktk7_VdSqIxlMBnj4L8dIOKX7C5XIYxxyJsr2gohCtJuLEKA4RPUWO6d88Ry8TAoA/exec";
+
+    // ── Storage Keys ──
+    const STORAGE_KEY_NAME  = 'bug_report_username';
+    const STORAGE_KEY_EMAIL = 'bug_report_email';
+
+    let images = []; // [{ id, name, dataUrl }]
+
+    // ════════════════════════════════
+    //  Network detection
+    // ════════════════════════════════
+    function isOnline() {
+      return navigator.onLine;
+    }
+
+    function updateOfflineBanner() {
+      const banner = document.getElementById('offline-banner');
+      const sendBtn = document.getElementById('send-btn');
+      if (!isOnline()) {
+        banner.classList.add('visible');
+        sendBtn.title = 'אין חיבור לרשת';
+      } else {
+        banner.classList.remove('visible');
+        sendBtn.title = '';
+      }
+    }
+
+    window.addEventListener('online',  updateOfflineBanner);
+    window.addEventListener('offline', updateOfflineBanner);
+
+    // ════════════════════════════════
+    //  Theme
+    // ════════════════════════════════
+    function hexToRgba(hex, alpha) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function applyTheme(theme) {
+      if (!theme || !theme.colorScheme) return;
+      const cs = theme.colorScheme;
+      const root = document.documentElement;
+
+      root.style.setProperty('--color-primary',                   cs.primary);
+      root.style.setProperty('--color-on-primary',                cs.onPrimary);
+      root.style.setProperty('--color-secondary',                 cs.secondary);
+      root.style.setProperty('--color-on-secondary',              cs.onSecondary);
+      root.style.setProperty('--color-surface',                   cs.surface);
+      root.style.setProperty('--color-on-surface',                cs.onSurface);
+      root.style.setProperty('--color-surface-container-highest', cs.surfaceContainerHighest);
+      root.style.setProperty('--color-error',                     cs.error);
+      root.style.setProperty('--color-on-error',                  cs.onError);
+      root.style.setProperty('--color-outline',                   cs.outline);
+      root.style.setProperty('--color-primary-subtle',   hexToRgba(cs.primary,   0.12));
+      root.style.setProperty('--color-secondary-subtle', hexToRgba(cs.secondary, 0.12));
+      root.style.setProperty('--color-on-surface-variant', hexToRgba(cs.onSurface, 0.6));
+
+      document.body.classList.toggle('dark-mode', theme.mode === 'dark');
+
+      if (theme.typography) {
+        const t = theme.typography;
+        root.style.setProperty('--font-main',       `'${t.fontFamily}', 'David', serif`);
+        root.style.setProperty('--font-size-base',  `${t.fontSize}px`);
+        root.style.setProperty('--line-height',     String(t.lineHeight));
+      }
+    }
+
+    // ════════════════════════════════
+    //  Storage helpers (Otzaria)
+    // ════════════════════════════════
+    async function loadSavedUser() {
+      try {
+        const [nameRes, emailRes] = await Promise.all([
+          Otzaria.call('storage.get', { key: STORAGE_KEY_NAME }),
+          Otzaria.call('storage.get', { key: STORAGE_KEY_EMAIL }),
+        ]);
+        const savedName  = nameRes?.data  || '';
+        const savedEmail = emailRes?.data || '';
+
+        if (savedName && savedEmail) {
+          showSavedBanner(savedName, savedEmail);
+        }
+      } catch (e) { /* storage לא זמין */ }
+    }
+
+    async function saveUserDetails(name, email) {
+      try {
+        await Promise.all([
+          Otzaria.call('storage.set', { key: STORAGE_KEY_NAME,  value: name  }),
+          Otzaria.call('storage.set', { key: STORAGE_KEY_EMAIL, value: email }),
+        ]);
+      } catch (e) { /* שקט */ }
+    }
+
+    async function clearSavedUser() {
+      try {
+        await Promise.all([
+          Otzaria.call('storage.remove', { key: STORAGE_KEY_NAME  }),
+          Otzaria.call('storage.remove', { key: STORAGE_KEY_EMAIL }),
+        ]);
+      } catch (e) { /* שקט */ }
+
+      document.getElementById('saved-banner').classList.add('hidden');
+      document.getElementById('user-fields').classList.remove('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('email').value    = '';
+    }
+
+    function showSavedBanner(name, email) {
+      document.getElementById('saved-name-display').textContent  = name;
+      document.getElementById('saved-email-display').textContent = email;
+      document.getElementById('saved-banner').classList.remove('hidden');
+      document.getElementById('user-fields').classList.add('hidden');
+    }
+
+    function getActiveUserDetails() {
+      const banner = document.getElementById('saved-banner');
+      if (!banner.classList.contains('hidden')) {
+        return {
+          name:  document.getElementById('saved-name-display').textContent,
+          email: document.getElementById('saved-email-display').textContent,
+        };
+      }
+      return {
+        name:  document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+      };
+    }
+
+    // ════════════════════════════════
+    //  File handling
+    // ════════════════════════════════
+    document.getElementById('file-input').onchange = (e) => {
+      Array.from(e.target.files).forEach(addFile);
+      e.target.value = '';
+    };
+
+    document.getElementById('bug-desc').addEventListener('paste', (e) => {
+      for (const item of e.clipboardData.items) {
+        if (item.type.includes('image')) addFile(item.getAsFile());
+      }
+    });
+
+    function addFile(file) {
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        showStatus('הקובץ גדול מ-10MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const id = Date.now() + Math.random();
+        images.push({ id, name: file.name, dataUrl: e.target.result });
+        renderImageChips();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage(id) {
+      images = images.filter(img => img.id !== id);
+      renderImageChips();
+    }
+
+    function renderImageChips() {
+      const list = document.getElementById('images-list');
+      list.innerHTML = '';
+      images.forEach(img => {
+        const chip = document.createElement('div');
+        chip.className = 'image-chip';
+        chip.innerHTML = `
+          <img src="${img.dataUrl}" alt="${img.name}">
+          <span>${img.name.length > 20 ? img.name.slice(0, 18) + '…' : img.name}</span>
+          <button class="chip-remove" onclick="removeImage(${img.id})" title="הסר">✕</button>
+        `;
+        list.appendChild(chip);
+      });
+    }
+
+    // ════════════════════════════════
+    //  Date helpers
+    // ════════════════════════════════
+    function formatDateExact(date) {
+      // DD-MM-YYYY_HH-MM-SS
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(date.getDate())}-${pad(date.getMonth()+1)}-${date.getFullYear()}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+    }
+
+    function formatDateDisplay(isoString) {
+      const d = new Date(isoString);
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    // ════════════════════════════════
+    //  Local JSON save (Downloads)
+    // ════════════════════════════════
+    function buildReportObject(name, email, desc) {
+      return {
+        שם: name,
+        אימייל: email,
+        תיאור: desc,
+        תאריך: new Date().toISOString(),
+        גרסה: 'נשלח מתוסף',
+        תמונות: images.map(i => ({ שם: i.name, data: i.dataUrl })),
+      };
+    }
+
+    function saveReportToDownloads(reportObj) {
+      const now = new Date(reportObj.תאריך);
+      const filename = `דיווח שגיאות בתוכנה - ${formatDateExact(now)}.json`;
+      const jsonStr = JSON.stringify(reportObj, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ════════════════════════════════
+    //  Offline modal
+    // ════════════════════════════════
+    let _pendingReport = null; // holds report data while modal is open
+
+    function openOfflineModal(reportObj) {
+      _pendingReport = reportObj;
+      document.getElementById('offline-modal').classList.add('visible');
+    }
+
+    function closeOfflineModal() {
+      document.getElementById('offline-modal').classList.remove('visible');
+      _pendingReport = null;
+      setBtnLoading(false);
+    }
+
+    function confirmSaveLocally() {
+      if (!_pendingReport) return;
+      saveReportToDownloads(_pendingReport);
+      closeOfflineModal();
+
+      // ניקוי הטופס
+      document.getElementById('bug-desc').value = '';
+      images = [];
+      renderImageChips();
+
+      showStatus('✓ הדיווח נשמר בהצלחה בתיקיית ההורדות שלך.', 'success');
+    }
+
+    // ════════════════════════════════
+    //  Import saved reports from JSON
+    // ════════════════════════════════
+    let _importedReports = []; // holds reports loaded from JSON files
+
+    function toggleSavedPanel() {
+      const panel = document.getElementById('saved-reports-panel');
+      const label = document.getElementById('import-btn-label');
+      if (panel.classList.contains('visible')) {
+        panel.classList.remove('visible');
+        label.textContent = 'דיווחים שנשמרו במחשב';
+      } else {
+        panel.classList.add('visible');
+        label.textContent = 'סגור פאנל';
+        renderImportedReports();
+      }
+    }
+
+    function loadFromJsonFile() {
+      document.getElementById('json-file-input').click();
+    }
+
+    function importJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          // Support both single object and array of reports
+          const reports = Array.isArray(data) ? data : [data];
+          let added = 0;
+          reports.forEach(r => {
+            if (r.תאריך && r.תיאור) {
+              // avoid duplicates by date
+              if (!_importedReports.find(x => x.תאריך === r.תאריך)) {
+                _importedReports.push(r);
+                added++;
+              }
+            }
+          });
+          if (added > 0) {
+            renderImportedReports();
+            showStatus(`✓ נטענו ${added} דיווח/ים מהקובץ.`, 'success');
+          } else {
+            showStatus('לא נמצאו דיווחים חדשים בקובץ.', 'error');
+          }
+        } catch (err) {
+          showStatus('שגיאה בקריאת קובץ ה-JSON.', 'error');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function renderImportedReports() {
+      const container = document.getElementById('saved-reports-list');
+      if (_importedReports.length === 0) {
+        container.innerHTML = '<div class="saved-reports-empty">אין דיווחים שמורים</div>';
+        return;
+      }
+
+      // Sort newest first
+      const sorted = [..._importedReports].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
+
+      container.innerHTML = '';
+      sorted.forEach((report, idx) => {
+        const item = document.createElement('div');
+        item.className = 'saved-report-item';
+        const shortDesc = report.תיאור?.slice(0, 60) + (report.תיאור?.length > 60 ? '…' : '');
+        item.innerHTML = `
+          <div class="report-info">
+            <div class="report-date">${formatDateDisplay(report.תאריך)}</div>
+            <div class="report-desc">${shortDesc}</div>
+          </div>
+          <div class="report-actions">
+            <button class="btn-icon-sm" title="שלח עכשיו" onclick="sendImportedReport(${idx})">
+              <!-- Fluent: send-24-regular -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.694 12 2.299 3.272c-.236-.607.356-1.188.953-.938l18 7.5a.75.75 0 0 1 0 1.382l-18 7.5c-.597.25-1.189-.33-.953-.938L5.694 12Zm0 0 6.556.001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              שלח
+            </button>
+            <button class="btn-icon-sm delete" title="הסר מרשימה" onclick="removeImportedReport(${idx})">
+              <!-- Fluent: delete-24-regular -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.25 3h5.5a.75.75 0 0 1 .75.75V5h3.75a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5H8.5V3.75A.75.75 0 0 1 9.25 3Zm-.75 2h7V4.25a.25.25 0 0 0-.25-.25H8.75a.25.25 0 0 0-.25.25V5ZM5.5 8.5l1.19 11.13A1.75 1.75 0 0 0 8.43 21h7.14a1.75 1.75 0 0 0 1.74-1.37L18.5 8.5H5.5Z" fill="currentColor"/>
+              </svg>
+              מחק
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function sendImportedReport(idx) {
+      const sorted = [..._importedReports].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
+      const report = sorted[idx];
+      if (!report) return;
+
+      if (!isOnline()) {
+        showStatus('אינך מחובר לרשת, הדיווח לא נשלח — אנא שלח את הדיווח כשתהיה מחובר לרשת.', 'error');
+        return;
+      }
+
+      showStatus('שולח...', 'success');
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            username: report.שם,
+            email:    report.אימייל,
+            desc:     report.תיאור,
+            images:   (report.תמונות || []).map(i => i.data),
+            version:  report.גרסה || 'נשלח מתוסף',
+            ref:      'דיווח שמור',
+          }),
+        });
+
+        // Remove from list after successful send
+        const originalIdx = _importedReports.findIndex(r => r.תאריך === report.תאריך);
+        if (originalIdx !== -1) _importedReports.splice(originalIdx, 1);
+        renderImportedReports();
+        showStatus('✓ הדיווח נשלח בהצלחה ונמחק מהרשימה.', 'success');
+      } catch (e) {
+        const isNetErr = (e instanceof TypeError);
+        showStatus(
+          isNetErr
+            ? 'אינך מחובר לרשת, הדיווח לא נשלח — אנא שלח את הדיווח כשתהיה מחובר לרשת.'
+            : 'אירעה שגיאה בשליחת הדיווח. נסה שוב.',
+          'error'
+        );
+      }
+    }
+
+    function removeImportedReport(idx) {
+      const sorted = [..._importedReports].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
+      const report = sorted[idx];
+      if (!report) return;
+      const originalIdx = _importedReports.findIndex(r => r.תאריך === report.תאריך);
+      if (originalIdx !== -1) _importedReports.splice(originalIdx, 1);
+      renderImportedReports();
+    }
+
+    // ════════════════════════════════
+    //  Submit
+    // ════════════════════════════════
+    async function submitReport() {
+      const { name, email } = getActiveUserDetails();
+      const desc = document.getElementById('bug-desc').value.trim();
+
+      if (!name || !email || !desc) {
+        showStatus('אנא מלא את כל שדות החובה (שם, אימייל ותיאור)', 'error');
+        return;
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        showStatus('כתובת האימייל אינה תקינה', 'error');
+        return;
+      }
+
+      setBtnLoading(true);
+      clearStatus();
+
+      // בנה את אובייקט הדיווח מראש — נצטרך אותו גם אם נפתח מודאל
+      const reportObj = buildReportObject(name, email, desc);
+
+      // ── בדיקה מוקדמת: navigator.onLine (אם כבר ידוע שאין רשת) ──
+      if (!isOnline()) {
+        setBtnLoading(false);
+        openOfflineModal(reportObj);
+        return;
+      }
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            username: name,
+            email:    email,
+            desc:     desc,
+            images:   images.map(i => i.dataUrl),
+            version:  'נשלח מתוסף',
+            ref:      'כללי',
+          }),
+        });
+
+        // fetch הצליח — שמור פרטי משתמש ונקה טופס
+        await saveUserDetails(name, email);
+        showSavedBanner(name, email);
+
+        document.getElementById('bug-desc').value = '';
+        images = [];
+        renderImageChips();
+
+        showThankYouModal();
+
+      } catch (e) {
+        // ── fetch נכשל — בדוק אם זו שגיאת רשת (TypeError) או שגיאת שרת ──
+        const isNetworkError = (e instanceof TypeError);
+        setBtnLoading(false);
+
+        if (isNetworkError) {
+          // אין חיבור לרשת — הצע שמירה מקומית
+          openOfflineModal(reportObj);
+        } else {
+          // שגיאת שרת אמיתית — הצג הודעת שגיאה רגילה
+          try {
+            await Otzaria.call('ui.showError', { message: 'אירעה שגיאה בשליחת הדיווח. נסה שוב.' });
+          } catch (_) {
+            showStatus('אירעה שגיאה בשליחת הדיווח. נסה שוב.', 'error');
+          }
+        }
+        return;
+      }
+
+      setBtnLoading(false);
+    }
+
+    // ════════════════════════════════
+    //  Thank You modal
+    // ════════════════════════════════
+    function showThankYouModal() {
+      document.getElementById('thank-you-modal').classList.add('visible');
+    }
+
+    function closeThankYouModal() {
+      document.getElementById('thank-you-modal').classList.remove('visible');
+    }
+
+    // ════════════════════════════════
+    //  UI helpers
+    // ════════════════════════════════
+    function setBtnLoading(loading) {
+      const btn   = document.getElementById('send-btn');
+      const label = document.getElementById('btn-label');
+      btn.disabled = loading;
+      if (loading) {
+        label.innerHTML = '<span class="spinner"></span> שולח...';
+      } else {
+        label.innerHTML = 'שלח דיווח';
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('status-msg');
+      el.textContent = msg;
+      el.className = `status-msg ${type}`;
+    }
+
+    function clearStatus() {
+      const el = document.getElementById('status-msg');
+      el.className = 'status-msg';
+      el.textContent = '';
+    }
+
+    // ════════════════════════════════
+    //  Boot
+    // ════════════════════════════════
+    Otzaria.on('plugin.boot', async (payload) => {
+      applyTheme(payload.theme);
+      await loadSavedUser();
+      updateOfflineBanner();
+    });
+
+    Otzaria.on('theme.changed', applyTheme);
+  </script>
+</body>
+</html>

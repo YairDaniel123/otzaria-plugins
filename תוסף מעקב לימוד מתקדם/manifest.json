@@ -1,9 +1,9 @@
 {
   "id": "com.study_tracker_combined.newplugin",
-  "name": "מעקב לימוד",
-  "version": "1.0.0",
+  "name": "מעקב לימוד מתקדם",
+  "version": "1.0.4",
   "description": "מעקב לימוד יומי, מפת ש\"ס/נ\"ך/משנה, טיימר זמן לימוד",
-  "author": "יאיר דניאל, יוסי כהן,סנאי",
+  "author": "יאיר דניאל, יוסי כהן, סנאי",
   "type": "webapp",
   "entrypoint": "index.html",
   "icon": "",

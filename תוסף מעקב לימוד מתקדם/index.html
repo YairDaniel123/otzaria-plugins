@@ -4,6 +4,11 @@
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>מעקב לימוד</title>
 <style>
+@font-face {
+  font-family: 'Rubik';
+  src: url('Rubik-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -15,7 +20,7 @@
   --color-outline: #79747E;
   --color-primary-subtle:   rgba(103,80,164,.12);
   --color-secondary-subtle: rgba(98,91,113,.12);
-  --font-main: 'Frank Ruhl Libre','David',serif;
+  --font-main: 'Rubik', sans-serif;
   --font-size-base: 18px; --line-height: 1.5;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-pill: 999px;
 }
@@ -514,8 +519,12 @@ body {
     <div class="settings-section">
       <div class="settings-section-title">הגדרות ספק לימוד</div>
       <div class="settings-item">
-        <div><div class="settings-item-label">החרג יום שישי מהספק</div><div class="settings-item-sub">ביום שישי לא יוצג ספק לימוד</div></div>
+        <div><div class="settings-item-label">החרג יום שישי מהספק</div><div class="settings-item-sub">ביום שישי לא יוצג הספק לימוד</div></div>
         <div class="toggle-switch" id="toggle-exclude-friday" onclick="toggleExcludeFriday()"></div>
+      </div>
+      <div class="settings-item">
+        <div><div class="settings-item-label">החרג שבת מהספק</div><div class="settings-item-sub">בשבת לא יוצג הספק לימוד</div></div>
+        <div class="toggle-switch" id="toggle-exclude-shabbat" onclick="toggleExcludeShabbat()"></div>
       </div>
     </div>
 
@@ -708,6 +717,13 @@ body {
         <option value="3">רביעי</option><option value="4">חמישי</option><option value="6">שבת</option>
       </select>
     </div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;">
+      <input type="checkbox" id="reminder-dlg-include-study" style="width:18px;height:18px;cursor:pointer;" />
+      <div>
+        <div style="font-size:0.88em;font-weight:700;">כלול את הלימוד של היום</div>
+        <div style="font-size:0.75em;color:var(--color-outline);">התזכורת תציין מה צריך ללמוד (לפי תוכניות פעילות)</div>
+      </div>
+    </label>
     <div class="divider"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn-primary" style="flex:1;" onclick="saveReminderDialog()">שמור</button>
@@ -806,7 +822,7 @@ let timerData={
   ],
   sessions:[]
 };
-let settings={showMap:true,dateFormat:'hebrew',excludeFriday:false,reminders:[]};
+let settings={showMap:true,dateFormat:'hebrew',excludeFriday:false,excludeShabbat:false,reminders:[]};
 
 async function loadAll(){
   try{const r=await Otzaria.call('storage.get',{key:KEY_PLANS});   if(r.success&&r.data)plans=r.data;}catch(e){}
@@ -821,12 +837,13 @@ async function saveSettings(){try{await Otzaria.call('storage.set',{key:KEY_SETT
 
 // ════ UTILS ════
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function todayStr(){return new Date().toISOString().slice(0,10);}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysBetween(a,b){return Math.round((new Date(b).setHours(0,0,0,0)-new Date(a).setHours(0,0,0,0))/86400000);}
+function isExcludedDay(dayNum){return(settings.excludeFriday&&dayNum===5)||(settings.excludeShabbat&&dayNum===6);}
 function getEffectiveStudyOffset(startDate,toDate){
-  if(!settings.excludeFriday)return daysBetween(startDate,toDate);
+  if(!settings.excludeFriday&&!settings.excludeShabbat)return daysBetween(startDate,toDate);
   let count=0,d=new Date(startDate+'T12:00:00'),end=new Date(toDate+'T12:00:00');
-  while(d<=end){if(d.getDay()!==5)count++;d.setDate(d.getDate()+1);}
+  while(d<=end){if(!isExcludedDay(d.getDay()))count++;d.setDate(d.getDate()+1);}
   return count-1;
 }
 
@@ -877,8 +894,8 @@ function goScreen(name){
 // ════ PLANS LOGIC ════
 function calcRangeForDay(plan,dayOffset){const base=(plan.startOffset||1)-1;const from=base+dayOffset*plan.daily+1;const to=Math.min(base+(dayOffset+1)*plan.daily,plan.total);return{from,to};}
 function calcDoneUnitsUpToToday(plan){const today=todayStr(),offset=getEffectiveStudyOffset(plan.startDate,today);if(offset<0)return 0;const base=(plan.startOffset||1)-1;return Math.min(offset*plan.daily,plan.total-base);}
-function calcStreak(plan){let streak=0,cur=new Date();while(true){const s=cur.toISOString().slice(0,10);if(plan.done?.[s]){streak++;cur.setDate(cur.getDate()-1);}else break;}return streak;}
-function calcTotalDays(plan){const days=Math.ceil((plan.total-(plan.startOffset-1))/plan.daily);return settings.excludeFriday?Math.ceil(days*7/6):days;}
+function calcStreak(plan){let streak=0,cur=new Date();while(true){const d=cur;const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(plan.done?.[s]){streak++;cur.setDate(cur.getDate()-1);}else break;}return streak;}
+function calcTotalDays(plan){const days=Math.ceil((plan.total-(plan.startOffset-1))/plan.daily);const excl=(settings.excludeFriday?1:0)+(settings.excludeShabbat?1:0);return excl>0?Math.ceil(days*7/(7-excl)):days;}
 let currentPlanId=null;
 function getActivePlan(){if(!plans.length)return null;if(currentPlanId&&plans.find(p=>p.id===currentPlanId))return plans.find(p=>p.id===currentPlanId);currentPlanId=plans[0].id;return plans[0];}
 
@@ -927,17 +944,19 @@ function renderHome(){
   }
   plans.forEach(plan=>{
     const offset=getEffectiveStudyOffset(plan.startDate,today),isDone=!!plan.done?.[today];
-    const isFriPause=settings.excludeFriday&&new Date(today+'T12:00:00').getDay()===5;
+    const todayDayH=new Date(today+'T12:00:00').getDay();
+    const isFriPause=isExcludedDay(todayDayH);
     let qt='—';
-    if(isFriPause)qt='יום שישי — אין הספק';
-    else if(offset>=0){const{from,to}=calcRangeForDay(plan,offset);if(from>plan.total)qt='✅ סיימת את הספר!';else if(from===to)qt=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;else qt=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;}
+    if(isFriPause)qt=todayDayH===5?'יום שישי — אין הספק':'שבת — אין הספק';
+    else if(offset>=0){const{from,to}=calcRangeForDay(plan,offset);if(from>plan.total)qt='סיימת את הספר!';else if(from===to)qt=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;else qt=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;}
     else qt='מתחיל ב-'+formatDateShort(plan.startDate);
     const doneU=calcDoneUnitsUpToToday(plan),totalU=plan.total-(plan.startOffset-1);
     const pct=totalU>0?Math.round((doneU/totalU)*100):0;
     const totalDays=calcTotalDays(plan),doneCount=Object.keys(plan.done||{}).filter(d=>plan.done[d]).length;
     const remaining=Math.max(0,totalDays-Math.max(0,offset+1));
     const tile=document.createElement('div');tile.className='plan-tile fade-in'+(isDone?' done-today':'');
-    tile.innerHTML=`<div class="plan-tile-header"><div><div class="plan-tile-name">${plan.book}</div><div class="plan-tile-type">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</div></div>${isDone?'<span class="done-badge">✓ נלמד</span>':''}</div><div class="plan-tile-quota">${qt}</div><div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%"></div></div><div class="plan-tile-stats"><span>${pct}%</span><span>·</span><span>✓ ${doneCount} ימים</span><span>·</span><span>${remaining>0?remaining+' נותרו':'✅ הסתיים'}</span></div>`;
+    const chkSvg='<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21.03 5.72a.75.75 0 010 1.06l-11.5 11.5a.75.75 0 01-1.06 0l-5-5a.75.75 0 111.06-1.06l4.47 4.47 10.97-10.97a.75.75 0 011.06 0z"/></svg>';
+    tile.innerHTML=`<div class="plan-tile-header"><div><div class="plan-tile-name">${plan.book}</div><div class="plan-tile-type">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</div></div>${isDone?`<span class="done-badge" style="display:inline-flex;align-items:center;gap:3px;">${chkSvg}נלמד</span>`:''}</div><div class="plan-tile-quota">${qt}</div><div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%"></div></div><div class="plan-tile-stats"><span>${pct}%</span><span>·</span><span>${doneCount} ימים</span><span>·</span><span>${remaining>0?remaining+' נותרו':'הסתיים'}</span></div>`;
     tile.addEventListener('click',()=>{currentPlanId=plan.id;goScreen('quota');});
     tiles.appendChild(tile);
   });
@@ -951,13 +970,13 @@ function renderHome(){
     tiles.appendChild(tile);
     const indices=getMapCurrentIndices(track),missing=indices.filter(i=>!(td.progress||{})[mapItemKey(flat[i])]);
     const el=document.getElementById(`map-tile-quota-${track}`);
-    if(el)el.textContent=missing.length>0?`${track==='shas'?'דף':'פרק'} היום: ${missing.slice(0,2).map(i=>`${flat[i].name} ${intToGematria(flat[i].idx)}`).join(', ')}${missing.length>2?'...':''}`:'✅ המכסה הושלמה!';
+    if(el)el.textContent=missing.length>0?`${track==='shas'?'דף':'פרק'} היום: ${missing.slice(0,2).map(i=>`${flat[i].name} ${intToGematria(flat[i].idx)}`).join(', ')}${missing.length>2?'...':''}`:'המכסה הושלמה!';
   });
   (mapData.custom_books||[]).filter(b=>b.setup_date).forEach(b=>{
     const flat=getFlatList(b.id),learned=Object.values(b.progress||{}).filter(v=>v>0).length;
     const pct=Math.floor((learned/flat.length)*100),ul=b.unitLabel||'יחידה';
     const indices=getMapCurrentIndices(b.id),missing=indices.filter(i=>!(b.progress||{})[mapItemKey(flat[i])]);
-    const quotaText=missing.length>0?`${ul} היום: ${missing.slice(0,2).map(i=>intToGematria(flat[i].idx)).join(', ')}${missing.length>2?'...':''}`:'✅ המכסה הושלמה!';
+    const quotaText=missing.length>0?`${ul} היום: ${missing.slice(0,2).map(i=>intToGematria(flat[i].idx)).join(', ')}${missing.length>2?'...':''}`:'המכסה הושלמה!';
     const tile=document.createElement('div');tile.className='plan-tile fade-in';
     tile.innerHTML=`<div class="plan-tile-header"><div><div class="plan-tile-name">${b.name}</div><div class="plan-tile-type">${b.pace||1} ${ul} ליום</div></div><span class="chip primary">${ul}</span></div><div class="plan-tile-quota">${quotaText}</div><div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%"></div></div><div class="plan-tile-stats"><span>${pct}% הושלם</span><span>·</span><span>${learned.toLocaleString()} / ${flat.length.toLocaleString()} ${ul}ות</span></div>`;
     tile.addEventListener('click',()=>{mapData.current_track=b.id;goScreen('map');});
@@ -973,18 +992,19 @@ function renderQuota(){
   const body=document.getElementById('quota-body');const plan=getActivePlan();
   if(!plan){body.innerHTML=`<div class="empty-state fade-in"><div class="icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="color:var(--color-outline);"><path d="M6.5 2A2.5 2.5 0 004 4.5v15A2.5 2.5 0 006.5 22h13a.5.5 0 000-1H6.5A1.5 1.5 0 015 19.5H19a.5.5 0 00.5-.5V3.5A1.5 1.5 0 0018 2H6.5zm0 1.5H18a.5.5 0 01.5.5v15H5.5V4.5A1.5 1.5 0 016.5 3.5zM8.25 7a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3.5a.75.75 0 000 1.5h4a.75.75 0 000-1.5h-4z"/></svg></div><div style="font-size:1em;font-weight:700;margin-bottom:8px;">אין תוכנית לימוד</div><p style="margin-bottom:16px;">לחץ "+ חדש"</p><button class="btn-primary" onclick="openPlanOverlay(null)">הגדר תוכנית</button></div>`;return;}
   const today=todayStr(),calOffset=daysBetween(plan.startDate,today),offset=getEffectiveStudyOffset(plan.startDate,today),isDone=!!plan.done?.[today];
-  const isFriPause=settings.excludeFriday&&new Date(today+'T12:00:00').getDay()===5;
+  const todayDayQ=new Date(today+'T12:00:00').getDay();
+  const isFriPause=isExcludedDay(todayDayQ);
   let refText='—';
-  if(isFriPause)refText='יום שישי — אין הספק היום';
+  if(isFriPause)refText=todayDayQ===5?'יום שישי — אין הספק היום':'שבת — אין הספק היום';
   else if(offset<0)refText='התוכנית מתחילה ב-'+formatDate(plan.startDate);
-  else{const{from,to}=calcRangeForDay(plan,offset);if(from>plan.total)refText='✅ סיימת את הספר!';else if(from===to)refText=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;else refText=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;}
+  else{const{from,to}=calcRangeForDay(plan,offset);if(from>plan.total)refText='סיימת את הספר!';else if(from===to)refText=`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`;else refText=`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;}
   const doneU=calcDoneUnitsUpToToday(plan),totalU=plan.total-(plan.startOffset-1);
   const pct=totalU>0?Math.round((doneU/totalU)*100):0,streak=calcStreak(plan);
   const doneCount=Object.keys(plan.done||{}).filter(d=>plan.done[d]).length;
   const remaining=Math.max(0,calcTotalDays(plan)-Math.max(0,calOffset+1));
   body.innerHTML='';
   const tc=document.createElement('div');tc.className='today-card fade-in';
-  tc.innerHTML=`<div class="today-label">היום · ${formatDate(today)}</div><div class="today-ref">${refText}</div><div class="today-meta"><span class="chip primary">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</span>${offset>=0?`<span class="chip">יום ${offset+1}</span>`:''}<span class="chip">${plan.book}</span></div><div class="today-actions"><button class="btn-primary" style="display:inline-flex;align-items:center;gap:6px;" onclick="openInReader()">פתח בקורא<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10.78 19.03a.75.75 0 01-1.06 0l-6.25-6.25a.75.75 0 010-1.06l6.25-6.25a.75.75 0 011.06 1.06L5.81 11.5H20a.75.75 0 010 1.5H5.81l4.97 4.97a.75.75 0 010 1.06z"/></svg></button>${!isFriPause&&offset>=0&&!isDone?`<button class="btn-secondary" onclick="markDone()">✓ סמן כלמוד</button>`:''}${isDone?'<span style="font-size:0.82em;color:var(--color-primary);font-weight:700;align-self:center;">✓ נלמד היום!</span>':''}</div>`;
+  tc.innerHTML=`<div class="today-label">היום · ${formatDate(today)}</div><div class="today-ref">${refText}</div><div class="today-meta"><span class="chip primary">${plan.daily} ${unitLabel(plan.unitType,plan.customUnit,plan.daily)} ליום</span>${offset>=0?`<span class="chip">יום ${offset+1}</span>`:''}<span class="chip">${plan.book}</span></div><div class="today-actions"><button class="btn-primary" style="display:inline-flex;align-items:center;gap:6px;" onclick="openInReader()">פתח בקורא<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10.78 19.03a.75.75 0 01-1.06 0l-6.25-6.25a.75.75 0 010-1.06l6.25-6.25a.75.75 0 011.06 1.06L5.81 11.5H20a.75.75 0 010 1.5H5.81l4.97 4.97a.75.75 0 010 1.06z"/></svg></button>${!isFriPause&&offset>=0&&!isDone?'<button class="btn-secondary" style="display:inline-flex;align-items:center;gap:5px;" onclick="markDone()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21.03 5.72a.75.75 0 010 1.06l-11.5 11.5a.75.75 0 01-1.06 0l-5-5a.75.75 0 111.06-1.06l4.47 4.47 10.97-10.97a.75.75 0 011.06 0z"/></svg>סמן כלמוד</button>':''}${isDone?'<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.82em;color:var(--color-primary);font-weight:700;align-self:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21.03 5.72a.75.75 0 010 1.06l-11.5 11.5a.75.75 0 01-1.06 0l-5-5a.75.75 0 111.06-1.06l4.47 4.47 10.97-10.97a.75.75 0 011.06 0z"/></svg>נלמד היום!</span>':''}</div>`;
   body.appendChild(tc);
   const pc=document.createElement('div');pc.className='card';
   pc.innerHTML=`<div class="card-title">התקדמות</div><div class="progress-wrap"><div class="progress-header"><span class="progress-label">${doneU} מתוך ${totalU} ${unitLabel(plan.unitType,plan.customUnit,totalU)}</span><span class="progress-pct">${pct}%</span></div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div></div>`;
@@ -999,16 +1019,16 @@ function renderQuota(){
     const count=Math.min(calOffset+1,14);
     for(let i=0;i<count;i++){
       const d=new Date(today+'T12:00:00');d.setDate(d.getDate()-i);
-      const ds=d.toISOString().slice(0,10),isFriExcl=settings.excludeFriday&&d.getDay()===5;
+      const ds=d.toISOString().slice(0,10),dayNumH=d.getDay(),isFriExcl=isExcludedDay(dayNumH);
       const done=!!plan.done?.[ds],isToday=(i===0);
       const label=isToday?'היום':formatDateShort(ds);
       const item=document.createElement('div');item.className='history-item'+(isToday&&done?' today-done':'');
-      if(isFriExcl){item.innerHTML=`<div><div class="day-label">${label}</div><div class="day-ref" style="color:var(--color-outline);">יום שישי — אין הספק</div></div><span class="history-badge" style="background:var(--color-secondary-subtle);color:var(--color-outline);font-size:0.72em;font-weight:700;padding:2px 7px;border-radius:999px;">שישי</span>`;hl.appendChild(item);continue;}
+      if(isFriExcl){const dayBadge=dayNumH===5?'שישי':'שבת';const dayMsg=dayNumH===5?'יום שישי — אין הספק':'שבת — אין הספק';item.innerHTML=`<div><div class="day-label">${label}</div><div class="day-ref" style="color:var(--color-outline);">${dayMsg}</div></div><span class="history-badge" style="background:var(--color-secondary-subtle);color:var(--color-outline);font-size:0.72em;font-weight:700;padding:2px 7px;border-radius:999px;">${dayBadge}</span>`;hl.appendChild(item);continue;}
       const studyOff=getEffectiveStudyOffset(plan.startDate,ds);
       if(studyOff<0)break;
       const{from,to}=calcRangeForDay(plan,studyOff);
       const refStr=from>plan.total?'(סיום)':from===to?`${unitLabel(plan.unitType,plan.customUnit,1)} ${from}`:`${unitLabel(plan.unitType,plan.customUnit,2)} ${from}–${to}`;
-      item.innerHTML=`<div><div class="day-label">${label}</div><div class="day-ref">${refStr}</div></div>${done?'<span class="history-badge badge-done">✓ נלמד</span>':'<span class="history-badge badge-pending">טרם נלמד</span>'}`;
+      item.innerHTML=`<div><div class="day-label">${label}</div><div class="day-ref">${refStr}</div></div>${done?'<span class="history-badge badge-done" style="display:inline-flex;align-items:center;gap:3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21.03 5.72a.75.75 0 010 1.06l-11.5 11.5a.75.75 0 01-1.06 0l-5-5a.75.75 0 111.06-1.06l4.47 4.47 10.97-10.97a.75.75 0 011.06 0z"/></svg>נלמד</span>':'<span class="history-badge badge-pending">טרם נלמד</span>'}`;
       item.addEventListener('click',()=>{openInReaderOffset(studyOff);});hl.appendChild(item);
     }
   }
@@ -1017,8 +1037,26 @@ function renderQuota(){
   hc.appendChild(ew);body.appendChild(hc);
 }
 
-async function markDone(){const plan=getActivePlan();if(!plan)return;plan.done=plan.done||{};plan.done[todayStr()]=true;await savePlans();renderQuota();try{await Otzaria.call('notifications.showInApp',{message:'כל הכבוד! הלימוד היומי הושלם ✅',type:'success'});}catch(e){}}
-async function openInReader(dayOffset){const plan=getActivePlan();if(!plan||!plan.bookId)return;const today=todayStr(),off=dayOffset??daysBetween(plan.startDate,today);const{from}=calcRangeForDay(plan,Math.max(0,off));try{await Otzaria.call('reader.openBook',{bookId:plan.bookId,index:Math.max(0,from-1)});}catch(e){try{await Otzaria.call('notifications.showInApp',{message:'לא ניתן לפתוח את הספר',type:'error'});}catch(ee){}}}
+async function markDone(){const plan=getActivePlan();if(!plan)return;plan.done=plan.done||{};plan.done[todayStr()]=true;await savePlans();renderQuota();try{await Otzaria.call('notifications.showInApp',{message:'כל הכבוד! הלימוד היומי הושלם',type:'success'});}catch(e){}}
+function buildUnitRef(unitType,from){
+  const h=toHebNum(from);
+  if(unitType==='daf')    return `${h}.`;
+  if(unitType==='perek')  return `פרק ${h}`;
+  if(unitType==='siman')  return `סימן ${h}`;
+  return null;
+}
+async function openInReader(dayOffset){
+  const plan=getActivePlan();if(!plan)return;
+  const bookId=plan.bookId||plan.book;
+  if(!bookId){try{await Otzaria.call('notifications.showInApp',{message:'לא הוגדר שם ספר לפתיחה בקורא — ערוך את התוכנית והזן שם ספר',type:'error'});}catch(e){}return;}
+  const today=todayStr(),off=dayOffset??daysBetween(plan.startDate,today);
+  const{from}=calcRangeForDay(plan,Math.max(0,off));
+  const ref=buildUnitRef(plan.unitType,from);
+  try{
+    if(ref){await Otzaria.call('reader.openBookAtRef',{bookId,ref,index:0});}
+    else    {await Otzaria.call('reader.openBook',   {bookId,index:0});}
+  }catch(e){try{await Otzaria.call('notifications.showInApp',{message:`לא ניתן לפתוח את "${bookId}" — בדוק שהשם מדויק`,type:'error'});}catch(ee){}}
+}
 function openInReaderOffset(off){openInReader(off);}
 
 // ════ PLAN OVERLAY ════
@@ -1055,7 +1093,9 @@ async function savePlan(){
 }
 async function deletePlan(){
   const id=document.getElementById('plan-edit-id').value;if(!id)return;
-  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק תוכנית',content:'למחוק את תוכנית הלימוד?'});if(!data.confirmed)return;}catch(e){}
+  let confirmed=false;
+  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק תוכנית',content:'למחוק את תוכנית הלימוד?'});confirmed=!!data?.confirmed;}catch(e){}
+  if(!confirmed)return;
   plans=plans.filter(p=>p.id!==id);currentPlanId=plans[0]?.id||null;await savePlans();closePlanOverlay();
   if(currentScreen==='quota')renderQuota();else renderHome();
 }
@@ -1184,7 +1224,9 @@ async function addCxBook(){
   try{await Otzaria.call('notifications.showInApp',{message:`"${name}" נוסף! ${total} ${ul}ות`,type:'success'});}catch(e){}
 }
 async function removeCxBook(id){
-  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק ספר',content:'למחוק ספר זה מהמפה?'});if(!data.confirmed)return;}catch(e){}
+  let confirmed=false;
+  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק ספר',content:'למחוק ספר זה מהמפה?'});confirmed=!!data?.confirmed;}catch(e){}
+  if(!confirmed)return;
   mapData.custom_books=(mapData.custom_books||[]).filter(b=>b.id!==id);delete mapData[id];
   if(mapData.current_track===id){if(mapData.active_tracks.length)mapData.current_track=mapData.active_tracks[0];else if(mapData.custom_books.length)mapData.current_track=mapData.custom_books[0].id;else mapData.current_track='shas';}
   await saveMap();renderCxBooksInSetup();
@@ -1301,10 +1343,11 @@ function renderMapGrid(track){
   const unit=cxBook?(cxBook.unitLabel||'יחידה'):track==='shas'?'דף':'פרק';
   const missing=indices.filter(i=>!(td?.progress||{})[mapItemKey(flat[i])]);
   if(missing.length>0){const pItem=flat[missing[0]],more=missing.length>1?` (+${missing.length-1} נוספים)`:'';document.getElementById('map-daily-task').textContent=`${unit} היום: ${intToGematria(pItem.idx)}${more}`;if(!cxBook)mapCurrentItem[track]=flat[missing[0]].name;}
-  else document.getElementById('map-daily-task').textContent='✅ המכסה הושלמה!';
+  else document.getElementById('map-daily-task').textContent='המכסה הושלמה!';
 }
 function renderMapFooter(track){
-  const td=mapData[track],flat=getFlatList(track),setup=new Date(td.setup_date||new Date());setup.setHours(0,0,0,0);
+  const td=mapData[track];if(!td)return;
+  const flat=getFlatList(track),setup=new Date(td.setup_date||new Date());setup.setHours(0,0,0,0);
   const today=getMapAdjustedToday(),totalDays=Math.max(1,Math.floor((today-setup)/86400000)),pace=td.pace||1;
   const learned=Object.values(td.progress||{}).filter(v=>v>0).length,startIdx=getMapStartIdx(track);
   const debts=Array.from({length:startIdx},(_,i)=>i).filter(i=>!(td.progress||{})[mapItemKey(flat[i])]).length;
@@ -1316,7 +1359,7 @@ function renderMapFooter(track){
 }
 async function mapToggleItem(track,key){if(!mapData[track])return;mapData[track].progress=mapData[track].progress||{};const cur=mapData[track].progress[key]||0,next=(cur+1)%3;if(next===0)delete mapData[track].progress[key];else mapData[track].progress[key]=next;await saveMap();renderMap();}
 async function mapBulkAction(status){const track=mapData.current_track,name=mapCurrentItem[track];if(!name)return;const db=getMapDB(track);let count=0;for(const s in db)if(db[s][name])count=db[s][name];const start=track==='shas'?2:1;mapData[track].progress=mapData[track].progress||{};for(let p=start;p<=count;p++){const key=`${name}_${p}`;if(status===0)delete mapData[track].progress[key];else mapData[track].progress[key]=status;}await saveMap();renderMap();}
-async function mapDeferDay(){const track=mapData.current_track;mapData[track].defer_days=(mapData[track].defer_days||0)+1;await saveMap();renderMap();}
+async function mapDeferDay(){const track=mapData.current_track;if(!mapData[track])return;mapData[track].defer_days=(mapData[track].defer_days||0)+1;await saveMap();renderMap();}
 function switchMapTrack(track){if(!mapData.active_tracks.includes(track)&&!isCustomTrack(track))return;mapData.current_track=track;renderMap();}
 function toggleMapSidebar(){document.getElementById('map-sidebar').classList.toggle('collapsed');}
 
@@ -1328,7 +1371,7 @@ function openMapSetup(){
 }
 function populateMapSelect(id,db){const sel=document.getElementById(id);sel.innerHTML='';for(const s in db){const g=document.createElement('optgroup');g.label=s;for(const n in db[s]){const o=document.createElement('option');o.value=n;o.textContent=n;g.appendChild(o);}sel.appendChild(g);}}
 async function saveMapSetup(){
-  const today=new Date().toISOString().split('T')[0];mapData.active_tracks=[];
+  const _d=new Date(),today=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');mapData.active_tracks=[];
   for(const t of['shas','nach','mishna']){if(!document.getElementById(`ms-check-${t}`).checked){mapData[t]=null;continue;}mapData.active_tracks.push(t);let name,idx,pace;
     if(t==='shas'){name=document.getElementById('ms-shas-masechet').value;idx=parseInt(document.getElementById('ms-shas-daf').value)||2;pace=parseFloat(document.getElementById('ms-shas-pace').value)||1;}
     else if(t==='nach'){name=document.getElementById('ms-nach-book').value;idx=parseInt(document.getElementById('ms-nach-chapter').value)||1;pace=parseFloat(document.getElementById('ms-nach-pace').value)||1;}
@@ -1413,7 +1456,7 @@ function updateGoalRemain(){
   const goalSec=topic.dailyGoalMin*60;
   const liveSec=timerState.running&&timerState.startTime?Math.floor((Date.now()-timerState.startTime)/1000):0;
   const remaining=Math.max(0,goalSec-doneSec-timerState.elapsed-liveSec);
-  el.textContent=doneSec+timerState.elapsed+liveSec>=goalSec?'✓ יעד יומי הושג!':`נותר ליעד: ${fmtDuration(remaining)}`;
+  el.innerHTML=doneSec+timerState.elapsed+liveSec>=goalSec?'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-left:3px;"><path d="M21.03 5.72a.75.75 0 010 1.06l-11.5 11.5a.75.75 0 01-1.06 0l-5-5a.75.75 0 111.06-1.06l4.47 4.47 10.97-10.97a.75.75 0 011.06 0z"/></svg>יעד יומי הושג!':`נותר ליעד: ${fmtDuration(remaining)}`;
 }
 
 function renderTimerSessions(){
@@ -1581,7 +1624,9 @@ async function saveTopicDialog(){
 }
 
 async function deleteTopic(topicId){
-  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק נושא',content:'למחוק את הנושא?'});if(!data.confirmed)return;}catch(e){}
+  let confirmed=false;
+  try{const{data}=await Otzaria.call('ui.showConfirm',{title:'מחק נושא',content:'למחוק את הנושא?'});confirmed=!!data?.confirmed;}catch(e){}
+  if(!confirmed)return;
   timerData.topics=(timerData.topics||[]).filter(t=>t.id!==topicId);
   if(timerState.topicId===topicId){timerState.topicId=null;timerState.topicName='';}
   await saveTimer();renderTimerTopics();
@@ -1642,6 +1687,21 @@ function renderParallelTimers(){
 }
 
 // ════ REMINDERS ════
+function buildStudyTextForDate(dateStr,onlyUndone=false){
+  if(!plans.length)return '';
+  const parts=[];
+  for(const p of plans){
+    if(onlyUndone&&p.done?.[dateStr])continue;
+    const off=getEffectiveStudyOffset(p.startDate,dateStr);
+    if(off<0)continue;
+    const{from,to}=calcRangeForDay(p,off);
+    if(from>p.total)continue;
+    const ref=from===to?`${unitLabel(p.unitType,p.customUnit,1)} ${from}`:`${unitLabel(p.unitType,p.customUnit,2)} ${from}–${to}`;
+    parts.push(`${p.book}: ${ref}`);
+  }
+  return parts.join(', ');
+}
+
 function setReminderRepeat(val){
   document.querySelectorAll('#reminder-repeat-seg .segment-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
   document.getElementById('reminder-weekday-wrap').style.display=val==='weekly'?'':'none';
@@ -1655,6 +1715,7 @@ function openReminderDialog(remId){
   setReminderRepeat(rem?.repeat||'daily');
   document.getElementById('reminder-dlg-weekday').value=rem?.weekday??0;
   document.getElementById('btn-reminder-delete').style.display=rem?'block':'none';
+  document.getElementById('reminder-dlg-include-study').checked=!!(rem?.includeStudy);
   document.getElementById('reminder-dialog').classList.add('open');
 }
 async function saveReminderDialog(){
@@ -1664,9 +1725,10 @@ async function saveReminderDialog(){
   const time=document.getElementById('reminder-dlg-time').value||'20:00';
   const repeat=document.querySelector('#reminder-repeat-seg .segment-btn.active')?.dataset.val||'daily';
   const weekday=parseInt(document.getElementById('reminder-dlg-weekday').value)||0;
+  const includeStudy=document.getElementById('reminder-dlg-include-study').checked;
   if(!settings.reminders)settings.reminders=[];
-  if(id){const r=settings.reminders.find(r=>r.id===id);if(r){r.label=label;r.time=time;r.repeat=repeat;r.weekday=weekday;}}
-  else{settings.reminders.push({id:uid(),label,time,repeat,weekday,enabled:true});}
+  if(id){const r=settings.reminders.find(r=>r.id===id);if(r){r.label=label;r.time=time;r.repeat=repeat;r.weekday=weekday;r.includeStudy=includeStudy;}}
+  else{settings.reminders.push({id:uid(),label,time,repeat,weekday,enabled:true,includeStudy});}
   await saveSettings();closeDialog('reminder-dialog');renderRemindersSettings();
   await scheduleAllReminders();
   try{await Otzaria.call('notifications.showInApp',{message:'התזכורת נשמרה!',type:'success'});}catch(e){}
@@ -1706,7 +1768,10 @@ async function scheduleReminderOccurrences(r){
   if(d<=now)d.setDate(d.getDate()+1);
   if(r.repeat==='weekly'){while(d.getDay()!==(r.weekday??0))d.setDate(d.getDate()+1);}
   for(let i=0;i<count;i++){
-    try{await Otzaria.call('notifications.scheduleSystem',{title:'תזכורת לימוד',body:r.label,scheduledTime:new Date(d).toISOString()});}catch(e){}
+    const ds=d.toISOString().slice(0,10);
+    let body=r.label;
+    if(r.includeStudy){const study=buildStudyTextForDate(ds,false);if(study)body+=`\nהלימוד של היום: ${study}`;}
+    try{await Otzaria.call('notifications.scheduleSystem',{title:'תזכורת לימוד',body,scheduledTime:new Date(d).toISOString()});}catch(e){}
     if(r.repeat==='daily')d.setDate(d.getDate()+1);
     else if(r.repeat==='weekly')d.setDate(d.getDate()+7);
     else break;
@@ -1719,7 +1784,9 @@ async function checkDueReminders(){
     const fire=new Date();fire.setHours(hh,mm,0,0);
     if(fire<twoHoursAgo||fire>now)continue;
     if(r.repeat==='weekly'&&now.getDay()!==(r.weekday??0))continue;
-    try{await Otzaria.call('notifications.showInApp',{message:`תזכורת: ${r.label}`,type:'info'});}catch(e){}
+    let msg=`תזכורת: ${r.label}`;
+    if(r.includeStudy){const study=buildStudyTextForDate(todayStr(),true);if(study)msg+=` — עוד לא למדת: ${study}`;}
+    try{await Otzaria.call('notifications.showInApp',{message:msg,type:'info'});}catch(e){}
   }
 }
 
@@ -1735,6 +1802,7 @@ function renderSettings(){
   // use .onclick to prevent duplicate listeners on re-render
   document.getElementById('settings-timer-subjects').onclick=()=>{goScreen('timer');switchTimerTab('topics');};
   document.getElementById('toggle-exclude-friday').classList.toggle('on',settings.excludeFriday);
+  document.getElementById('toggle-exclude-shabbat').classList.toggle('on',settings.excludeShabbat);
   renderRemindersSettings();
 }
 async function toggleExcludeFriday(){
@@ -1743,10 +1811,16 @@ async function toggleExcludeFriday(){
   if(currentScreen==='home')renderHome();
   else if(currentScreen==='quota')renderQuota();
 }
+async function toggleExcludeShabbat(){
+  settings.excludeShabbat=!settings.excludeShabbat;
+  await saveSettings();renderSettings();
+  if(currentScreen==='home')renderHome();
+  else if(currentScreen==='quota')renderQuota();
+}
 async function toggleMapVisibility(){settings.showMap=!settings.showMap;document.getElementById('toggle-show-map').classList.toggle('on',settings.showMap);document.getElementById('ntab-map').style.display=settings.showMap?'':'none';await saveSettings();}
 async function setDateFormat(fmt){settings.dateFormat=fmt;await saveSettings();renderSettings();if(currentScreen==='home')renderHome();else if(currentScreen==='quota')renderQuota();else if(currentScreen==='timer')renderTimer();}
 function exportData(){const data={plans,mapData,timerData,settings,exported:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`מעקב_לימוד_גיבוי_${todayStr()}.json`;a.click();URL.revokeObjectURL(url);}
-async function importData(event){const file=event.target.files[0];if(!file)return;try{const text=await file.text(),data=JSON.parse(text);if(data.plans)plans=data.plans;if(data.mapData)mapData=data.mapData;if(data.timerData)timerData=data.timerData;if(data.settings)settings={...settings,...data.settings};await savePlans();await saveMap();await saveTimer();await saveSettings();const planCount=plans.length,sessionCount=(timerData.sessions||[]).length,topicCount=(timerData.topics||[]).length;
+async function importData(event){const file=event.target.files[0];if(!file)return;try{const text=await file.text(),data=JSON.parse(text);if(!data||typeof data!=='object')throw new Error('invalid');if(Array.isArray(data.plans))plans=data.plans;if(data.mapData&&typeof data.mapData==='object'){mapData=data.mapData;if(!mapData.custom_books)mapData.custom_books=[];rebuildCustomRefs();}if(data.timerData&&typeof data.timerData==='object')timerData=data.timerData;if(data.settings&&typeof data.settings==='object')settings={...settings,...data.settings};await savePlans();await saveMap();await saveTimer();await saveSettings();const planCount=plans.length,sessionCount=(timerData.sessions||[]).length,topicCount=(timerData.topics||[]).length;
     try{await Otzaria.call('notifications.showInApp',{message:`גיבוי נטען בהצלחה! ${planCount} תוכניות · ${sessionCount} סשנים · ${topicCount} נושאים`,type:'success'});}catch(e){}goScreen(currentScreen);}catch(e){try{await Otzaria.call('notifications.showInApp',{message:'שגיאה בטעינת קובץ הגיבוי — בדוק שהקובץ תקין',type:'error'});}catch(ee){}}event.target.value='';}
 
 // ════ DIALOG HELPERS ════

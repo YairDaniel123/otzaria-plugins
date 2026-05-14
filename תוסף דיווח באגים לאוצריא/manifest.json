@@ -1,0 +1,31 @@
+{
+  "id": "com.software_bug_report.newplugin",
+  "name": "תוסף דיווח באגים לאוצריא",
+  "version": "1.0.2",
+  "description": "תוסף לדיווח על באגים בתוכנה כולל צילומי מסך. הדיווח נשלח ישירות לגיטאב. ישנה אפשרות לשמירת הדיווח באופן מקומי אם אין חיבור לרשת.",
+  "author": "Yair Daniel",
+  "type": "webapp",
+  "entrypoint": "bug-report-plugin (2).html",
+  "icon": "bug_24_regular",
+  "category": "Utilities",
+  "stability": "beta",
+  "minAppVersion": "0.9.91",
+  "permissions": [
+    "events.subscribe:theme.changed",
+    "plugin.storage.read",
+    "plugin.storage.write",
+    "network.access"
+  ],
+  "network": {
+    "enabled": true,
+    "allowlist": []
+  },
+  "contributes": {
+    "toolTab": {
+      "title": "דיווח באגים",
+      "order": 100,
+      "defaultPinned": true,
+      "iconName": "bug_24_regular"
+    }
+  }
+}

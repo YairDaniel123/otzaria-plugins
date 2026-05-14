@@ -1,0 +1,26 @@
+מעקב לימוד מתקדם
+
+com.study_tracker_combined.newplugin
+
+מעקב לימוד יומי מתקדם - בחירת סדרי לימוד אישיים מגוונים, תצוגה חיה של קצב הלימוד, סדרי לימוד עם תוכנית סיום עתידית, טיימר מעקב לזמן הלימוד, ועוד.
+
+יאיר דניאל, יוסי כהן, סנאי
+
+0.9.91
+
+
+מעקב לימוד +
+
+
+הרשאות:
+
+events.subscribe:theme.changed
+plugin.storage.read
+plugin.storage.write
+notifications.send
+ui.feedback
+reader.open
+library.books.read
+library.content.read
+notifications.system
+

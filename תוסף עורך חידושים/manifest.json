@@ -1,0 +1,24 @@
+{
+  "id": "com.otzaria_word_editor.newplugin",
+  "name": "עורך חידושים",
+  "version": "1.0.0",
+  "description": "עורך מסמכים בסגנון Word לכתיבת חידושי תורה, עם שילוב מלא עם ספריית אוצריא",
+  "author": "יאיר דניאל",
+  "type": "webapp",
+  "entrypoint": "index.html",
+  "icon": "",
+  "category": "Utilities",
+  "stability": "beta",
+  "minAppVersion": "0.9.91",
+  "permissions": [
+    "events.subscribe:theme.changed",
+    "plugin.storage.read",
+    "plugin.storage.write",
+    "reader.open",
+    "library.books.read",
+    "library.content.read",
+    "notifications.send",
+    "ui.feedback",
+    "notifications.system"
+  ]
+}

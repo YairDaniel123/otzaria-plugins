@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>וורד לאוצריא</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;}
+:root{--wb:#2b579a;--wb-dk:#1a4480;--wb-lt:#dce6f7;--bh:rgba(43,87,154,.13);--ba:rgba(43,87,154,.28);--rb:#f3f3f3;--rbb:#d1d1d1;--canvas:#d2d2d2;}
+body{display:flex;flex-direction:column;background:var(--canvas);}
+
+/* TITLE BAR */
+#tb{background:var(--wb);height:36px;display:flex;align-items:center;padding:0 6px;gap:2px;flex-shrink:0;color:#fff;user-select:none;}
+.tbl{background:#fff;color:var(--wb);font-weight:900;font-style:italic;font-size:.95em;padding:1px 7px;border-radius:3px;margin-left:6px;cursor:default;}
+.tbb{background:none;border:none;color:#fff;cursor:pointer;padding:3px 7px;border-radius:3px;font-size:.78em;font-family:inherit;display:flex;align-items:center;gap:3px;transition:background .1s;}
+.tbb:hover{background:rgba(255,255,255,.2);}
+.tbb svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+.tb-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;}
+#doc-title{background:transparent;border:none;color:#fff;font-family:inherit;font-size:.86em;font-weight:600;text-align:center;width:200px;outline:none;border-bottom:1px solid transparent;transition:border-color .15s;}
+#doc-title:hover,#doc-title:focus{border-bottom-color:rgba(255,255,255,.55);}
+.tb-srch{display:flex;align-items:center;background:rgba(255,255,255,.15);border-radius:4px;padding:3px 10px;gap:5px;}
+.tb-srch input{background:none;border:none;color:#fff;font-family:inherit;font-size:.78em;outline:none;width:120px;}
+.tb-srch input::placeholder{color:rgba(255,255,255,.6);}
+.tb-srch svg{width:13px;height:13px;fill:rgba(255,255,255,.7);}
+
+/* REC INDICATOR */
+#rec-ind{display:none;align-items:center;gap:4px;background:rgba(200,0,0,.85);padding:1px 8px;border-radius:3px;font-size:.74em;cursor:pointer;}
+#rec-ind span{animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TAB BAR */
+#tab-bar{background:var(--wb);display:flex;align-items:flex-end;padding:0 6px;flex-shrink:0;}
+.rtab{padding:6px 13px 5px;font-size:.79em;color:rgba(255,255,255,.88);cursor:pointer;border:none;background:none;font-family:inherit;border-radius:3px 3px 0 0;position:relative;top:1px;white-space:nowrap;transition:background .1s,color .1s;}
+.rtab:hover{background:rgba(255,255,255,.15);color:#fff;}
+.rtab.on{background:var(--rb);color:var(--wb);font-weight:600;border:1px solid var(--rbb);border-bottom:1px solid var(--rb);}
+.rtab.otz-tab{color:#ffe566;}
+.rtab.otz-tab.on{color:var(--wb);}
+#rib-tog{margin-right:auto;background:none;border:none;color:rgba(255,255,255,.65);cursor:pointer;padding:3px 8px;font-size:.9em;align-self:center;line-height:1;transition:color .1s;}
+#rib-tog:hover{color:#fff;}
+
+/* RIBBON */
+#ribbon{background:var(--rb);border-bottom:2px solid var(--rbb);flex-shrink:0;overflow:hidden;transition:max-height .18s ease;max-height:115px;}
+#ribbon.closed{max-height:0;border-bottom:none;}
+.rp{display:none;padding:4px 6px 0;gap:0;align-items:stretch;}
+.rp.on{display:flex;}
+.rg{display:flex;flex-direction:column;border-right:1px solid var(--rbb);padding:0 6px;min-width:0;}
+.rg:last-child{border-right:none;}
+.rgb{display:flex;align-items:center;gap:2px;flex:1;padding-bottom:1px;}
+.rgb.col{flex-direction:column;gap:2px;align-items:stretch;justify-content:center;}
+.rgt{font-size:.6em;color:#888;text-align:center;padding:2px 0 3px;white-space:nowrap;}
+.rb{background:none;border:1px solid transparent;cursor:pointer;color:#333;font-family:inherit;padding:2px 5px;border-radius:2px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.68em;white-space:nowrap;min-width:30px;transition:background .08s,border-color .08s;line-height:1.3;}
+.rb:hover{background:var(--bh);border-color:rgba(43,87,154,.35);}
+.rb:active,.rb.on{background:var(--ba);border-color:rgba(43,87,154,.6);}
+.rb svg{width:18px;height:18px;fill:currentColor;flex-shrink:0;}
+.rb.lg{padding:3px 8px;min-width:50px;}
+.rb.lg svg{width:28px;height:28px;}
+.rb.sm{flex-direction:row;padding:2px 7px;min-width:unset;font-size:.7em;gap:3px;}
+.rb.sm svg{width:13px;height:13px;}
+.rb.ico{min-width:26px;padding:3px 4px;}
+.rb.ico svg{width:17px;height:17px;}
+.rv{display:flex;flex-direction:column;gap:1px;}
+.rv .rb{flex-direction:row;padding:1px 7px;font-size:.7em;min-width:unset;gap:3px;}
+.rv .rb svg{width:13px;height:13px;}
+.rsep{width:1px;background:var(--rbb);align-self:stretch;margin:2px 4px;}
+.rsel{border:1px solid #adadad;background:#fff;color:#333;font-family:inherit;padding:2px 4px;border-radius:2px;font-size:.74em;outline:none;cursor:pointer;}
+.rsel:hover,.rsel:focus{border-color:var(--wb);}
+.swatch{height:3px;border-radius:1px;width:16px;margin-top:1px;}
+input[type=color].hc{opacity:0;width:0;height:0;position:absolute;pointer-events:none;}
+.sty-gal{display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding:2px 0;}
+.sty-btn{border:1px solid #d8d8d8;cursor:pointer;padding:2px 8px;border-radius:2px;background:#fff;font-size:.8em;white-space:nowrap;transition:border-color .1s,background .1s;font-family:'Times New Roman',serif;}
+.sty-btn:hover{border-color:var(--wb);background:var(--wb-lt);}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* NAV PANE */
+#nav-pane{width:240px;flex-shrink:0;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column;overflow:hidden;transition:width .2s;}
+#nav-pane.hide{width:0;border-right:none;}
+.nav-head{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #e8e8e8;flex-shrink:0;}
+.nav-head span{font-size:.8em;font-weight:600;color:#333;}
+.nav-xbtn{background:none;border:none;cursor:pointer;color:#777;font-size:1em;padding:1px 5px;border-radius:2px;}
+.nav-xbtn:hover{background:#f0f0f0;}
+.nav-srch{padding:5px 8px;border-bottom:1px solid #e8e8e8;flex-shrink:0;}
+.nav-srch input{width:100%;border:1px solid #d1d1d1;border-radius:3px;padding:3px 7px;font-family:inherit;font-size:.78em;outline:none;}
+.nav-srch input:focus{border-color:var(--wb);}
+.nav-tabs{display:flex;border-bottom:1px solid #e8e8e8;flex-shrink:0;}
+.nav-tab{flex:1;padding:4px;font-size:.7em;cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2px solid transparent;color:#777;transition:border-color .1s,color .1s;}
+.nav-tab.on{border-bottom-color:var(--wb);color:var(--wb);font-weight:600;}
+#nav-body{flex:1;overflow-y:auto;padding:2px 0;}
+.nav-item{padding:4px 10px;font-size:.77em;cursor:pointer;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .08s;}
+.nav-item:hover{background:#f5f5f5;}
+.nav-item.h1{font-weight:700;}
+.nav-item.h2{padding-right:20px;color:#2e74b5;}
+.nav-item.h3{padding-right:32px;color:#555;}
+.nav-item.cur{background:var(--wb-lt);color:var(--wb);}
+.nav-empty{padding:16px;text-align:center;color:#bbb;font-size:.78em;}
+
+/* DOC AREA */
+#dw{flex:1;overflow-y:auto;background:var(--canvas);padding:24px;display:flex;flex-direction:column;align-items:center;position:relative;}
+
+/* RULER */
+#ruler{width:794px;max-width:calc(100% - 20px);height:20px;background:#e8e8e8;border:1px solid #ccc;border-bottom:2px solid #aaa;flex-shrink:0;margin-bottom:6px;position:relative;font-size:0;display:none;}
+#ruler::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0px,transparent 9px,#bbb 9px,#bbb 10px);opacity:.5;}
+
+/* DOCUMENT */
+#dp{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.28);width:794px;max-width:calc(100% - 20px);min-height:1122px;padding:96px 90px;outline:none;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.5;direction:rtl;text-align:right;}
+#dp:focus{box-shadow:0 1px 6px rgba(0,0,0,.28),0 0 0 2px rgba(43,87,154,.22);}
+#dp p{margin:0;min-height:1.5em;}
+#dp p:empty::before{content:'​';}
+#dp:not(:focus) p:only-child:empty::before{content:'התחל לכתוב כאן...';color:#ccc;pointer-events:none;}
+#dp h1{font-size:2em;font-weight:700;margin:.4em 0 .3em;border-bottom:2px solid #111;padding-bottom:.15em;}
+#dp h2{font-size:1.5em;font-weight:700;margin:.35em 0 .25em;color:#2e74b5;}
+#dp h3{font-size:1.17em;font-weight:700;margin:.3em 0 .2em;color:#1f3763;}
+#dp blockquote{border-right:3px solid #ccc;margin:8px 0;padding:4px 14px;color:#555;font-style:italic;}
+#dp table{border-collapse:collapse;width:100%;margin:8px 0;}
+#dp td,#dp th{border:1px solid #b0b0b0;padding:5px 8px;min-width:40px;vertical-align:top;}
+#dp th{background:#f3f3f3;font-weight:700;}
+#dp a{color:var(--wb);}
+#dp pre{background:#f8f8f8;border:1px solid #e0e0e0;padding:8px 12px;border-radius:3px;font-family:monospace;font-size:.9em;}
+#dp .fn-area{margin-top:40px;padding-top:10px;border-top:1px solid #aaa;font-size:.85em;color:#555;}
+#dp .en-area{margin-top:40px;padding-top:10px;border-top:2px solid #888;font-size:.85em;color:#333;}
+mark.fhl{background:#fff176;}
+mark.fhl.cur{background:#ff9800;color:#fff;}
+body.focus-mode #tb,body.focus-mode #tab-bar,body.focus-mode #ribbon,body.focus-mode #sb{opacity:0;pointer-events:none;transition:opacity .4s;}
+body.focus-mode #nav-pane{width:0!important;}
+body.focus-mode #dw{padding:0;background:#fff;}
+body.focus-mode #dp{width:100%;min-height:100vh;box-shadow:none;padding:80px 120px;zoom:100%!important;}
+body.focus-mode:hover #tb,body.focus-mode:hover #tab-bar,body.focus-mode:hover #ribbon,body.focus-mode:hover #sb{opacity:1;pointer-events:auto;}
+body.cursor-paint{cursor:crosshair!important;}
+body.cursor-paint *{cursor:crosshair!important;}
+
+/* FIND BAR */
+#fb{position:absolute;top:6px;left:8px;z-index:60;background:#fff;border:1px solid #b0b0b0;border-radius:3px;box-shadow:0 3px 10px rgba(0,0,0,.18);padding:6px 8px;display:none;flex-direction:column;gap:5px;min-width:300px;}
+#fb input{border:1px solid #d1d1d1;border-radius:2px;padding:3px 7px;font-family:inherit;font-size:.8em;outline:none;flex:1;}
+#fb input:focus{border-color:var(--wb);}
+.fb-row{display:flex;align-items:center;gap:4px;}
+#fb button{background:#fff;border:1px solid #d1d1d1;cursor:pointer;padding:2px 8px;border-radius:2px;font-size:.75em;font-family:inherit;white-space:nowrap;}
+#fb button:hover{background:var(--bh);}
+.fb-x{border:none!important;font-size:1.1em;color:#888!important;padding:0 4px!important;}
+#fc{font-size:.72em;color:#777;min-width:70px;text-align:center;}
+
+/* STATUS BAR */
+#sb{background:var(--wb);color:#fff;height:24px;display:flex;align-items:center;padding:0 10px;flex-shrink:0;font-size:.72em;gap:0;user-select:none;}
+.sb-r{display:flex;align-items:center;}
+.sb-l{margin-right:auto;display:flex;align-items:center;gap:2px;}
+.sbi{padding:1px 8px;cursor:default;border-radius:2px;white-space:nowrap;}
+.sbi:hover{background:rgba(255,255,255,.18);cursor:pointer;}
+.sbsep{opacity:.35;padding:0 2px;}
+.sv{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:2px 5px;border-radius:2px;display:flex;transition:color .1s,background .1s;}
+.sv:hover,.sv.on{color:#fff;background:rgba(255,255,255,.18);}
+.sv svg{width:14px;height:14px;fill:currentColor;}
+.za{display:flex;align-items:center;gap:3px;padding:0 4px;}
+.zb{background:none;border:none;color:rgba(255,255,255,.75);cursor:pointer;font-size:1em;padding:0 2px;line-height:1;}
+.zb:hover{color:#fff;}
+#zsl{-webkit-appearance:none;width:72px;height:3px;background:rgba(255,255,255,.35);border-radius:2px;outline:none;cursor:pointer;}
+#zsl::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;cursor:pointer;}
+#zpct{min-width:34px;text-align:left;cursor:pointer;}
+#tt-btn{background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-family:inherit;font-size:.78em;padding:1px 8px;border-radius:8px;margin-left:4px;transition:background .15s;}
+#tt-btn:hover{background:rgba(255,255,255,.3);}
+
+/* CONTEXT MENU */
+#ctx{position:fixed;z-index:500;background:#fff;border:1px solid #ccc;border-radius:3px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:4px 0;min-width:160px;display:none;}
+.ctx-item{padding:5px 16px;font-size:.82em;cursor:pointer;display:flex;align-items:center;gap:8px;color:#333;}
+.ctx-item:hover{background:var(--bh);}
+.ctx-sep{height:1px;background:#e8e8e8;margin:3px 0;}
+
+/* DIALOGS */
+.dlg-back{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;display:flex;align-items:center;justify-content:center;}
+.dlg{background:#fff;border-radius:3px;box-shadow:0 8px 32px rgba(0,0,0,.28);min-width:340px;max-width:90vw;font-family:inherit;}
+.dlg-hd{background:var(--wb);color:#fff;padding:8px 14px;font-size:.86em;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-radius:3px 3px 0 0;}
+.dlg-hd button{background:none;border:none;color:#fff;cursor:pointer;font-size:1.1em;padding:0 5px;}
+.dlg-bd{padding:14px 16px;}
+.dlg-bd label{display:block;font-size:.8em;color:#555;margin-bottom:3px;margin-top:10px;}
+.dlg-bd label:first-child{margin-top:0;}
+.dlg-bd input,.dlg-bd select,.dlg-bd textarea{width:100%;border:1px solid #d1d1d1;border-radius:2px;padding:4px 8px;font-family:inherit;font-size:.82em;outline:none;transition:border-color .1s;}
+.dlg-bd input:focus,.dlg-bd select:focus,.dlg-bd textarea:focus{border-color:var(--wb);}
+.dlg-bd textarea{min-height:90px;resize:vertical;}
+.dlg-ft{padding:8px 16px 12px;display:flex;gap:7px;justify-content:flex-end;}
+.dbtn{padding:5px 18px;border-radius:2px;border:1px solid transparent;cursor:pointer;font-family:inherit;font-size:.82em;font-weight:600;transition:background .1s;}
+.dbtn.p{background:var(--wb);color:#fff;border-color:var(--wb);}
+.dbtn.p:hover{background:var(--wb-dk);}
+.dbtn.s{background:#fff;color:#444;border-color:#adadad;}
+.dbtn.s:hover{background:#f0f0f0;}
+.tbl-grid{display:grid;grid-template-columns:repeat(10,22px);gap:2px;padding:4px;}
+.tbl-cell{width:22px;height:18px;border:1px solid #d1d1d1;cursor:pointer;background:#fff;border-radius:1px;}
+.tbl-cell.hi{background:var(--wb-lt);border-color:var(--wb);}
+.list-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid #e8e8e8;border-radius:2px;margin-bottom:4px;}
+.list-item span{flex:1;font-size:.8em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* DARK MODE */
+#outline-panel{width:180px;flex-shrink:0;background:var(--rb);border-left:1px solid var(--rbb);display:flex;flex-direction:column;overflow:hidden;}
+#outline-panel.hide{width:0;border-left:none;}
+#outline-body{flex:1;overflow-y:auto;padding:4px 0;}
+.outline-item{padding:3px 10px;cursor:pointer;font-size:.8em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:2px;color:var(--wb);}
+.outline-item:hover{background:var(--bh);}
+body.dark-mode{--canvas:#252525;--rb:#2b2b2b;--rbb:#444;}
+body.dark-mode #dp{background:#1e1e1e!important;color:#e0e0e0;}
+body.dark-mode #dp h2{color:#82b4f0;}body.dark-mode #dp h3{color:#9ab8e0;}
+body.dark-mode #dp blockquote{border-right-color:#555;color:#bbb;}
+body.dark-mode #nav-pane,body.dark-mode #cp{background:#252525;border-color:#3a3a3a;color:#e0e0e0;}
+body.dark-mode .nav-item{color:#ccc;}body.dark-mode .nav-head span,body.dark-mode .cp-head{color:#ddd;}
+body.dark-mode #fb,body.dark-mode .dlg{background:#2b2b2b;color:#e0e0e0;}
+body.dark-mode .dlg-bd input,body.dark-mode .dlg-bd select,body.dark-mode .dlg-bd textarea{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark-mode #ctx{background:#2b2b2b;}body.dark-mode .ctx-item{color:#e0e0e0;}
+body.dark-mode .rsel{background:#333;color:#ddd;border-color:#555;}
+body.dark-mode .sty-btn{background:#333;color:#ddd;border-color:#555;}
+body.dark-mode .cm-card{background:#2d2a1a;border-color:#555;}
+body.dark-mode .list-item{border-color:#444;background:#2b2b2b;}
+@media print{#tb,#tab-bar,#ribbon,#nav-pane,#sb,#fb,#ctx{display:none!important;}#main{display:block!important;}#dw{background:#fff!important;padding:0!important;overflow:visible!important;}#dp{box-shadow:none!important;width:100%!important;padding:0!important;zoom:100%!important;}mark{background:none!important}}
+
+/* PAGE BREAK — real visual gap between pages */
+.pgbreak{display:block;height:56px;margin:0 -90px;background:var(--canvas);border-top:1px solid #c0c0c0;border-bottom:1px solid #c0c0c0;page-break-after:always!important;position:relative;user-select:none;-webkit-user-select:none;cursor:default;}
+.pgbreak::after{content:attr(data-pg);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62em;color:#aaa;letter-spacing:1px;pointer-events:none;}
+
+/* COMMENTS PANEL */
+#cp{width:260px;flex-shrink:0;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column;overflow:hidden;transition:width .2s;}
+#cp.hide{width:0;border-left:none;}
+.cp-head{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #e8e8e8;font-size:.8em;font-weight:600;flex-shrink:0;}
+#cp-body{flex:1;overflow-y:auto;padding:4px;}
+.cm-card{border:1px solid #e0e0e0;border-radius:3px;padding:6px 8px;margin-bottom:6px;font-size:.78em;background:#fffde7;cursor:pointer;position:relative;}
+.cm-card:hover{border-color:var(--wb);}
+.cm-card.resolved{background:#f5f5f5;color:#999;}
+.cm-card .cm-author{font-weight:600;color:var(--wb);font-size:.85em;}
+.cm-card .cm-text{margin-top:3px;}
+.cm-card .cm-del{position:absolute;top:4px;left:6px;background:none;border:none;cursor:pointer;color:#ccc;font-size:.85em;line-height:1;}
+.cm-card .cm-del:hover{color:#c00;}
+mark.cm-ref{background:rgba(255,200,0,.3);cursor:pointer;border-bottom:2px solid rgba(255,180,0,.7);}
+mark.cm-ref:hover{background:rgba(255,200,0,.55);}
+
+/* TRACK CHANGES */
+ins.tc-ins{background:rgba(0,160,0,.12);text-decoration:underline;text-decoration-color:#090;color:#060;}
+del.tc-del{background:rgba(200,0,0,.08);text-decoration:line-through;text-decoration-color:#c00;color:#a00;}
+
+/* WATERMARK */
+#watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden;}
+#watermark span{font-size:5em;color:rgba(150,150,150,.18);transform:rotate(-35deg);white-space:nowrap;font-weight:900;user-select:none;letter-spacing:.1em;}
+</style>
+</head>
+<script src="jszip.min.js"></script>
+<script src="mammoth.min.js"></script>
+<body id="app">
+
+<!-- TITLE BAR -->
+<div id="tb">
+  <span class="tbl">W</span>
+  <button class="tbb" onclick="saveDoc()" title="שמור Ctrl+S"><svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg></button>
+  <button class="tbb" onclick="ex('undo')" title="בטל Ctrl+Z"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62A7 7 0 0 1 19 16l2-2a9 9 0 0 0-8.5-6z"/></svg></button>
+  <button class="tbb" onclick="ex('redo')" title="חזור Ctrl+Y"><svg viewBox="0 0 24 24"><path d="M18.4 10.6A9 9 0 0 0 5 16l2 2a7 7 0 0 1 11.62-2.62L15 18h9V9l-5.6 1.6z"/></svg></button>
+  <div class="tb-mid">
+    <input id="doc-title" type="text" value="מסמך חדש" spellcheck="false" onchange="schedSave()"/>
+    <div class="tb-srch">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 5 1.49-1.49-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+      <input type="text" id="qsrch" placeholder="חיפוש מהיר" onkeydown="if(event.key==='Enter'){openFB();document.getElementById('fi').value=this.value;hlFind(this.value);}"/>
+    </div>
+  </div>
+  <div id="rec-ind" onclick="stopRecording()" title="מקליט — לחץ לעצירה">⏺ <span id="rec-ind-name">מקליט...</span> <span id="rec-count" style="opacity:.75">(0)</span> עצור</div>
+  <button class="tbb" onclick="exportDocx()" title="ייצוא .docx"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> .docx</button>
+  <button class="tbb" onclick="printDoc()" title="הדפסה Ctrl+P"><svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg></button>
+</div>
+
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <button class="rtab" onclick="swTab('file',this)" ondblclick="togRib()">קובץ</button>
+  <button class="rtab on" onclick="swTab('home',this)" ondblclick="togRib()">בית</button>
+  <button class="rtab" onclick="swTab('insert',this)" ondblclick="togRib()">הוספה</button>
+  <button class="rtab" onclick="swTab('layout',this)" ondblclick="togRib()">פריסה</button>
+  <button class="rtab" onclick="swTab('refs',this)" ondblclick="togRib()">הפניות</button>
+  <button class="rtab" onclick="swTab('view',this)" ondblclick="togRib()">תצוגה</button>
+  <button class="rtab" onclick="swTab('design',this)" ondblclick="togRib()">עיצוב</button>
+  <button class="rtab" onclick="swTab('review',this)" ondblclick="togRib()">סקירה</button>
+  <button class="rtab" onclick="swTab('books',this)" ondblclick="togRib()">עריכת ספרים</button>
+  <button class="rtab otz-tab" onclick="swTab('otz',this)" ondblclick="togRib()">✦ אוצריא</button>
+  <button id="rib-tog" onclick="togRib()" title="הצג/הסתר רצועה">∧</button>
+</div>
+
+<!-- RIBBON -->
+<div id="ribbon">
+
+<!-- FILE -->
+<div class="rp" id="rp-file">
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="newDoc()">📄 מסמך חדש</button>
+      <button class="rb sm" onclick="openDocFile()">📂 פתח קובץ</button>
+    </div></div>
+    <div class="rgt">קובץ</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="saveDocAs()">💾 שמור בשם...</button>
+      <button class="rb sm" onclick="saveDoc()">💾 שמור Ctrl+S</button>
+    </div></div>
+    <div class="rgt">שמירה</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="exportDocx()">⬆ ייצוא .docx</button>
+      <button class="rb sm" onclick="printDoc()">🖨 הדפסה</button>
+    </div></div>
+    <div class="rgt">ייצוא</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="showPluginInfo()">ℹ אודות התוסף</button>
+    </div></div>
+    <div class="rgt">מידע</div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="rp on" id="rp-home">
+  <div class="rg" style="min-width:68px">
+    <div class="rgb">
+      <button class="rb lg" onclick="doPaste()" title="הדבק Ctrl+V"><svg viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>הדבק</button>
+      <div class="rv">
+        <button class="rb sm" onclick="ex('cut')" title="גזור Ctrl+X"><svg viewBox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64z"/></svg>גזור</button>
+        <button class="rb sm" onclick="ex('copy')" title="העתק Ctrl+C"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>העתק</button>
+        <button class="rb sm" id="fp-btn" onclick="fmtPainter()" title="העתק עיצוב"><svg viewBox="0 0 24 24"><path d="M18 2H9C7.9 2 7 2.9 7 4v12c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H9V4h9v12zM3 15v-2h2V7H3V5L1 7v6l2 2z"/></svg>עיצוב</button>
+      </div>
+    </div>
+    <div class="rgt">לוח</div>
+  </div>
+
+  <div class="rg">
+    <div class="rgb col">
+      <div style="display:flex;gap:3px;align-items:center">
+        <select class="rsel" id="sf" onchange="applyFont(this.value)" style="width:112px">
+          <option value="'Times New Roman',serif">Times New Roman</option>
+          <option value="'David Libre','David',serif">David</option>
+          <option value="'Frank Ruhl Libre',serif">Frank Ruhl</option>
+          <option value="Arial,sans-serif">Arial</option>
+          <option value="'Rubik',sans-serif">Rubik</option>
+          <option value="'Calibri',sans-serif">Calibri</option>
+          <option value="'Courier New',monospace">Courier New</option>
+        </select>
+        <select class="rsel" id="ss" onchange="applySize(+this.value)" style="width:44px">
+          <option>8</option><option>9</option><option>10</option><option>11</option>
+          <option selected>12</option><option>14</option><option>16</option><option>18</option>
+          <option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
+        </select>
+        <button class="rb ico" onclick="growFont(1)" title="הגדל Ctrl+]"><svg viewBox="0 0 24 24"><path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/></svg></button>
+        <button class="rb ico" onclick="growFont(-1)" title="הקטן Ctrl+["><svg viewBox="0 0 24 24"><path d="M3 7h6v2H3V7zm0 4h9v2H3v-2zm0 4h12v2H3v-2zm14-6h2v10h-2zm5 0v12h-8V9h8z"/></svg></button>
+        <button class="rb ico" onclick="ex('removeFormat')" title="נקה עיצוב"><svg viewBox="0 0 24 24"><path d="M6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6zm14 13.59L18.59 17l-2.09-2.09L14.41 13 8.09 6.68 6.68 5.27 5.27 3.86 3.86 5.27l3.4 3.4L5 13h4.37L8.09 16H4v3h9.27l2.14 2.14L16.73 20l1.41 1.41L19.55 20 20 19.55z"/></svg></button>
+      </div>
+      <div style="display:flex;gap:2px;align-items:center">
+        <button class="rb ico" id="bb" onclick="fmt('bold')" title="מודגש Ctrl+B"><strong>B</strong></button>
+        <button class="rb ico" id="bi" onclick="fmt('italic')" title="נטוי Ctrl+I"><em>I</em></button>
+        <button class="rb ico" id="bu" onclick="fmt('underline')" title="קו תחתון Ctrl+U"><u>U</u></button>
+        <button class="rb ico" id="bs" onclick="fmt('strikeThrough')" title="קו חוצה"><s>S</s></button>
+        <button class="rb ico" onclick="fmt('subscript')" title="תחתי">x<sub style="font-size:.65em">2</sub></button>
+        <button class="rb ico" onclick="fmt('superscript')" title="עליון">x<sup style="font-size:.65em">2</sup></button>
+        <div class="rsep"></div>
+        <div style="position:relative;display:inline-flex;flex-direction:column;align-items:center">
+          <button class="rb ico" onclick="document.getElementById('pc').click()" title="צבע טקסט">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 2L5.5 16h2.25l1.12-3h6.25l1.12 3h2.25L13 2h-2zm-1.38 9L12 4.67 14.38 11H9.62z"/></svg>
+            <div class="swatch" id="bc" style="background:#000"></div>
+          </button>
+          <input type="color" id="pc" class="hc" value="#000000" onchange="applyColor(this.value)"/>
+        </div>
+        <div style="position:relative;display:inline-flex;flex-direction:column;align-items:center">
+          <button class="rb ico" onclick="document.getElementById('ph').click()" title="סימון">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 22H2v-5l9.06-9.06 4.94 4.94L7 22zm14.41-14.41a1 1 0 0 0 0-1.42l-3.58-3.58a1 1 0 0 0-1.42 0L14.6 4.4l5 5 1.81-1.81z"/></svg>
+            <div class="swatch" id="bh" style="background:#FFFF00"></div>
+          </button>
+          <input type="color" id="ph" class="hc" value="#FFFF00" onchange="applyHL(this.value)"/>
+        </div>
+      </div>
+    </div>
+    <div class="rgt">גופן</div>
+  </div>
+
+  <div class="rg">
+    <div class="rgb col">
+      <div style="display:flex;gap:2px;align-items:center">
+        <button class="rb ico" onclick="fmt('insertUnorderedList')" title="נקודות"><svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg></button>
+        <button class="rb ico" onclick="fmt('insertOrderedList')" title="ממוספרת"><svg viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-9v2h14V2H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg></button>
+        <button class="rb ico" onclick="fmt('outdent')" title="הפחת הזחה"><svg viewBox="0 0 24 24"><path d="M11 17h10v-2H11v2zm-8-5 4 4V8l-4 4zm0 9h18v-2H3v2zM3 3v2h18V3H3zm8 6h10V7H11v2zm0 4h10v-2H11v2z"/></svg></button>
+        <button class="rb ico" onclick="fmt('indent')" title="הגדל הזחה"><svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zM3 8v8l4-4-4-4zm8 9h10v-2H11v2zM3 3v2h18V3H3zm8 6h10V7H11v2zm0 4h10v-2H11v2z"/></svg></button>
+        <div class="rsep"></div>
+        <select class="rsel" onchange="applySpacing(this.value)" style="width:50px" title="רווח שורות">
+          <option value="1">1.0</option><option value="1.15">1.15</option>
+          <option value="1.5" selected>1.5</option><option value="2">2.0</option><option value="2.5">2.5</option><option value="3">3.0</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:2px;align-items:center">
+        <button class="rb ico" id="bar" onclick="sa('Right')" title="ימין Ctrl+R"><svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zM3 3v2h18V3H3z"/></svg></button>
+        <button class="rb ico" id="bac" onclick="sa('Center')" title="מרכז Ctrl+E"><svg viewBox="0 0 24 24"><path d="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"/></svg></button>
+        <button class="rb ico" id="bal" onclick="sa('Left')" title="שמאל Ctrl+L"><svg viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg></button>
+        <button class="rb ico" id="baj" onclick="sa('Full')" title="מלא Ctrl+J"><svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18V7H3v2zm0-6v2h18V3H3z"/></svg></button>
+      </div>
+    </div>
+    <div class="rgt">פסקה</div>
+  </div>
+
+  <div class="rg" style="flex:1;max-width:240px">
+    <div class="rgb"><div class="sty-gal">
+      <button class="sty-btn" onclick="applyBlock('p')">רגיל</button>
+      <button class="sty-btn" onclick="applyBlock('h1')" style="font-weight:800">כותרת 1</button>
+      <button class="sty-btn" onclick="applyBlock('h2')" style="color:#2e74b5;font-weight:700">כותרת 2</button>
+      <button class="sty-btn" onclick="applyBlock('h3')" style="color:#1f3763">כותרת 3</button>
+      <button class="sty-btn" onclick="applyBlock('blockquote')" style="font-style:italic;color:#555">ציטוט</button>
+      <button class="sty-btn" onclick="applyBlock('pre')" style="font-family:monospace;font-size:.78em">קוד</button>
+      <button class="sty-btn" onclick="insChidush()" style="color:var(--wb);font-weight:700">✦ חידוש</button>
+    </div></div>
+    <div class="rgt">סגנונות</div>
+  </div>
+
+  <div class="rg" style="min-width:72px">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="openFB()"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 5 1.49-1.49-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg> חפש Ctrl+F</button>
+      <button class="rb sm" onclick="openReplace()"><svg viewBox="0 0 24 24"><path d="M11 6C9.55 6 8.22 6.56 7.22 7.5L10 10H3V3l2.77 2.77C7.16 4.1 8.97 3 11 3c3.92 0 7.09 3.06 7.42 6.9l-2.01.2C16.14 7.37 13.8 6 11 6zm.99 11c1.45 0 2.78-.56 3.78-1.5L13 13h7v7l-2.77-2.77c-1.39 1.67-3.19 2.77-5.23 2.77-3.92 0-7.09-3.06-7.42-6.9l2.01-.2c.28 2.73 2.62 4.1 5.4 4.1z"/></svg> החלף Ctrl+H</button>
+      <button class="rb sm" onclick="ex('selectAll')">הכל Ctrl+A</button>
+    </div></div>
+    <div class="rgt">עריכה</div>
+  </div>
+</div>
+
+<!-- INSERT -->
+<div class="rp" id="rp-insert">
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insertPageBreak()">מעבר עמוד</button>
+    <button class="rb sm" onclick="insertBlankPage()">עמוד ריק</button>
+  </div></div><div class="rgt">עמודים</div></div>
+
+  <div class="rg"><div class="rgb">
+    <button class="rb" onclick="openTableDlg()"><svg viewBox="0 0 24 24"><path d="M10 10.02h5V21h-5zM17 21h3a2 2 0 0 0 2-2v-9h-5v11zm3-18H5a2 2 0 0 0-2 2v3h19V5a2 2 0 0 0-2-2zM3 19a2 2 0 0 0 2 2h3V10H3v9z"/></svg><br>טבלה</button>
+  </div><div class="rgt">טבלה</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insLink()">קישור Ctrl+K</button>
+    <button class="rb sm" onclick="insBookmark()">סימניה</button>
+  </div></div><div class="rgt">קישורים</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insDate()">תאריך</button>
+    <button class="rb sm" onclick="insHebDate()">תאריך עברי</button>
+    <button class="rb sm" onclick="insFootnote()">הערת שוליים</button>
+    <button class="rb sm" onclick="insHR()">קו מפריד</button>
+    <button class="rb sm" onclick="insSpecialChar()">תו מיוחד</button>
+  </div></div><div class="rgt">טקסט</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insHeader()">כותרת עליונה</button>
+    <button class="rb sm" onclick="insFooterArea()">כותרת תחתונה</button>
+    <button class="rb sm" onclick="insPageNum()">מספר עמוד</button>
+  </div></div><div class="rgt">כותרת/רגל</div></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="rp" id="rp-layout">
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="setMargins('normal')">שוליים רגיל</button>
+    <button class="rb sm" onclick="setMargins('narrow')">שוליים צר</button>
+    <button class="rb sm" onclick="setMargins('wide')">שוליים רחב</button>
+  </div></div><div class="rgt">שוליים</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="setPageDir('portrait')">לאורך</button>
+    <button class="rb sm" onclick="setPageDir('landscape')">לרוחב</button>
+  </div></div><div class="rgt">כיוון</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="setPageSize('A4')">A4</button>
+    <button class="rb sm" onclick="setPageSize('letter')">Letter</button>
+    <button class="rb sm" onclick="setPageSize('legal')">Legal</button>
+  </div></div><div class="rgt">גודל</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="setCols(1)">עמודה אחת</button>
+    <button class="rb sm" onclick="setCols(2)">שתי עמודות</button>
+    <button class="rb sm" onclick="setCols(3)">שלוש עמודות</button>
+  </div></div><div class="rgt">עמודות</div></div>
+</div>
+
+<!-- REFS -->
+<div class="rp" id="rp-refs">
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="genTOC()">הוסף תוכן עניינים</button>
+    <button class="rb sm" onclick="updTOC()">עדכן תוכן עניינים</button>
+  </div></div><div class="rgt">תוכן עניינים</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insFootnote()">הוסף הערת שוליים</button>
+    <button class="rb sm" onclick="insEndnote()">הוסף הערת סיום</button>
+  </div></div><div class="rgt">הערות</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insCitation()">הוסף ציטוט</button>
+    <button class="rb sm" onclick="insBib()">ביבליוגרפיה</button>
+  </div></div><div class="rgt">ציטוטים</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="rp" id="rp-view">
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="togRead()" id="vread-btn">מצב קריאה</button>
+    <button class="rb sm" onclick="togFocus()">מצב פוקוס</button>
+  </div></div><div class="rgt">תצוגה</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" id="nav-btn" onclick="togNav()">✓ חלונית ניווט</button>
+    <button class="rb sm" id="ruler-btn" onclick="togRuler()">סרגל</button>
+  </div></div><div class="rgt">הצג</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="setZoom(100)">100%</button>
+    <button class="rb sm" onclick="setZoom(75)">75%</button>
+    <button class="rb sm" onclick="promptZoom()">זום מותאם...</button>
+  </div></div><div class="rgt">זום</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" id="rec-btn" onclick="toggleRecording()" style="color:#c00">⏺ הקלט מאקרו</button>
+    <button class="rb sm" onclick="openMacroDlg()">נהל מאקרואים</button>
+    <button class="rb sm" onclick="openTemplates()">תבניות</button>
+  </div></div><div class="rgt">מאקרואים</div></div>
+</div>
+
+<!-- DESIGN -->
+<div class="rp" id="rp-design">
+  <div class="rg">
+    <div class="rgb col">
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <button class="rb sm" onclick="applyTheme('default')">ברירת מחדל</button>
+        <button class="rb sm" onclick="applyTheme('modern')">מודרני</button>
+        <button class="rb sm" onclick="applyTheme('classic')">קלאסי</button>
+        <button class="rb sm" onclick="applyTheme('minimal')">מינימלי</button>
+        <button class="rb sm" onclick="applyTheme('elegant')">אלגנטי</button>
+      </div>
+    </div>
+    <div class="rgt">ערכות נושא</div>
+  </div>
+  <div class="rg">
+    <div class="rgb col">
+      <div style="display:flex;gap:4px;align-items:center">
+        <label style="font-size:.72em;color:#555">צבע עמוד:</label>
+        <input type="color" id="pgcolor" value="#ffffff" onchange="setPageColor(this.value)" style="width:36px;height:22px;border:1px solid #ccc;cursor:pointer;border-radius:2px;padding:1px 2px"/>
+        <button class="rb sm" onclick="setPageColor('#ffffff')">לבן</button>
+      </div>
+      <div style="display:flex;gap:3px;margin-top:3px">
+        <button class="rb sm" id="pgborder-btn" onclick="togPageBorder()">מסגרת עמוד</button>
+      </div>
+    </div>
+    <div class="rgt">רקע</div>
+  </div>
+  <div class="rg">
+    <div class="rgb col">
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <button class="rb sm" onclick="openWatermarkDlg()">הוסף סימן מים</button>
+        <button class="rb sm" onclick="removeWatermark()">הסר סימן מים</button>
+      </div>
+    </div>
+    <div class="rgt">סימן מים</div>
+  </div>
+  <div class="rg">
+    <div class="rgb col">
+      <button class="rb sm" onclick="openParaDlg()">פסקה...</button>
+      <button class="rb sm" onclick="openFontDlg()">גופן...</button>
+    </div>
+    <div class="rgt">עיצוב</div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div class="rp" id="rp-review">
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" onclick="addComment()">💬 הוסף הערה</button>
+      <button class="rb sm" onclick="togCommentPanel()">📋 חלונית הערות</button>
+    </div></div>
+    <div class="rgt">הערות</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" id="tc-btn" onclick="togTrackChanges()">⟳ מעקב שינויים</button>
+      <button class="rb sm" onclick="acceptAllChanges()" style="color:#070">✓ אשר הכל</button>
+      <button class="rb sm" onclick="rejectAllChanges()" style="color:#c00">✕ דחה הכל</button>
+    </div></div>
+    <div class="rgt">מעקב שינויים</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" id="spell-btn" onclick="togSpellCheck()">✓ בדיקת איות</button>
+    </div></div>
+    <div class="rgt">איות</div>
+  </div>
+  <div class="rg">
+    <div class="rgb"><div class="rv">
+      <button class="rb sm" id="protect-btn" onclick="togDocProtect()">🔒 הגנת מסמך</button>
+    </div></div>
+    <div class="rgt">הגנה</div>
+  </div>
+</div>
+
+<!-- OTZARIA -->
+<div class="rp" id="rp-otz">
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="insHebDate()">📅 תאריך עברי</button>
+    <button class="rb sm" onclick="insDate()">📅 תאריך לועזי</button>
+    <button class="rb sm" onclick="insLoc()">📍 הכנס מיקום</button>
+    <button class="rb sm" onclick="insPasuk()">📖 הכנס פסוק</button>
+  </div></div><div class="rgt">הכנסה</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="openInReader()">📖 פתח בקורא</button>
+    <button class="rb sm" onclick="searchInLib()">🔍 חפש בספרייה</button>
+    <button class="rb sm" onclick="insChidushBox()">📦 מסגרת חידוש</button>
+  </div></div><div class="rgt">ספרייה</div></div>
+
+  <div class="rg"><div class="rgb"><div class="rv">
+    <button class="rb sm" onclick="saveToArchive()">💾 שמור לארכיון</button>
+    <button class="rb sm" onclick="openArchiveDlg()">📂 פתח ארכיון</button>
+  </div></div><div class="rgt">ארכיון</div></div>
+</div>
+
+<!-- BOOKS -->
+<div class="rp" id="rp-books">
+  <div class="rg">
+    <div class="rgb">
+      <button class="rb" onclick="importDocxForBooks()" title="ייבוא קובץ Word לעריכה">⬇ ייבוא .docx</button>
+      <button class="rb" onclick="exportDocx()" title="ייצוא חזרה לקובץ Word">⬆ ייצוא .docx</button>
+      <button class="rb" onclick="exportOtzaria()" title="ייצוא לפורמט אוצריא TXT">⬆ ייצוא .txt</button>
+    </div>
+    <div class="rgt">קובץ</div>
+  </div>
+  <div class="rg">
+    <div class="rgb">
+      <button class="rb" onclick="setBookHeading(1)" title="כותרת 1"><b>כ1</b></button>
+      <button class="rb" onclick="setBookHeading(2)" title="כותרת 2"><b style="font-size:.95em">כ2</b></button>
+      <button class="rb" onclick="setBookHeading(3)" title="כותרת 3">כ3</button>
+      <button class="rb" onclick="setBookHeading(4)" title="כותרת 4" style="font-size:.9em">כ4</button>
+      <button class="rb" onclick="setBookHeading(5)" title="כותרת 5" style="font-size:.85em">כ5</button>
+      <button class="rb" onclick="setBookHeading(6)" title="כותרת 6" style="font-size:.8em">כ6</button>
+      <button class="rb" onclick="restoreSel();document.execCommand('formatBlock',false,'p');schedSave();" title="פסקה רגילה">¶</button>
+    </div>
+    <div class="rgt">תגיות</div>
+  </div>
+  <div class="rg">
+    <div class="rgb">
+      <button class="rb sty-btn" id="bk-bold" onclick="fmt('bold')" title="מודגש"><b>ב</b></button>
+      <button class="rb sty-btn" id="bk-ital" onclick="fmt('italic')" title="נטוי"><i>נ</i></button>
+      <button class="rb sty-btn" id="bk-und" onclick="fmt('underline')" title="קו תחתי"><u>ק</u></button>
+    </div>
+    <div class="rgt">עיצוב</div>
+  </div>
+  <div class="rg">
+    <div class="rgb col">
+      <button class="rb sm" onclick="togOutlinePanel()" id="outline-btn">📋 מבנה</button>
+      <button class="rb sm" onclick="replaceHeadingLvl()">🔄 החלף רמה</button>
+    </div>
+    <div class="rgt">מבנה</div>
+  </div>
+</div>
+
+</div><!-- /ribbon -->
+
+<!-- MAIN -->
+<div id="main">
+  <div id="nav-pane">
+    <div class="nav-head"><span>ניווט</span><button class="nav-xbtn" onclick="togNav()">✕</button></div>
+    <div class="nav-srch"><input type="text" id="nav-si" placeholder="חיפוש במסמך..." oninput="navSearch(this.value)"/></div>
+    <div class="nav-tabs">
+      <button class="nav-tab on" onclick="swNavTab('h',this)">כותרות</button>
+      <button class="nav-tab" onclick="swNavTab('r',this)">תוצאות</button>
+    </div>
+    <div id="nav-body"><div class="nav-empty">אין כותרות</div></div>
+  </div>
+
+  <div id="cp" class="hide">
+    <div class="cp-head"><span>💬 הערות</span><button class="nav-xbtn" onclick="togCommentPanel()">✕</button></div>
+    <div id="cp-body"><p style="font-size:.78em;color:#999;padding:10px">אין הערות</p></div>
+  </div>
+
+  <div id="outline-panel" class="hide">
+    <div class="cp-head"><span>📋 מבנה הספר</span><button class="nav-xbtn" onclick="togOutlinePanel()">✕</button></div>
+    <div id="outline-body"></div>
+  </div>
+
+  <div id="dw" onscroll="updPageNum()">
+    <div id="fb">
+      <div class="fb-row">
+        <input type="text" id="fi" placeholder="חפש..." oninput="hlFind(this.value)" onkeydown="fbKey(event)"/>
+        <span id="fc"></span>
+        <button onclick="findPrev()">‹</button>
+        <button onclick="findNext()">›</button>
+        <button onclick="togReplace()">החלף</button>
+        <button class="fb-x" onclick="closeFB()">✕</button>
+      </div>
+      <div class="fb-row" id="rr" style="display:none">
+        <input type="text" id="ri" placeholder="החלף ב..."/>
+        <button onclick="doRep()">החלף</button>
+        <button onclick="doRepAll()">הכל</button>
+      </div>
+    </div>
+    <div id="ruler"></div>
+    <div id="dp" contenteditable="true" spellcheck="true"
+         onkeydown="onKey(event)"
+         onkeyup="updFmt();schedCount();"
+         onmouseup="updFmt();onDocClick(event);"
+         oninput="schedSave();schedNav();schedRepaginate();"
+         oncontextmenu="showCtx(event)"><p><br></p></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="sb">
+  <div class="sb-r">
+    <span class="sbi" id="sbpg">עמוד 1</span>
+    <span class="sbsep">|</span>
+    <span class="sbi" id="sbw" onclick="openWordCountDlg()">0 מילים</span>
+    <span class="sbsep">|</span>
+    <span class="sbi" id="sbch">0 תווים</span>
+    <span class="sbsep">|</span>
+    <span class="sbi">עברית</span>
+    <span class="sbsep">|</span>
+    <span class="sbi" id="sbs">✓ שמור</span>
+  </div>
+  <div class="sb-l">
+    <button id="tt-btn" onclick="togTheme()">Word</button>
+    <div style="display:flex;gap:1px;margin-right:4px">
+      <button class="sv on" id="sv-pr" onclick="svClick('pr',this)" title="פריסת הדפסה"><svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg></button>
+      <button class="sv" id="sv-rd" onclick="svClick('rd',this)" title="מצב קריאה"><svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg></button>
+      <button class="sv" id="sv-fc" onclick="togFocus()" title="פוקוס"><svg viewBox="0 0 24 24"><path d="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"/></svg></button>
+    </div>
+    <div class="za">
+      <button class="zb" onclick="chZoom(-10)">−</button>
+      <input type="range" id="zsl" min="50" max="200" value="100" oninput="setZoom(+this.value)"/>
+      <button class="zb" onclick="chZoom(10)">+</button>
+      <span id="zpct" class="sbi" onclick="promptZoom()">100%</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <!-- עיצוב -->
+  <div class="ctx-item" onclick="fmt('bold');hideCtx()"><strong>B</strong> מודגש</div>
+  <div class="ctx-item" onclick="fmt('italic');hideCtx()"><em>I</em> נטוי</div>
+  <div class="ctx-item" onclick="fmt('underline');hideCtx()"><u>U</u> קו תחתון</div>
+  <div class="ctx-item" onclick="ex('removeFormat');hideCtx()">נקה עיצוב</div>
+  <div class="ctx-sep"></div>
+  <!-- כותרות -->
+  <div class="ctx-item" onclick="applyBlock('h1');hideCtx()">כותרת 1</div>
+  <div class="ctx-item" onclick="applyBlock('h2');hideCtx()">כותרת 2</div>
+  <div class="ctx-item" onclick="applyBlock('h3');hideCtx()">כותרת 3</div>
+  <div class="ctx-item" onclick="applyBlock('p');hideCtx()">פסקה רגילה</div>
+  <div class="ctx-sep"></div>
+  <!-- עריכה -->
+  <div class="ctx-item" onclick="ex('cut');hideCtx()">גזור</div>
+  <div class="ctx-item" onclick="ex('copy');hideCtx()">העתק</div>
+  <div class="ctx-item" onclick="doPaste();hideCtx()">הדבק</div>
+  <div class="ctx-sep"></div>
+  <!-- יישור -->
+  <div class="ctx-item" onclick="sa('Right');hideCtx()">יישור ימין</div>
+  <div class="ctx-item" onclick="sa('Center');hideCtx()">מרכז</div>
+  <div class="ctx-item" onclick="sa('Left');hideCtx()">יישור שמאל</div>
+  <div class="ctx-sep"></div>
+  <!-- אוצריא -->
+  <div class="ctx-item" onclick="openInReader();hideCtx()">פתח בקורא אוצריא</div>
+  <div class="ctx-item" onclick="insHebDate();hideCtx()">תאריך עברי</div>
+  <div class="ctx-item" onclick="insLink();hideCtx()">הוסף קישור</div>
+  <!-- טבלה — מוצג רק כשהסמן בתוך טבלה -->
+  <div class="ctx-sep" id="ctx-tbl-sep" style="display:none"></div>
+  <div class="ctx-item" id="ctx-tbl-ins-above" style="display:none" onclick="ctxTblRow('above');hideCtx()">הוסף שורה מעל</div>
+  <div class="ctx-item" id="ctx-tbl-ins-below" style="display:none" onclick="ctxTblRow('below');hideCtx()">הוסף שורה מתחת</div>
+  <div class="ctx-item" id="ctx-tbl-ins-col-r" style="display:none" onclick="ctxTblCol('right');hideCtx()">הוסף עמודה לימין</div>
+  <div class="ctx-item" id="ctx-tbl-ins-col-l" style="display:none" onclick="ctxTblCol('left');hideCtx()">הוסף עמודה לשמאל</div>
+  <div class="ctx-item" id="ctx-tbl-del-row" style="display:none" onclick="ctxTblDelRow();hideCtx()">מחק שורה</div>
+  <div class="ctx-item" id="ctx-tbl-del-col" style="display:none" onclick="ctxTblDelCol();hideCtx()">מחק עמודה</div>
+  <div class="ctx-item" id="ctx-tbl-del-tbl" style="display:none" onclick="ctxTblDelTable();hideCtx()">מחק טבלה</div>
+</div>
+
+<script>
+'use strict';
+let zoom=100,autoSave,countTimer,navTimer;
+let macros=[],archive=[],navMode='h';
+let fhlList=[],fhlIdx=0,savedRange=null;
+let fnCount=0,enCount=0;
+let isReadMode=false,isPainting=false,paintData=null;
+let isRecording=false,recActions=[],recName='',recBuf='';
+let _skipPasteRecord=false;
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded',()=>{
+  const dp=document.getElementById('dp');
+  try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
+  try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+
+  document.addEventListener('selectionchange',()=>{
+    const s=window.getSelection();
+    if(s&&s.rangeCount>0&&dp.contains(s.focusNode)){
+      try{savedRange=s.getRangeAt(0).cloneRange();}catch(e){}
+    }
+    updFmt();
+  });
+
+  dp.addEventListener('beforeinput',e=>{
+    if(!isRecording)return;
+    switch(e.inputType){
+      case 'insertText':
+        if(e.data)recBuf+=e.data;
+        break;
+      case 'insertParagraph':
+        recFlush();recPush({t:'nl'});break;
+      case 'insertLineBreak':
+        recFlush();recPush({t:'lb'});break;
+      case 'deleteContentBackward':
+      case 'deleteWordBackward':
+        recFlush();recPush({t:'del',d:'b'});break;
+      case 'deleteContentForward':
+      case 'deleteWordForward':
+        recFlush();recPush({t:'del',d:'f'});break;
+    }
+  });
+
+  dp.addEventListener('paste',e=>{
+    if(!isRecording||_skipPasteRecord)return;
+    recFlush();
+    const html=e.clipboardData?.getData('text/html')||'';
+    const txt=e.clipboardData?.getData('text/plain')||'';
+    if(html)recPush({t:'paste_html',html:html});
+    else if(txt)recPush({t:'paste_txt',v:txt});
+  });
+
+  dp.addEventListener('keydown',e=>{
+    // Tab in table — move to next cell
+    if(e.key==='Tab'){
+      const cell=e.target.closest?.('td,th')||e.target.closest?.('td')||
+                 window.getSelection()?.focusNode?.parentElement?.closest('td,th');
+      if(cell){
+        e.preventDefault();
+        const cells=[...cell.closest('table').querySelectorAll('td,th')];
+        const idx=cells.indexOf(cell);
+        const next=cells[e.shiftKey?idx-1:idx+1];
+        if(next){next.focus();const r=document.createRange();r.selectNodeContents(next);r.collapse(false);const s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+        else if(!e.shiftKey){ex('insertParagraph');}
+      }
+    }
+  });
+
+  // Format painter apply — on mouseup so the click selection is already set
+  dp.addEventListener('mouseup',e=>{
+    if(isPainting&&paintData){
+      const d=paintData;
+      isPainting=false;paintData=null;
+      document.getElementById('fp-btn').classList.remove('on');
+      document.body.classList.remove('cursor-paint');
+      dp.focus();
+      // Apply each format only if it differs from the current state (execCommand toggles)
+      if(d.bold!==document.queryCommandState('bold'))document.execCommand('bold',false,null);
+      if(d.italic!==document.queryCommandState('italic'))document.execCommand('italic',false,null);
+      if(d.underline!==document.queryCommandState('underline'))document.execCommand('underline',false,null);
+      if(d.color)document.execCommand('foreColor',false,d.color);
+      schedSave();
+    }
+  });
+
+  // Close context menu on click
+  document.addEventListener('click',()=>hideCtx(),true);
+
+  try{
+    Otzaria.on('plugin.boot',d=>{if(d?.theme)applyOtzTheme(d.theme);});
+    Otzaria.on('theme.changed',d=>{applyOtzTheme(d);});
+    Otzaria.call('app.getTheme').then(({data})=>{if(data)applyOtzTheme(data);}).catch(()=>{});
+  }catch(e){}
+
+  loadAll();
+  loadSystemFonts();
+  updCount();
+  updNav();
+});
+
+/* ── SELECTION ── */
+function restoreSel(){
+  if(!savedRange)return;
+  const dp=document.getElementById('dp');
+  dp.focus();
+  const s=window.getSelection();s.removeAllRanges();
+  try{s.addRange(savedRange);}catch(e){}
+}
+
+/* ── EXEC ── */
+function ex(cmd,val){
+  restoreSel();
+  document.getElementById('dp').focus();
+  try{document.execCommand(cmd,false,val??null);}catch(e){}
+}
+
+/* ── FORMAT ── */
+function fmt(cmd){
+  recFlush();
+  ex(cmd);
+  if(isRecording){
+    let on;try{on=document.queryCommandState(cmd);}catch(e){}
+    recPush({t:'fmt',cmd:cmd,on:on});
+  }
+  updFmt();schedSave();
+}
+
+function applyFont(name){recFlush();if(isRecording)recPush({t:'font',name:name});ex('fontName',name);schedSave();}
+
+function applySize(pt){
+  if(!pt||isNaN(pt))return;
+  if(isRecording){recFlush();recPush({t:'size',pt:pt});}
+  restoreSel();
+  const dp=document.getElementById('dp');dp.focus();
+  try{document.execCommand('fontSize',false,'7');}catch(e){}
+  dp.querySelectorAll('font[size="7"]').forEach(el=>{
+    const sp=document.createElement('span');sp.style.fontSize=pt+'pt';
+    while(el.firstChild)sp.appendChild(el.firstChild);
+    el.parentNode.replaceChild(sp,el);
+  });
+  schedSave();
+}
+
+function growFont(d){
+  const dp=document.getElementById('dp');
+  const s=window.getSelection();
+  const el=s?.focusNode?(s.focusNode.nodeType===3?s.focusNode.parentElement:s.focusNode):dp;
+  const px=parseFloat(window.getComputedStyle(el).fontSize)||16;
+  const pt=Math.round(px*0.75);
+  const pts=[8,9,10,11,12,14,16,18,20,24,28,36,48,72];
+  let i=pts.findIndex(v=>v>=pt);
+  if(i===-1)i=pts.length-1;
+  else if(d<0&&pts[i]===pt)i--;
+  i=Math.max(0,Math.min(pts.length-1,i+d));
+  applySize(pts[i]);
+  document.getElementById('ss').value=pts[i];
+}
+
+function applyColor(c){recFlush();if(isRecording)recPush({t:'color',c:c});document.getElementById('bc').style.background=c;ex('foreColor',c);schedSave();}
+function applyHL(c){recFlush();if(isRecording)recPush({t:'hl',c:c});document.getElementById('bh').style.background=c;ex('backColor',c);schedSave();}
+
+function sa(dir){
+  recFlush();
+  if(isRecording)recPush({t:'align',dir:dir});
+  const m={Right:'justifyRight',Left:'justifyLeft',Center:'justifyCenter',Full:'justifyFull'};
+  ex(m[dir]);updFmt();schedSave();
+}
+
+function applyBlock(tag){
+  recFlush();
+  if(isRecording)recPush({t:'block',tag:tag});
+  ex('formatBlock','<'+tag+'>');
+  updFmt();schedNav();schedSave();
+}
+
+function applySpacing(v){
+  const dp=document.getElementById('dp');
+  const s=window.getSelection();
+  if(!s||!s.rangeCount)return;
+  let n=s.focusNode;
+  const BL=['P','DIV','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE'];
+  while(n&&n!==dp&&!BL.includes(n.nodeName))n=n.parentNode;
+  if(n&&n!==dp)n.style.lineHeight=v;else dp.style.lineHeight=v;
+  schedSave();
+}
+
+function updFmt(){
+  const q=c=>{try{return document.queryCommandState(c);}catch(e){return false;}};
+  document.getElementById('bb')?.classList.toggle('on',q('bold'));
+  document.getElementById('bi')?.classList.toggle('on',q('italic'));
+  document.getElementById('bu')?.classList.toggle('on',q('underline'));
+  document.getElementById('bs')?.classList.toggle('on',q('strikeThrough'));
+  document.getElementById('bar')?.classList.toggle('on',q('justifyRight'));
+  document.getElementById('bac')?.classList.toggle('on',q('justifyCenter'));
+  document.getElementById('bal')?.classList.toggle('on',q('justifyLeft'));
+  document.getElementById('baj')?.classList.toggle('on',q('justifyFull'));
+}
+
+/* ── FORMAT PAINTER ── */
+function fmtPainter(){
+  const s=window.getSelection();
+  const el=s?.focusNode?(s.focusNode.nodeType===3?s.focusNode.parentElement:s.focusNode):document.getElementById('dp');
+  paintData={
+    bold:document.queryCommandState('bold'),
+    italic:document.queryCommandState('italic'),
+    underline:document.queryCommandState('underline'),
+    color:document.queryCommandValue('foreColor')
+  };
+  isPainting=true;
+  document.getElementById('fp-btn').classList.add('on');
+  document.body.classList.add('cursor-paint');
+  notify('לחץ על טקסט ליישום העיצוב');
+}
+
+/* ── PASTE ── */
+async function doPaste(){
+  recFlush();
+  try{
+    const t=await navigator.clipboard.readText();
+    _skipPasteRecord=true;
+    if(isRecording)recPush({t:'paste_txt',v:t});
+    ex('insertText',t);
+    _skipPasteRecord=false;
+  }catch(e){try{ex('paste');}catch(e2){}}
+}
+
+/* ── DOC CLICK ── */
+function onDocClick(e){
+  if(isPainting)return; // handled in mousedown
+}
+
+/* ── INSERT ── */
+let _pgNum=1,repagTimer=null;
+const _A4H=1122,_PGH=56;
+function insertPageBreak(){
+  recFlush();if(isRecording)recPush({t:'pg'});
+  _pgNum++;
+  ex('insertHTML','<div class="pgbreak" contenteditable="false" data-pg="עמוד '+_pgNum+'"></div><p><br></p>');
+}
+function insertBlankPage(){
+  insertPageBreak();
+  ex('insertHTML','<p style="min-height:600px"><br></p>');
+  insertPageBreak();
+}
+function insHR(){
+  recFlush();if(isRecording)recPush({t:'sep'});
+  ex('insertHTML','<hr style="border:none;border-top:2px solid #ccc;margin:16px 0"/><p><br></p>');
+}
+function insLink(){
+  const s=window.getSelection(),txt=s?.toString()||'';
+  const url=prompt('כתובת URL:','https://');
+  if(!url||!url.trim())return;
+  if(txt&&!s.isCollapsed){ex('createLink',url);}
+  else ex('insertHTML','<a href="'+url+'" target="_blank">'+url+'</a>');
+  schedSave();
+}
+function insBookmark(){
+  const nm=prompt('שם הסימניה:');if(!nm)return;
+  ex('insertHTML','<a id="bm-'+nm.replace(/\s+/g,'-')+'" style="color:var(--wb);font-size:.85em">[📌 '+nm+']</a>');
+}
+function insHeader(){
+  const dp=document.getElementById('dp');
+  let h=dp.querySelector('.doc-hdr');
+  if(!h){h=document.createElement('div');h.className='doc-hdr';h.contentEditable='true';
+    h.style.cssText='border-bottom:1px solid #ccc;padding-bottom:8px;margin-bottom:16px;font-size:.85em;color:#555;min-height:24px;';
+    h.innerHTML='כותרת עליונה';dp.insertBefore(h,dp.firstChild);}
+  h.focus();
+}
+function insFooterArea(){
+  const dp=document.getElementById('dp');
+  let f=dp.querySelector('.doc-ftr');
+  if(!f){f=document.createElement('div');f.className='doc-ftr';f.contentEditable='true';
+    f.style.cssText='border-top:1px solid #ccc;padding-top:8px;margin-top:40px;font-size:.85em;color:#555;min-height:24px;';
+    f.innerHTML='כותרת תחתונה';dp.appendChild(f);}
+  f.focus();
+}
+function insPageNum(){ex('insertHTML','<span contenteditable="false" style="color:#666;font-size:.85em;background:#f0f0f0;padding:0 3px;border-radius:2px">[עמוד]</span>');}
+function insDate(){
+  recFlush();if(isRecording)recPush({t:'date'});
+  const d=new Date();ex('insertText',d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear());
+}
+function numToHebrew(n){
+  if(n<=0)return String(n);
+  const tbl=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],
+             [90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],
+             [9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+  let r='';
+  const h=Math.floor(n/100)*100,lo=n%100;
+  let hrem=h;
+  for(const[v,l] of tbl){if(v<100)break;while(hrem>=v){r+=l;hrem-=v;}}
+  if(lo===15)r+='טו';
+  else if(lo===16)r+='טז';
+  else{let lr=lo;for(const[v,l] of tbl){if(v>=100)continue;while(lr>=v){r+=l;lr-=v;}}}
+  if(!r)return String(n);
+  return r.length===1?r+"'":r.slice(0,-1)+'"'+r.slice(-1);
+}
+function insHebDate(){
+  recFlush();if(isRecording)recPush({t:'heb_date'});
+  try{
+    const fmtParts=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).formatToParts(new Date());
+    let day=0,month='',year=0;
+    for(const p of fmtParts){
+      if(p.type==='day')day=parseInt(p.value);
+      else if(p.type==='month')month=p.value.replace(/^ב/,''); // strip leading ב if Intl adds it
+      else if(p.type==='year')year=parseInt(p.value);
+    }
+    const result=numToHebrew(day)+' ב'+month+' '+numToHebrew(year%1000||year);
+    ex('insertText',result);
+  }catch(e){ex('insertText','[תאריך עברי]');}
+}
+function insLoc(){
+  const ref=prompt('הכנס מיקום (לדוג׳: בראשית א, א):');if(!ref)return;
+  ex('insertHTML','<span style="color:var(--wb);font-weight:600;cursor:pointer;text-decoration:underline" onclick="openRef(\''+ref.replace(/'/g,"\\'")+'\')" title="פתח בקורא">'+ref+'</span>');
+}
+function openRef(ref){try{Otzaria.call('reader.open',{ref});}catch(e){notify('פתח בקורא: '+ref);}}
+function insPasuk(){
+  const dlg=makeDlg('הכנס פסוק');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <label>ספר / מסכת:</label><input id="pbook" placeholder="בראשית / ברכות"/>
+    <label>פרק:</label><input id="pchap" type="number" placeholder="1" style="width:80px"/>
+    <label>פסוק / דף:</label><input id="pverse" placeholder="א"/>`;
+  addDlgBtn(dlg,'הכנס',()=>{
+    const bk=dlg.querySelector('#pbook').value.trim();
+    const ch=dlg.querySelector('#pchap').value.trim();
+    const vs=dlg.querySelector('#pverse').value.trim();
+    if(!bk)return;
+    const ref=bk+(ch?' '+ch:'')+(vs?', '+vs:'');
+    dlg.remove();
+    ex('insertHTML','<span style="color:var(--wb);font-weight:600;cursor:pointer" onclick="openRef(\''+ref.replace(/'/g,"\\'")+'\')" title="פתח בקורא">'+ref+'</span> ');
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function insFootnote(){
+  fnCount++;const n=fnCount;
+  ex('insertHTML','<sup class="fn-ref" style="color:var(--wb);font-size:.75em;cursor:pointer" title="הערת שוליים '+n+'">['+n+']</sup>');
+  const dp=document.getElementById('dp');
+  let ar=dp.querySelector('.fn-area');
+  if(!ar){ar=document.createElement('div');ar.className='fn-area';ar.innerHTML='<div style="height:1px;background:#bbb;margin:30px 0 8px"></div>';dp.appendChild(ar);}
+  const p=document.createElement('p');p.style.cssText='font-size:.85em;color:#444;margin:2px 0';
+  p.innerHTML='<span style="color:var(--wb)">['+n+']</span> ';
+  ar.appendChild(p);
+  const r=document.createRange();r.setStart(p,p.childNodes.length);r.collapse(true);
+  const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  schedSave();
+}
+function insEndnote(){
+  enCount++;const n=enCount;
+  ex('insertHTML','<sup style="color:#c00;font-size:.75em;cursor:pointer" title="הערת סיום '+n+'">('+n+')</sup>');
+  const dp=document.getElementById('dp');
+  let ar=dp.querySelector('.en-area');
+  if(!ar){ar=document.createElement('div');ar.className='en-area';ar.innerHTML='<p style="font-weight:700;font-size:.9em;margin-bottom:6px">הערות סיום</p>';dp.appendChild(ar);}
+  const p=document.createElement('p');p.style.cssText='font-size:.85em;color:#333;margin:2px 0';
+  p.innerHTML='<span style="color:#c00">('+n+')</span> ';
+  ar.appendChild(p);
+  const r=document.createRange();r.setStart(p,p.childNodes.length);r.collapse(true);
+  const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  schedSave();
+}
+function insCitation(){
+  const src=prompt('מקור הציטוט:');if(!src)return;
+  ex('insertHTML','<span style="color:#555;font-style:italic;font-size:.9em">('+src+')</span>');
+}
+function insBib(){
+  ex('insertHTML','<div style="margin-top:20px;border-top:1px solid #ccc;padding-top:12px"><h3 style="font-size:1em;margin-bottom:6px">מקורות</h3><p style="font-size:.85em;color:#444">הוסף מקורות כאן...</p></div>');
+}
+function insSpecialChar(){
+  const chars='–—…«»©®™₪°±×÷√∞≈≠≤≥←→↑↓↔αβγδεπσφψω';
+  const dlg=makeDlg('תו מיוחד');
+  let html='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px">';
+  for(const c of chars)html+=`<button onclick="ex('insertText','${c}');this.closest('.dlg-back').remove()" style="width:32px;height:32px;border:1px solid #d1d1d1;background:#fff;cursor:pointer;border-radius:2px;font-size:1.1em">${c}</button>`;
+  html+='</div>';
+  dlg.querySelector('.dlg-bd').innerHTML=html;
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+function insChidush(){
+  recFlush();if(isRecording)recPush({t:'block',tag:'h2'});
+  ex('formatBlock','<h2>');schedSave();
+}
+function insChidushBox(){
+  ex('insertHTML','<div style="border:2px solid var(--wb);border-radius:4px;padding:10px 14px;margin:12px 0;background:var(--wb-lt)"><p style="font-weight:700;color:var(--wb);margin-bottom:6px">✦ חידוש</p><p>כתוב כאן...</p></div><p><br></p>');
+  schedSave();
+}
+
+/* ── TABLE ── */
+function openTableDlg(){
+  const dlg=makeDlg('הוסף טבלה');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <p style="font-size:.8em;color:#555;margin-bottom:6px">גרור לבחירת גודל:</p>
+    <div class="tbl-grid" id="tg"></div>
+    <p id="tg-lbl" style="font-size:.78em;color:var(--wb);margin-top:5px;min-height:1.2em"></p>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <label style="font-size:.8em">שורות: <input type="number" id="tr" value="3" min="1" max="20" style="width:50px;border:1px solid #ccc;padding:2px 4px;border-radius:2px;font-family:inherit"></label>
+      <label style="font-size:.8em">עמודות: <input type="number" id="tc" value="3" min="1" max="10" style="width:50px;border:1px solid #ccc;padding:2px 4px;border-radius:2px;font-family:inherit"></label>
+    </div>`;
+  const tg=dlg.querySelector('#tg');
+  for(let r=1;r<=8;r++)for(let c=1;c<=10;c++){
+    const cl=document.createElement('div');cl.className='tbl-cell';cl.dataset.r=r;cl.dataset.c=c;
+    cl.addEventListener('mouseover',()=>{
+      const rr=+cl.dataset.r,cc=+cl.dataset.c;
+      tg.querySelectorAll('.tbl-cell').forEach(x=>x.classList.toggle('hi',+x.dataset.r<=rr&&+x.dataset.c<=cc));
+      dlg.querySelector('#tg-lbl').textContent=rr+' שורות × '+cc+' עמודות';
+      dlg.querySelector('#tr').value=rr;dlg.querySelector('#tc').value=cc;
+    });
+    cl.addEventListener('click',()=>{doInsTable(+cl.dataset.r,+cl.dataset.c);dlg.remove();});
+    tg.appendChild(cl);
+  }
+  addDlgBtn(dlg,'הוסף',()=>{
+    const r=parseInt(dlg.querySelector('#tr').value)||3,c=parseInt(dlg.querySelector('#tc').value)||3;
+    doInsTable(r,c);dlg.remove();
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function doInsTable(rows,cols){
+  restoreSel();
+  let h='<table style="border-collapse:collapse;width:100%;margin:10px 0"><tbody>';
+  for(let r=0;r<rows;r++){h+='<tr>';
+    for(let c=0;c<cols;c++){
+      const tag=r===0?'th':'td';
+      h+=`<${tag} style="border:1px solid #b0b0b0;padding:5px 8px;min-width:50px;${r===0?'background:#f3f3f3;font-weight:700;':''}">&nbsp;</${tag}>`;
+    }h+='</tr>';}
+  h+='</tbody></table><p><br></p>';
+  ex('insertHTML',h);schedSave();
+}
+
+/* ── TOC ── */
+function genTOC(){
+  const dp=document.getElementById('dp');
+  const hs=dp.querySelectorAll('h1,h2,h3');
+  if(!hs.length){notify('אין כותרות במסמך');return;}
+  hs.forEach((h,i)=>{if(!h.id)h.id='_h'+i;});
+  let html='<div style="border:1px solid #d1d1d1;padding:12px 16px;margin:12px 0;background:#fafafa" class="toc-block"><p style="font-weight:700;margin-bottom:8px;color:var(--wb)">תוכן עניינים</p>';
+  hs.forEach(h=>{
+    const lv=parseInt(h.tagName[1]);
+    html+=`<p style="margin:2px 0;padding-right:${(lv-1)*16}px;font-size:.88em"><a href="#${h.id}" style="color:#333;text-decoration:none" onclick="document.getElementById('${h.id}')?.scrollIntoView({behavior:'smooth'});return false;">${h.textContent.trim()}</a></p>`;
+  });
+  html+='</div><p><br></p>';
+  restoreSel();ex('insertHTML',html);schedSave();
+}
+function updTOC(){
+  const dp=document.getElementById('dp');
+  dp.querySelectorAll('.toc-block').forEach(el=>el.remove());
+  genTOC();
+}
+
+/* ── LAYOUT ── */
+function setMargins(t){
+  const m={normal:'96px 90px',narrow:'48px 36px',wide:'96px 144px'};
+  document.getElementById('dp').style.padding=m[t]||m.normal;
+}
+function setPageDir(d){
+  const dp=document.getElementById('dp');
+  dp.style.width=d==='landscape'?'1122px':'794px';
+  dp.style.minHeight=d==='landscape'?'794px':'1122px';
+  document.getElementById('ruler').style.width=d==='landscape'?'1122px':'794px';
+}
+function setPageSize(s){
+  const sz={A4:{w:'794px',h:'1122px'},letter:{w:'816px',h:'1056px'},legal:{w:'816px',h:'1344px'}};
+  const p=sz[s]||sz.A4;
+  document.getElementById('dp').style.width=p.w;
+  document.getElementById('dp').style.minHeight=p.h;
+}
+function setCols(n){
+  const dp=document.getElementById('dp');
+  dp.style.columns=n>1?String(n):'';dp.style.columnGap=n>1?'2em':'';
+}
+
+/* ── NAV PANE ── */
+function togNav(){
+  const p=document.getElementById('nav-pane');p.classList.toggle('hide');
+  const on=!p.classList.contains('hide');
+  document.getElementById('nav-btn').textContent=(on?'✓ ':'')+'חלונית ניווט';
+}
+function swNavTab(t,el){
+  navMode=t;
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');updNav();
+}
+function schedNav(){clearTimeout(navTimer);navTimer=setTimeout(updNav,500);}
+function updNav(){navMode==='h'?updNavH():updNavR();}
+function updNavH(){
+  const dp=document.getElementById('dp');
+  const hs=dp.querySelectorAll('h1,h2,h3');
+  const nb=document.getElementById('nav-body');
+  if(!hs.length){nb.innerHTML='<div class="nav-empty">אין כותרות</div>';return;}
+  // Assign IDs so scrollToH works
+  hs.forEach((h,i)=>{if(!h.id)h.id='_h'+i;});
+  nb.innerHTML=Array.from(hs).map(h=>{
+    const cls=h.tagName.toLowerCase();
+    const txt=(h.textContent||'').trim()||'(ללא כותרת)';
+    return `<div class="nav-item ${cls}" onclick="scrollToH('${h.id}')">${txt}</div>`;
+  }).join('');
+}
+function scrollToH(id){
+  const el=document.getElementById(id);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('cur'));
+    document.querySelector(`.nav-item[onclick="scrollToH('${id}')"]`)?.classList.add('cur');}
+}
+function navSearch(q){
+  if(!q.trim()){navMode='h';document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('on',i===0));updNavH();return;}
+  navMode='r';document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('on',i===1));
+  updNavR(q);
+}
+function updNavR(q){
+  const nb=document.getElementById('nav-body');
+  if(!q){nb.innerHTML='<div class="nav-empty">הכנס מונח</div>';return;}
+  const lines=document.getElementById('dp').innerText.split('\n').filter(l=>l.toLowerCase().includes(q.toLowerCase()));
+  if(!lines.length){nb.innerHTML='<div class="nav-empty">אין תוצאות</div>';return;}
+  nb.innerHTML=lines.slice(0,25).map(l=>`<div class="nav-item" onclick="findInDoc('${l.trim().slice(0,30).replace(/'/g,"\\'")}')">${l.trim().slice(0,70)}</div>`).join('');
+}
+function findInDoc(txt){openFB();document.getElementById('fi').value=txt;hlFind(txt);}
+
+/* ── FIND & REPLACE ── */
+function openFB(){document.getElementById('fb').style.display='flex';document.getElementById('fi').focus();}
+function closeFB(){document.getElementById('fb').style.display='none';clearHL();document.getElementById('fc').textContent='';}
+function togReplace(){const r=document.getElementById('rr');r.style.display=r.style.display==='flex'?'none':'flex';}
+function openReplace(){openFB();document.getElementById('rr').style.display='flex';}
+function fbKey(e){if(e.key==='Escape')closeFB();else if(e.key==='Enter'){e.shiftKey?findPrev():findNext();}}
+
+function clearHL(){
+  document.querySelectorAll('mark.fhl').forEach(m=>{
+    const p=m.parentNode;if(!p)return;
+    while(m.firstChild)p.insertBefore(m.firstChild,m);
+    p.removeChild(m);try{p.normalize();}catch(e){}
+  });
+  fhlList=[];fhlIdx=0;
+}
+function hlFind(q){
+  clearHL();if(!q)return;
+  const dp=document.getElementById('dp');
+  const w=document.createTreeWalker(dp,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentNode.nodeName==='MARK'?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const nodes=[];let n;while((n=w.nextNode()))nodes.push(n);
+  const lq=q.toLowerCase();
+  nodes.forEach(tn=>{
+    const txt=tn.textContent,lt=txt.toLowerCase();
+    let idx=0,last=0,found=false;
+    const fr=document.createDocumentFragment();
+    while((idx=lt.indexOf(lq,last))!==-1){
+      fr.appendChild(document.createTextNode(txt.slice(last,idx)));
+      const mk=document.createElement('mark');mk.className='fhl';mk.textContent=txt.slice(idx,idx+q.length);
+      fr.appendChild(mk);fhlList.push(mk);last=idx+q.length;found=true;
+    }
+    if(found){fr.appendChild(document.createTextNode(txt.slice(last)));tn.parentNode.replaceChild(fr,tn);}
+  });
+  document.getElementById('fc').textContent=fhlList.length?fhlList.length+' תוצאות':'לא נמצא';
+  if(fhlList.length)scrollFHL(0);
+}
+function scrollFHL(i){
+  document.querySelectorAll('mark.fhl.cur').forEach(m=>m.classList.remove('cur'));
+  const m=fhlList[i];if(!m)return;
+  m.classList.add('cur');m.scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('fc').textContent=(i+1)+' / '+fhlList.length;
+}
+function findNext(){if(!fhlList.length)return;fhlIdx=(fhlIdx+1)%fhlList.length;scrollFHL(fhlIdx);}
+function findPrev(){if(!fhlList.length)return;fhlIdx=(fhlIdx-1+fhlList.length)%fhlList.length;scrollFHL(fhlIdx);}
+function doRep(){
+  if(!fhlList.length)return;
+  const r=document.getElementById('ri').value;
+  const m=fhlList[fhlIdx];
+  if(m&&m.parentNode){m.parentNode.replaceChild(document.createTextNode(r),m);fhlList.splice(fhlIdx,1);}
+  if(fhlIdx>=fhlList.length)fhlIdx=Math.max(0,fhlList.length-1);
+  document.getElementById('fc').textContent=fhlList.length+' תוצאות';
+  if(fhlList.length)scrollFHL(fhlIdx);
+}
+function doRepAll(){
+  const f=document.getElementById('fi').value,r=document.getElementById('ri').value;
+  if(!f)return;
+  const cnt=fhlList.length;
+  fhlList.forEach(m=>{if(m.parentNode)m.parentNode.replaceChild(document.createTextNode(r),m);});
+  fhlList=[];document.getElementById('fc').textContent='';
+  notify('הוחלפו '+cnt+' מופעים');closeFB();schedSave();
+}
+
+/* ── VIEW ── */
+function setZoom(v){
+  zoom=Math.min(200,Math.max(50,v));
+  document.getElementById('dp').style.zoom=zoom+'%';
+  document.getElementById('ruler').style.zoom=zoom+'%';
+  document.getElementById('zpct').textContent=zoom+'%';
+  document.getElementById('zsl').value=zoom;
+}
+function chZoom(d){setZoom(zoom+d);}
+function promptZoom(){const v=parseInt(prompt('הכנס אחוז זום:',zoom));if(!isNaN(v))setZoom(v);}
+
+function togFocus(){
+  document.body.classList.toggle('focus-mode');
+  document.getElementById('sv-fc').classList.toggle('on',document.body.classList.contains('focus-mode'));
+}
+function togRead(){
+  isReadMode=!isReadMode;
+  const dp=document.getElementById('dp');
+  dp.contentEditable=isReadMode?'false':'true';
+  dp.style.cursor=isReadMode?'default':'text';
+  document.getElementById('sv-rd').classList.toggle('on',isReadMode);
+  document.getElementById('vread-btn').textContent=isReadMode?'✓ מצב קריאה':'מצב קריאה';
+  notify(isReadMode?'מצב קריאה':'מצב עריכה');
+}
+function svClick(v,el){
+  if(v==='rd'){togRead();return;}
+  document.querySelectorAll('.sv').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function togRuler(){
+  const r=document.getElementById('ruler');
+  const vis=r.style.display==='block';
+  r.style.display=vis?'none':'block';
+  document.getElementById('ruler-btn').textContent=(vis?'':'✓ ')+'סרגל';
+}
+
+/* ── WORD COUNT ── */
+function schedCount(){clearTimeout(countTimer);countTimer=setTimeout(updCount,400);}
+function updCount(){
+  const txt=document.getElementById('dp').innerText||'';
+  const w=txt.trim()?txt.trim().split(/\s+/).filter(x=>x.length).length:0;
+  const c=txt.replace(/\s/g,'').length;
+  document.getElementById('sbw').textContent=w.toLocaleString()+' מילים';
+  document.getElementById('sbch').textContent=c.toLocaleString()+' תווים';
+  updPageNum();
+}
+function updPageNum(){
+  const dp=document.getElementById('dp');
+  const dw=document.getElementById('dw');
+  const total=Math.max(1,1+dp.querySelectorAll('.pgbreak').length);
+  const dpTop=dp.getBoundingClientRect().top-dw.getBoundingClientRect().top+dw.scrollTop;
+  const midScroll=dw.scrollTop+dw.clientHeight/2-dpTop;
+  const cur=Math.max(1,Math.min(total,Math.ceil(midScroll/_A4H)));
+  document.getElementById('sbpg').textContent='עמוד '+cur+' / '+total;
+}
+function schedRepaginate(){clearTimeout(repagTimer);repagTimer=setTimeout(doRepaginate,1200);}
+function doRepaginate(){
+  const dp=document.getElementById('dp');if(!dp)return;
+  // Save selection node (not full range — survives DOM changes)
+  const sel=window.getSelection();
+  const anchorNode=sel?.anchorNode;
+  const anchorOff=sel?.anchorOffset??0;
+  // Remove all auto page breaks
+  dp.querySelectorAll('.auto-pg').forEach(pb=>pb.remove());
+  // Reset _pgNum to count only manual breaks
+  _pgNum=1+dp.querySelectorAll('.pgbreak:not(.auto-pg)').length;
+  void dp.offsetHeight; // force reflow to get fresh offsetTop values
+  // Walk direct children, insert break when content crosses page boundary
+  const kids=[...dp.children].filter(c=>!c.classList.contains('pgbreak'));
+  let boundary=_A4H,inserted=0;
+  for(const kid of kids){
+    const top=kid.offsetTop;
+    if(top>=boundary){
+      _pgNum++;
+      const pb=document.createElement('div');
+      pb.className='pgbreak auto-pg';
+      pb.setAttribute('contenteditable','false');
+      pb.dataset.pg='עמוד '+_pgNum;
+      kid.before(pb);
+      inserted++;
+      boundary+=_PGH+_A4H;
+    }
+  }
+  // Restore cursor if node still exists
+  if(anchorNode&&dp.contains(anchorNode)){
+    try{
+      const r=document.createRange();
+      const mx=anchorNode.nodeType===3?anchorNode.length:anchorNode.childNodes.length;
+      r.setStart(anchorNode,Math.min(anchorOff,mx));
+      r.collapse(true);
+      sel.removeAllRanges();sel.addRange(r);
+    }catch(e){}
+  }
+  updPageNum();
+}
+function openWordCountDlg(){
+  const txt=document.getElementById('dp').innerText||'';
+  const w=txt.trim()?txt.trim().split(/\s+/).filter(x=>x.length).length:0;
+  const dlg=makeDlg('ספירת מילים');
+  dlg.querySelector('.dlg-bd').innerHTML=`<table style="width:100%;font-size:.85em;border-collapse:collapse">
+    <tr><td style="padding:5px 0;color:#555">מילים</td><td style="font-weight:600">${w.toLocaleString()}</td></tr>
+    <tr><td style="padding:5px 0;color:#555">תווים (עם רווחים)</td><td style="font-weight:600">${txt.length.toLocaleString()}</td></tr>
+    <tr><td style="padding:5px 0;color:#555">תווים (ללא רווחים)</td><td style="font-weight:600">${txt.replace(/\s/g,'').length.toLocaleString()}</td></tr>
+    <tr><td style="padding:5px 0;color:#555">פסקאות</td><td style="font-weight:600">${document.getElementById('dp').querySelectorAll('p,h1,h2,h3').length}</td></tr>
+  </table>`;
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+
+/* ── SAVE / LOAD ── */
+function schedSave(){document.getElementById('sbs').textContent='● לא שמור';clearTimeout(autoSave);autoSave=setTimeout(saveDoc,2500);}
+async function saveDoc(){
+  const t=document.getElementById('doc-title').value;
+  const c=document.getElementById('dp').innerHTML;
+  await stSet('wdoc',{title:t,content:c,ts:Date.now()});
+  await stSet('wmacros',macros);
+  await stSet('warchive',archive);
+  await stSet('wcomments',{list:comments,count:cmCount});
+  document.getElementById('sbs').textContent='✓ שמור';
+}
+async function loadAll(){
+  const d=await stGet('wdoc');
+  if(d?.title)document.getElementById('doc-title').value=d.title;
+  if(d?.content){document.getElementById('dp').innerHTML=d.content;updCount();updNav();setTimeout(doRepaginate,200);}
+  const m=await stGet('wmacros');if(Array.isArray(m))macros=m;
+  const a=await stGet('warchive');if(Array.isArray(a))archive=a;
+  const cm=await stGet('wcomments');
+  if(cm&&Array.isArray(cm.list)){comments=cm.list;cmCount=cm.count||cm.list.length;updCommentPanel();}
+}
+async function stSet(k,v){
+  try{await Otzaria.call('plugin.storage.set',{key:k,value:JSON.stringify(v)});}
+  catch(e){try{localStorage.setItem('_otzw_'+k,JSON.stringify(v));}catch(ee){}}
+}
+async function stGet(k){
+  try{const{data}=await Otzaria.call('plugin.storage.get',{key:k});if(data?.value)return JSON.parse(data.value);}catch(e){}
+  try{const v=localStorage.getItem('_otzw_'+k);return v?JSON.parse(v):null;}catch(e){return null;}
+}
+
+/* ── EXPORT / PRINT ── */
+/* ══ DOCX (real Open XML .docx) ══ */
+function exportDocx(){
+  const title=document.getElementById('doc-title').value||'מסמך';
+  const body=_htmlToOoxml(document.getElementById('dp').innerHTML);
+  const NW='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const NR='http://schemas.openxmlformats.org/package/2006/relationships';
+  const NC='http://schemas.openxmlformats.org/package/2006/content-types';
+  const NO='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const CT=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="${NC}"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/></Types>`;
+  const RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NR}"><Relationship Id="rId1" Type="${NO}/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const WRELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NR}"><Relationship Id="rId1" Type="${NO}/styles" Target="styles.xml"/><Relationship Id="rId2" Type="${NO}/settings" Target="settings.xml"/></Relationships>`;
+  const WSETTINGS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="${NW}"><w:defaultTabStop w:val="720"/><w:themeFontLang w:val="he-IL" w:bidi="he-IL"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>`;
+  const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${NW}"><w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:sz w:val="40"/><w:szCs w:val="40"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="2E74B5"/><w:sz w:val="32"/><w:szCs w:val="32"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="1F3763"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:rtl/></w:rPr></w:style></w:styles>`;
+  const DOC=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="${NW}" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/><w:bidi/><w:rtlGutter/><w:docGrid w:type="lines" w:linePitch="360"/></w:sectPr></w:body></w:document>`;
+  const zip=_makeZip([
+    {name:'[Content_Types].xml',text:CT},
+    {name:'_rels/.rels',text:RELS},
+    {name:'word/document.xml',text:DOC},
+    {name:'word/_rels/document.xml.rels',text:WRELS},
+    {name:'word/styles.xml',text:STYLES},
+    {name:'word/settings.xml',text:WSETTINGS},
+  ]);
+  const blob=new Blob([zip],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=title+'.docx';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  notify('✓ '+title+'.docx נשמר');
+}
+
+/* ZIP builder (no compression) */
+function _makeZip(files){
+  const enc=new TextEncoder();
+  const ct=new Uint32Array(256);
+  for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);ct[i]=c;}
+  const crc32=d=>{let c=0xFFFFFFFF;for(let i=0;i<d.length;i++)c=ct[(c^d[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
+  const u16=n=>[n&0xFF,(n>>8)&0xFF];
+  const u32=n=>[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];
+  const cat=(...a)=>{const t=a.reduce((s,x)=>s+x.length,0);const o=new Uint8Array(t);let p=0;for(const x of a){o.set(x,p);p+=x.length;}return o;};
+  const parts=[];const cds=[];let off=0;
+  for(const {name,text} of files){
+    const nb=enc.encode(name),db=enc.encode(text);
+    const crc=crc32(db);
+    const lh=new Uint8Array([0x50,0x4B,0x03,0x04,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(db.length),...u32(db.length),...u16(nb.length),0,0]);
+    const cd=new Uint8Array([0x50,0x4B,0x01,0x02,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(db.length),...u32(db.length),...u16(nb.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(off)]);
+    const entry=cat(lh,nb,db);
+    parts.push(entry);cds.push(cat(cd,nb));off+=entry.length;
+  }
+  const cdBuf=cat(...cds);
+  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cdBuf.length),...u32(off),0,0]);
+  return cat(...parts,cdBuf,eocd);
+}
+
+/* HTML → OOXML paragraphs */
+function _htmlToOoxml(html){
+  const tmp=document.createElement('div');
+  tmp.innerHTML=html;
+  tmp.querySelectorAll('.pgbreak,.fn-area,.en-area').forEach(e=>e.remove());
+  tmp.querySelectorAll('mark.fhl').forEach(m=>{const p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});
+  const xe=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // inline runs with optional rpr
+  function runs(node,extra=''){
+    if(!node)return'';
+    if(node.nodeType===3){
+      const t=node.textContent;if(!t)return'';
+      const rpr=extra?`<w:rPr>${extra}<w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr>`:'<w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr>';
+      return`<w:r>${rpr}<w:t xml:space="preserve">${xe(t)}</w:t></w:r>`;
+    }
+    if(node.nodeType!==1)return'';
+    const tag=node.tagName.toLowerCase();
+    const kids=Array.from(node.childNodes);
+    let add=extra;
+    if(['b','strong'].includes(tag))add+='<w:b/><w:bCs/>';
+    if(['i','em'].includes(tag))add+='<w:i/><w:iCs/>';
+    if(tag==='u')add+='<w:u w:val="single"/>';
+    if(['s','del','strike'].includes(tag))add+='<w:strike/>';
+    if(tag==='sup')add+='<w:vertAlign w:val="superscript"/>';
+    if(tag==='sub')add+='<w:vertAlign w:val="subscript"/>';
+    const st=node.style||{};
+    if(st.fontWeight==='bold'||+st.fontWeight>=700)add+='<w:b/><w:bCs/>';
+    if(st.fontStyle==='italic')add+='<w:i/><w:iCs/>';
+    const fsPt=parseFloat(st.fontSize);
+    if(fsPt){const hw=Math.round(fsPt*2);add+=`<w:sz w:val="${hw}"/><w:szCs w:val="${hw}"/>`;}
+    const hex=_col2hex(st.color);
+    if(hex)add+=`<w:color w:val="${hex}"/>`;
+    return kids.map(c=>runs(c,add)).join('');
+  }
+  // block-level element → w:p or w:tbl
+  function para(node){
+    if(node.nodeType===3){
+      const t=node.textContent.trim();if(!t)return'';
+      return`<w:p><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:r><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr><w:t xml:space="preserve">${xe(t)}</w:t></w:r></w:p>`;
+    }
+    if(node.nodeType!==1)return'';
+    const tag=node.tagName.toLowerCase();
+    const kids=Array.from(node.childNodes);
+    const jc={right:'right',left:'left',center:'center',justify:'both'}[(node.style?.textAlign||'right').toLowerCase()]||'right';
+    const pBase=`<w:pPr><w:bidi/><w:jc w:val="${jc}"/></w:pPr>`;
+    // table
+    if(tag==='table'){
+      let t=`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="auto"/><w:left w:val="single" w:sz="4" w:color="auto"/><w:bottom w:val="single" w:sz="4" w:color="auto"/><w:right w:val="single" w:sz="4" w:color="auto"/><w:insideH w:val="single" w:sz="4" w:color="auto"/><w:insideV w:val="single" w:sz="4" w:color="auto"/></w:tblBorders></w:tblPr>`;
+      node.querySelectorAll('tr').forEach(tr=>{
+        t+='<w:tr>';
+        tr.querySelectorAll('td,th').forEach(td=>{
+          const hd=td.tagName.toLowerCase()==='th';
+          const cp=hd?'<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="F3F3F3"/></w:tcPr>':'';
+          const inner=Array.from(td.childNodes).map(para).join('')||`<w:p><w:pPr><w:bidi/></w:pPr></w:p>`;
+          t+=`<w:tc>${cp}${inner}</w:tc>`;
+        });
+        t+='</w:tr>';
+      });
+      return t+'</w:tbl>';
+    }
+    if(tag==='hr')return`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="auto"/></w:pBdr><w:bidi/></w:pPr></w:p>`;
+    if(tag==='br')return`<w:p><w:pPr><w:bidi/></w:pPr></w:p>`;
+    // list
+    if(['ul','ol'].includes(tag)){
+      return Array.from(node.querySelectorAll('li')).map((li,i)=>
+        `<w:p><w:pPr><w:bidi/><w:jc w:val="right"/><w:ind w:right="360"/></w:pPr><w:r><w:rPr><w:rtl/></w:rPr><w:t xml:space="preserve">${tag==='ol'?(i+1)+'. ':'• '}</w:t></w:r>${runs(li)}</w:p>`
+      ).join('');
+    }
+    // block with block children → recurse
+    const BL=['p','div','h1','h2','h3','h4','ul','ol','table','hr','blockquote','pre','br'];
+    const hasBlock=kids.some(k=>k.nodeType===1&&BL.includes(k.tagName?.toLowerCase()));
+    if(['div','blockquote','section','article'].includes(tag)&&hasBlock)return kids.map(para).join('');
+    // headings
+    const hs={h1:'Heading1',h2:'Heading2',h3:'Heading3'};
+    const hStyle=hs[tag];
+    if(hStyle)return`<w:p><w:pPr><w:pStyle w:val="${hStyle}"/><w:bidi/><w:jc w:val="${jc}"/></w:pPr>${runs(node)}</w:p>`;
+    // normal paragraph
+    if(['p','h4','h5','h6','pre','li'].includes(tag)||!hasBlock)
+      return`<w:p>${pBase}${runs(node)}</w:p>`;
+    return kids.map(para).join('');
+  }
+  const result=Array.from(tmp.childNodes).map(para).join('');
+  return result||`<w:p><w:pPr><w:bidi/></w:pPr></w:p>`;
+}
+function _col2hex(c){
+  if(!c||c==='inherit'||c==='initial')return null;
+  if(/^#[0-9a-f]{6}$/i.test(c))return c.slice(1).toUpperCase();
+  if(/^#[0-9a-f]{3}$/i.test(c))return c.slice(1).split('').map(x=>x+x).join('').toUpperCase();
+  const el=document.createElement('div');el.style.color=c;document.body.appendChild(el);
+  const cs=window.getComputedStyle(el).color;document.body.removeChild(el);
+  const m=cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+  if(!m)return null;
+  return[m[1],m[2],m[3]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function printDoc(){
+  const c=document.getElementById('dp').innerHTML;
+  const t=document.getElementById('doc-title').value;
+  const w=window.open('','_blank');if(!w)return;
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"/><title>${t}</title><style>
+    body{font-family:'Times New Roman',serif;font-size:12pt;direction:rtl;padding:72px 90px;line-height:1.5}
+    h1{font-size:2em;border-bottom:2px solid #000;padding-bottom:.15em;margin:.4em 0 .3em}
+    h2{font-size:1.5em;color:#2e74b5;margin:.35em 0 .25em}h3{font-size:1.17em;margin:.3em 0 .2em}
+    blockquote{border-right:3px solid #ccc;padding:4px 14px;font-style:italic;margin:8px 0}
+    table{border-collapse:collapse;width:100%}td,th{border:1px solid #aaa;padding:5px 8px}th{background:#f3f3f3}
+    hr{border:none;border-top:2px solid #ccc;margin:16px 0}a{color:#2b579a}mark{background:none!important}
+    @media print{body{padding:0}}
+  </style></head><body>${c}</body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),600);
+}
+
+/* ══ MACRO RECORDING ══ */
+function recPush(action){
+  recActions.push(action);
+  const el=document.getElementById('rec-count');
+  if(el)el.textContent='('+recActions.length+')';
+}
+function recFlush(){
+  if(!isRecording||!recBuf)return;
+  recPush({t:'text',v:recBuf});recBuf='';
+}
+function toggleRecording(){
+  if(isRecording){stopRecording();}
+  else{
+    const name=prompt('שם המאקרו החדש:');
+    if(!name)return;
+    recName=name;isRecording=true;recActions=[];recBuf='';
+    const ind=document.getElementById('rec-ind');
+    ind.style.display='flex';
+    document.getElementById('rec-ind-name').textContent='"'+name+'"';
+    document.getElementById('rec-count').textContent='(0)';
+    document.getElementById('rec-btn').classList.add('on');
+    notify('⏺ מקליט "'+name+'" — בצע פעולות, לחץ "עצור" בסיום');
+  }
+}
+function stopRecording(){
+  recFlush();
+  isRecording=false;
+  document.getElementById('rec-ind').style.display='none';
+  document.getElementById('rec-btn').classList.remove('on');
+  if(recActions.length){
+    macros.push({name:recName,actions:[...recActions]});
+    schedSave();
+    notify('✓ מאקרו נשמר: "'+recName+'" — '+recActions.length+' פעולות');
+  }else notify('לא הוקלטו פעולות');
+}
+
+/* ── MACRO RUN / MANAGE ── */
+function openMacroDlg(){
+  const dlg=makeDlg('מאקרואים');
+  const listHTML=macros.length?macros.map((m,i)=>{
+    const cnt=Array.isArray(m.actions)?m.actions.length:(m.actions||'').split('\n').filter(Boolean).length;
+    return`<div class="list-item">
+      <span>${m.name} <em style="color:#999;font-size:.85em">(${cnt} פעולות)</em></span>
+      <button class="dbtn p" style="font-size:.72em;padding:2px 8px" onclick="runMacro(${i});this.closest('.dlg-back').remove()">▶ הפעל</button>
+      <button class="dbtn p" style="font-size:.72em;padding:2px 8px;background:#555;border-color:#555" onclick="editMacro(${i});this.closest('.dlg-back').remove()">✎ ערוך</button>
+      <button class="dbtn s" style="font-size:.72em;padding:2px 8px;color:#c00;border-color:#fcc" onclick="if(confirm('מחק?')){delMacro(${i});this.closest('.dlg-back').remove();openMacroDlg();}">✕</button>
+    </div>`}).join('')
+    :'<p style="font-size:.8em;color:#888;padding:6px 0">אין מאקרואים — לחץ "הקלט מאקרו" ברצועה כדי להתחיל</p>';
+  dlg.querySelector('.dlg-bd').innerHTML=listHTML;
+  addDlgBtn(dlg,'➕ מאקרו ידני',()=>{dlg.remove();openManualMacroDlg();},true);
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+function openManualMacroDlg(){
+  const dlg=makeDlg('מאקרו ידני');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <label>שם:</label><input type="text" id="mn" placeholder="שם המאקרו"/>
+    <label>פעולות (שורה לפעולה):</label>
+    <textarea id="mc" style="min-height:120px;font-family:monospace;font-size:.78em" placeholder="text: שלום עולם\nnewline\nbold\ntext: חידוש חשוב\nbold\nnewline\nseparator"></textarea>
+    <details style="margin-top:8px">
+      <summary style="font-size:.76em;color:var(--wb);cursor:pointer">📖 כל הפקודות הזמינות</summary>
+      <div style="font-size:.71em;color:#444;margin-top:6px;line-height:1.9;background:#f8f8f8;padding:8px 10px;border-radius:3px;direction:ltr;text-align:left;border:1px solid #e8e8e8">
+        <b>Text:</b> text: [your text] | newline | linebreak | del_back | del_fwd<br>
+        <b>Format:</b> bold | italic | underline | strikethrough | clear_format<br>
+        <b>More:</b> subscript | superscript | indent | outdent<br>
+        <b>Lists:</b> list_ul | list_ol<br>
+        <b>Align:</b> align_right | align_left | align_center | align_full<br>
+        <b>Heading:</b> block_h1 | block_h2 | block_h3 | block_p | block_blockquote<br>
+        <b>Font:</b> font: Times New Roman | size: 14 | color: #ff0000 | highlight: #ffff00<br>
+        <b>Insert:</b> date | hebrew_date | separator | page_break<br>
+        <b>Edit:</b> undo | redo
+      </div>
+    </details>`;
+  addDlgBtn(dlg,'שמור',()=>{
+    const n=dlg.querySelector('#mn').value.trim(),c=dlg.querySelector('#mc').value.trim();
+    if(!n||!c){notify('מלא שם ופקודות');return;}
+    macros.push({name:n,actions:textToActions(c)});schedSave();dlg.remove();notify('מאקרו נשמר: '+n);
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function editMacro(i){
+  const m=macros[i];if(!m)return;
+  const txt=actionsToText(m.actions);
+  const dlg=makeDlg('ערוך מאקרו: '+m.name);
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <label>שם:</label><input type="text" id="en" value="${m.name.replace(/"/g,'&quot;')}"/>
+    <label>פעולות:</label>
+    <textarea id="ec" style="min-height:150px;font-family:monospace;font-size:.78em">${txt.replace(/</g,'&lt;')}</textarea>
+    <p style="font-size:.71em;color:#999;margin-top:4px">ניתן לערוך ידנית — שורה לפעולה</p>`;
+  addDlgBtn(dlg,'שמור',()=>{
+    const newName=dlg.querySelector('#en').value.trim();
+    const newTxt=dlg.querySelector('#ec').value.trim();
+    if(!newName){notify('חסר שם');return;}
+    macros[i]={name:newName,actions:textToActions(newTxt)};
+    schedSave();dlg.remove();notify('מאקרו עודכן: '+newName);
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function runMacro(i){
+  const mac=macros[i];if(!mac)return;
+  if(Array.isArray(mac.actions))runMacroActions(mac.actions);
+  else if(typeof mac.actions==='string')runMacroActions(textToActions(mac.actions));
+  schedSave();
+}
+function runMacroActions(actions){
+  restoreSel();
+  const dp2=document.getElementById('dp');dp2.focus();
+  for(const a of actions){
+    switch(a.t){
+      case 'text':   if(a.v)document.execCommand('insertText',false,a.v);break;
+      case 'nl':     document.execCommand('insertParagraph',false,null);break;
+      case 'lb':     document.execCommand('insertLineBreak',false,null);break;
+      case 'del':    if(a.d==='b')document.execCommand('delete',false,null);
+                     else document.execCommand('forwardDelete',false,null);break;
+      case 'fmt':{
+        const cc={bold:'bold',italic:'italic',underline:'underline',strikeThrough:'strikeThrough',
+          subscript:'subscript',superscript:'superscript',indent:'indent',outdent:'outdent',
+          insertUnorderedList:'insertUnorderedList',insertOrderedList:'insertOrderedList',
+          removeFormat:'removeFormat'};
+        const execCmd=cc[a.cmd];
+        if(execCmd){
+          if(a.on!==undefined){
+            // Absolute state: only toggle if current state differs from desired state
+            let cur=false;
+            try{cur=document.queryCommandState(execCmd);}catch(e){}
+            if(cur!==a.on)document.execCommand(execCmd,false,null);
+          }else{
+            document.execCommand(execCmd,false,null);
+          }
+        }
+        break;
+      }
+      case 'align':{
+        const m={Right:'justifyRight',Left:'justifyLeft',Center:'justifyCenter',Full:'justifyFull'};
+        if(m[a.dir])document.execCommand(m[a.dir],false,null);break;
+      }
+      case 'block': document.execCommand('formatBlock',false,'<'+a.tag+'>');break;
+      case 'font':  document.execCommand('fontName',false,a.name);break;
+      case 'size':  applySize(a.pt);break;
+      case 'color': document.execCommand('foreColor',false,a.c);break;
+      case 'hl':    document.execCommand('backColor',false,a.c);break;
+      case 'html':
+      case 'paste_html': document.execCommand('insertHTML',false,a.html||a.v||'');break;
+      case 'paste_txt':  document.execCommand('insertText',false,a.v||'');break;
+      case 'date':  insDate();break;
+      case 'heb_date': insHebDate();break;
+      case 'sep':   insHR();break;
+      case 'pg':    insertPageBreak();break;
+      case 'undo':  document.execCommand('undo',false,null);break;
+      case 'redo':  document.execCommand('redo',false,null);break;
+    }
+  }
+}
+/* ── ACTIONS ↔ TEXT ── */
+function textToActions(text){
+  if(!text)return[];
+  return text.split('\n').map(line=>{
+    line=line.trim();if(!line||line.startsWith('#'))return null;
+    if(line.startsWith('text:'))return{t:'text',v:line.slice(5).replace(/^ /,'')};
+    if(line==='newline')return{t:'nl'};
+    if(line==='linebreak')return{t:'lb'};
+    if(line==='del_back')return{t:'del',d:'b'};
+    if(line==='del_fwd')return{t:'del',d:'f'};
+    // format commands with optional :on/:off state
+    const fmtMap={bold:'bold',italic:'italic',underline:'underline',strikethrough:'strikeThrough',
+      subscript:'subscript',superscript:'superscript',indent:'indent',outdent:'outdent'};
+    for(const [k,v] of Object.entries(fmtMap)){
+      if(line===k)return{t:'fmt',cmd:v};
+      if(line===k+':on')return{t:'fmt',cmd:v,on:true};
+      if(line===k+':off')return{t:'fmt',cmd:v,on:false};
+    }
+    if(false){}// placeholder so next if chains work
+    if(line==='list_ul'||line==='list_unordered')return{t:'fmt',cmd:'insertUnorderedList'};
+    if(line==='list_ol'||line==='list_ordered')return{t:'fmt',cmd:'insertOrderedList'};
+    if(line==='clear_format')return{t:'fmt',cmd:'removeFormat'};
+    if(line.startsWith('align_')){const d=line.slice(6);return{t:'align',dir:d.charAt(0).toUpperCase()+d.slice(1)};}
+    if(line.startsWith('block_'))return{t:'block',tag:line.slice(6)};
+    if(line.startsWith('font:'))return{t:'font',name:line.slice(5).replace(/^ /,'')};
+    if(line.startsWith('size:'))return{t:'size',pt:parseFloat(line.slice(5))};
+    if(line.startsWith('color:'))return{t:'color',c:line.slice(6).trim()};
+    if(line.startsWith('highlight:'))return{t:'hl',c:line.slice(10).trim()};
+    if(line==='date')return{t:'date'};
+    if(line==='hebrew_date')return{t:'heb_date'};
+    if(line==='separator')return{t:'sep'};
+    if(line==='page_break')return{t:'pg'};
+    if(line.startsWith('html:'))return{t:'html',html:line.slice(5).replace(/^ /,'')};
+    if(line==='undo')return{t:'undo'};
+    if(line==='redo')return{t:'redo'};
+    return null;
+  }).filter(Boolean);
+}
+function actionsToText(actions){
+  if(typeof actions==='string')return actions;
+  if(!Array.isArray(actions))return'';
+  const r={bold:'bold',italic:'italic',underline:'underline',strikeThrough:'strikethrough',
+    subscript:'subscript',superscript:'superscript',indent:'indent',outdent:'outdent',
+    insertUnorderedList:'list_ul',insertOrderedList:'list_ol',removeFormat:'clear_format'};
+  return actions.map(a=>{
+    switch(a.t){
+      case 'text':  return 'text: '+a.v;
+      case 'nl':    return 'newline';
+      case 'lb':    return 'linebreak';
+      case 'del':   return a.d==='b'?'del_back':'del_fwd';
+      case 'fmt':   return (r[a.cmd]||a.cmd)+(a.on!==undefined?':'+(a.on?'on':'off'):'');
+      case 'align': return 'align_'+a.dir.toLowerCase();
+      case 'block': return 'block_'+a.tag;
+      case 'font':  return 'font: '+a.name;
+      case 'size':  return 'size: '+a.pt;
+      case 'color': return 'color: '+a.c;
+      case 'hl':    return 'highlight: '+a.c;
+      case 'date':  return 'date';
+      case 'heb_date': return 'hebrew_date';
+      case 'sep':   return 'separator';
+      case 'pg':    return 'page_break';
+      case 'html':  return 'html: '+(a.html||'').slice(0,80);
+      case 'paste_html': return '# paste (html, '+((a.html||'').length)+' chars)';
+      case 'paste_txt':  return 'text: '+(a.v||'');
+      case 'undo':  return 'undo';
+      case 'redo':  return 'redo';
+      default: return '# '+JSON.stringify(a);
+    }
+  }).join('\n');
+}
+function delMacro(i){macros.splice(i,1);schedSave();}
+
+/* ── TEMPLATES ── */
+function openTemplates(){
+  const tpls=[
+    {name:'חידוש הלכתי',actions:'block_h1\ntext: [נושא]\nhebrew_date\nseparator\ntext: שאלה:\ntext: \ntext: תשובה:\ntext: \ntext: מסקנה:'},
+    {name:'חידוש על הפרשה',actions:'block_h1\ntext: [שם הפרשה]\nhebrew_date\nseparator\ntext: \ntext: חידוש:'},
+    {name:'סיכום שיעור',actions:'block_h1\ntext: סיכום שיעור\ndate\nseparator\ntext: נושא: \ntext: עיקרי הדברים:\ntext: \ntext: הערות:'},
+    {name:'ביאור סוגיא',actions:'block_h1\ntext: ביאור הסוגיא\nhebrew_date\nseparator\ntext: גוף הסוגיא:\ntext: \ntext: קושיות:\ntext: \ntext: תירוצים:\ntext: \ntext: סיכום:'},
+    {name:'שאלה ותשובה',actions:'block_h2\ntext: שאלה:\ntext: \nblock_h2\ntext: תשובה:\ntext: \nblock_h2\ntext: מסקנה:\ntext: '},
+  ];
+  const dlg=makeDlg('תבניות מסמך');
+  dlg.querySelector('.dlg-bd').innerHTML='<p style="font-size:.8em;color:#555;margin-bottom:8px">בחר תבנית:</p>'+
+    tpls.map(t=>`<div class="list-item" style="cursor:pointer"><span>${t.name}</span></div>`).join('');
+  dlg.querySelectorAll('.list-item').forEach((el,i)=>{
+    el.onclick=()=>{
+      const tmp={name:tpls[i].name,actions:tpls[i].actions};
+      macros.push(tmp);runMacro(macros.length-1);macros.pop();
+      dlg.remove();
+    };
+  });
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+
+/* ── ARCHIVE ── */
+async function saveToArchive(){
+  const t=document.getElementById('doc-title').value;
+  const c=document.getElementById('dp').innerHTML;
+  const d=new Date();
+  const ds=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  archive.unshift({title:t,content:c,date:ds,id:Date.now()});
+  if(archive.length>50)archive.pop();
+  await saveDoc();notify('נשמר לארכיון: '+t);
+}
+function openArchiveDlg(){
+  const dlg=makeDlg('ארכיון חידושים');
+  dlg.querySelector('.dlg-bd').innerHTML=!archive.length?'<p style="font-size:.8em;color:#888">הארכיון ריק</p>':
+    archive.map((a,i)=>`<div class="list-item">
+      <span><strong>${a.title}</strong> <em style="color:#888;font-size:.85em">${a.date}</em></span>
+      <button class="dbtn p" style="font-size:.72em;padding:2px 8px" onclick="loadArc(${i});this.closest('.dlg-back').remove()">טען</button>
+      <button class="dbtn s" style="font-size:.72em;padding:2px 8px;color:#c00;border-color:#fcc" onclick="if(confirm('מחק?')){archive.splice(${i},1);schedSave();this.closest('.dlg-back').remove();openArchiveDlg();}">מחק</button>
+    </div>`).join('');
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+function loadArc(i){
+  const a=archive[i];if(!a)return;
+  document.getElementById('doc-title').value=a.title;
+  document.getElementById('dp').innerHTML=a.content;
+  updCount();updNav();schedSave();
+}
+
+/* ── OTZARIA ── */
+function openInReader(){
+  const txt=window.getSelection()?.toString()?.trim();
+  if(!txt){notify('בחר טקסט לפתיחה בקורא');return;}
+  try{Otzaria.call('reader.open',{ref:txt});}catch(e){notify('פתח בקורא: '+txt);}
+}
+function searchInLib(){
+  const txt=window.getSelection()?.toString()?.trim()||prompt('חפש בספרייה:');
+  if(!txt)return;
+  try{Otzaria.call('reader.open',{ref:txt});}catch(e){notify('חיפוש: '+txt);}
+}
+
+/* ── CONTEXT MENU ── */
+function showCtx(e){
+  e.preventDefault();
+  const ctx=document.getElementById('ctx');
+  // Detect if cursor is inside a table cell
+  const node=window.getSelection()?.focusNode;
+  const cell=node?(node.nodeType===3?node.parentElement:node)?.closest('td,th'):null;
+  const inTable=!!cell;
+  const tblIds=['ctx-tbl-sep','ctx-tbl-ins-above','ctx-tbl-ins-below',
+                'ctx-tbl-ins-col-r','ctx-tbl-ins-col-l',
+                'ctx-tbl-del-row','ctx-tbl-del-col','ctx-tbl-del-tbl'];
+  tblIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display=inTable?'':'none';
+  });
+  ctx.style.display='block';
+  ctx.style.left='-9999px';ctx.style.top='-9999px'; // measure first
+  requestAnimationFrame(()=>{
+    const w=ctx.offsetWidth,h=ctx.offsetHeight;
+    const x=Math.min(e.clientX,window.innerWidth-w-6);
+    const y=Math.min(e.clientY,window.innerHeight-h-6);
+    ctx.style.left=x+'px';ctx.style.top=y+'px';
+  });
+}
+function hideCtx(){document.getElementById('ctx').style.display='none';}
+
+/* ── TABLE CONTEXT ACTIONS ── */
+function _ctxCell(){
+  const node=window.getSelection()?.focusNode;
+  return (node?(node.nodeType===3?node.parentElement:node)?.closest('td,th'):null);
+}
+function ctxTblRow(where){
+  const cell=_ctxCell();if(!cell)return;
+  const row=cell.closest('tr');if(!row)return;
+  const cols=row.querySelectorAll('td,th').length;
+  const newRow=document.createElement('tr');
+  for(let i=0;i<cols;i++){
+    const td=document.createElement('td');
+    td.style.cssText='border:1px solid #b0b0b0;padding:5px 8px;min-width:50px';
+    td.innerHTML='&nbsp;';
+    newRow.appendChild(td);
+  }
+  if(where==='above')row.parentNode.insertBefore(newRow,row);
+  else row.parentNode.insertBefore(newRow,row.nextSibling);
+  schedSave();
+}
+function ctxTblCol(where){
+  const cell=_ctxCell();if(!cell)return;
+  const row=cell.closest('tr');
+  const table=cell.closest('table');if(!table)return;
+  const cellIdx=Array.from(row.children).indexOf(cell);
+  table.querySelectorAll('tr').forEach(tr=>{
+    const cells=tr.querySelectorAll('td,th');
+    const ref=cells[cellIdx];if(!ref)return;
+    const td=document.createElement('td');
+    td.style.cssText='border:1px solid #b0b0b0;padding:5px 8px;min-width:50px';
+    td.innerHTML='&nbsp;';
+    if(where==='right')tr.insertBefore(td,ref);
+    else tr.insertBefore(td,ref.nextSibling);
+  });
+  schedSave();
+}
+function ctxTblDelRow(){
+  const cell=_ctxCell();if(!cell)return;
+  const row=cell.closest('tr');if(!row)return;
+  const table=row.closest('table');
+  if(table.querySelectorAll('tr').length<=1){ctxTblDelTable();return;}
+  row.remove();schedSave();
+}
+function ctxTblDelCol(){
+  const cell=_ctxCell();if(!cell)return;
+  const row=cell.closest('tr');
+  const table=cell.closest('table');if(!table)return;
+  const cellIdx=Array.from(row.children).indexOf(cell);
+  let allSingle=true;
+  table.querySelectorAll('tr').forEach(tr=>{if(tr.querySelectorAll('td,th').length>1)allSingle=false;});
+  if(allSingle){ctxTblDelTable();return;}
+  table.querySelectorAll('tr').forEach(tr=>{
+    const cells=tr.querySelectorAll('td,th');
+    if(cells[cellIdx])cells[cellIdx].remove();
+  });
+  schedSave();
+}
+function ctxTblDelTable(){
+  const cell=_ctxCell();if(!cell)return;
+  const table=cell.closest('table');if(!table)return;
+  table.remove();schedSave();
+}
+
+/* ── RIBBON / TABS ── */
+function swTab(id,el){
+  document.querySelectorAll('.rtab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.rp').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('rp-'+id)?.classList.add('on');
+  if(document.getElementById('ribbon').classList.contains('closed'))
+    document.getElementById('ribbon').classList.remove('closed');
+}
+function togRib(){
+  const r=document.getElementById('ribbon');r.classList.toggle('closed');
+  document.getElementById('rib-tog').textContent=r.classList.contains('closed')?'∨':'∧';
+}
+
+/* ── THEME ── */
+function togTheme(){
+  document.body.classList.toggle('otz-theme');
+  const o=document.body.classList.contains('otz-theme');
+  document.getElementById('tt-btn').textContent=o?'Word':'אוצריא';
+  // Reset to default Word blue if switching back
+  if(!o){
+    const root=document.documentElement;
+    root.style.setProperty('--wb','#2b579a');
+    root.style.setProperty('--wb-dk','#1a4480');
+    root.style.setProperty('--wb-lt','#dce6f7');
+    root.style.setProperty('--bh','rgba(43,87,154,.13)');
+    root.style.setProperty('--ba','rgba(43,87,154,.28)');
+    document.body.classList.remove('dark-mode');
+    document.getElementById('dp').style.removeProperty('background');
+    document.getElementById('dp').style.removeProperty('color');
+  }
+}
+
+/* ── KEYBOARD ── */
+function onKey(e){
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl)switch(e.key.toLowerCase()){
+    case 's':e.preventDefault();saveDoc();break;
+    case 'b':e.preventDefault();fmt('bold');break;
+    case 'i':e.preventDefault();fmt('italic');break;
+    case 'u':e.preventDefault();fmt('underline');break;
+    case 'f':e.preventDefault();openFB();break;
+    case 'h':e.preventDefault();openReplace();break;
+    case 'a':e.preventDefault();ex('selectAll');break;
+    case 'p':e.preventDefault();printDoc();break;
+    case 'k':e.preventDefault();insLink();break;
+    case 'z':e.preventDefault();ex('undo');break;
+    case 'y':e.preventDefault();ex('redo');break;
+    case 'l':e.preventDefault();sa('Left');break;
+    case 'r':e.preventDefault();sa('Right');break;
+    case 'e':e.preventDefault();sa('Center');break;
+    case 'j':e.preventDefault();sa('Full');break;
+    case ']':e.preventDefault();growFont(1);break;
+    case '[':e.preventDefault();growFont(-1);break;
+  }
+  if(e.key==='Escape'){
+    if(document.getElementById('fb').style.display==='flex')closeFB();
+    else if(document.body.classList.contains('focus-mode'))togFocus();
+    else if(isReadMode)togRead();
+  }
+}
+
+/* ── DIALOG HELPERS ── */
+function makeDlg(title){
+  const b=document.createElement('div');b.className='dlg-back';
+  b.innerHTML=`<div class="dlg" onclick="event.stopPropagation()">
+    <div class="dlg-hd"><span>${title}</span><button onclick="this.closest('.dlg-back').remove()">✕</button></div>
+    <div class="dlg-bd"></div><div class="dlg-ft"></div>
+  </div>`;
+  b.addEventListener('click',()=>b.remove());
+  document.body.appendChild(b);return b;
+}
+function addDlgBtn(dlg,label,fn,primary=true){
+  const btn=document.createElement('button');
+  btn.className='dbtn '+(primary?'p':'s');btn.textContent=label;
+  btn.addEventListener('click',fn);
+  dlg.querySelector('.dlg-ft').appendChild(btn);
+}
+
+/* ══ DESIGN TAB ══ */
+const THEMES={
+  default:{wb:'#2b579a',wbdk:'#1a4480',wblt:'#dce6f7',bh:'rgba(43,87,154,.13)',ba:'rgba(43,87,154,.28)',h1b:'#111',h2:'#2e74b5',h3:'#1f3763'},
+  modern: {wb:'#6750A4',wbdk:'#4a3780',wblt:'#e8def8',bh:'rgba(103,80,164,.13)',ba:'rgba(103,80,164,.28)',h1b:'#6750A4',h2:'#6750A4',h3:'#3d1f87'},
+  classic:{wb:'#8b0000',wbdk:'#660000',wblt:'#fce8e8',bh:'rgba(139,0,0,.13)',ba:'rgba(139,0,0,.28)',h1b:'#8b0000',h2:'#8b0000',h3:'#5c3317'},
+  minimal:{wb:'#444444',wbdk:'#222222',wblt:'#f0f0f0',bh:'rgba(68,68,68,.13)',ba:'rgba(68,68,68,.28)',h1b:'#555',h2:'#333',h3:'#555'},
+  elegant:{wb:'#2e5931',wbdk:'#1a3a1c',wblt:'#e2f0e3',bh:'rgba(46,89,49,.13)',ba:'rgba(46,89,49,.28)',h1b:'#2e5931',h2:'#2e5931',h3:'#1a3a1c'},
+};
+function applyTheme(name){
+  const t=THEMES[name]||THEMES.default;
+  const root=document.documentElement;
+  root.style.setProperty('--wb',t.wb);
+  root.style.setProperty('--wb-dk',t.wbdk);
+  root.style.setProperty('--wb-lt',t.wblt);
+  root.style.setProperty('--bh',t.bh);
+  root.style.setProperty('--ba',t.ba);
+  let s=document.getElementById('theme-style');
+  if(!s){s=document.createElement('style');s.id='theme-style';document.head.appendChild(s);}
+  s.textContent=`#dp h1{border-bottom-color:${t.h1b}}#dp h2{color:${t.h2}}#dp h3{color:${t.h3}}`;
+  schedSave();notify('ערכת נושא: '+name);
+}
+function setPageColor(c){
+  document.getElementById('dp').style.background=c;
+  schedSave();
+}
+let hasPageBorder=false;
+function togPageBorder(){
+  hasPageBorder=!hasPageBorder;
+  document.getElementById('dp').style.border=hasPageBorder?'2px solid #888':'';
+  document.getElementById('pgborder-btn').classList.toggle('on',hasPageBorder);
+}
+function openWatermarkDlg(){
+  const dlg=makeDlg('סימן מים');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <label>טקסט:</label>
+    <input id="wm-txt" value="טיוטה"/>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="dbtn s" style="font-size:.76em" onclick="document.getElementById('wm-txt').value='טיוטה'">טיוטה</button>
+      <button class="dbtn s" style="font-size:.76em" onclick="document.getElementById('wm-txt').value='סודי'">סודי</button>
+      <button class="dbtn s" style="font-size:.76em" onclick="document.getElementById('wm-txt').value='דוגמה'">דוגמה</button>
+      <button class="dbtn s" style="font-size:.76em" onclick="document.getElementById('wm-txt').value='לבדיקה'">לבדיקה</button>
+    </div>`;
+  addDlgBtn(dlg,'הוסף',()=>{
+    const t=dlg.querySelector('#wm-txt').value.trim();
+    if(!t)return;
+    setWatermark(t);dlg.remove();
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function setWatermark(txt){
+  let wm=document.getElementById('watermark');
+  if(!wm){wm=document.createElement('div');wm.id='watermark';document.getElementById('dw').appendChild(wm);}
+  wm.innerHTML='<span>'+txt+'</span>';
+  notify('סימן מים: '+txt);
+}
+function removeWatermark(){
+  document.getElementById('watermark')?.remove();
+  notify('סימן המים הוסר');
+}
+
+/* ── PARAGRAPH DIALOG ── */
+function openParaDlg(){
+  const s=window.getSelection();
+  let el=s?.focusNode?(s.focusNode.nodeType===3?s.focusNode.parentElement:s.focusNode):null;
+  const BL=['P','DIV','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE'];
+  const dp=document.getElementById('dp');
+  while(el&&el!==dp&&!BL.includes(el.nodeName))el=el.parentNode;
+  const cur=(el&&el!==dp)?el:null;
+  const dlg=makeDlg('עיצוב פסקה');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <label>יישור:</label>
+    <select id="pa-al">
+      <option value="right">ימין</option><option value="center">מרכז</option>
+      <option value="left">שמאל</option><option value="justify">מלא</option>
+    </select>
+    <label>רווח שורות:</label>
+    <select id="pa-lh">
+      <option value="1">1.0</option><option value="1.15">1.15</option>
+      <option value="1.5" selected>1.5</option><option value="2">2.0</option>
+      <option value="2.5">2.5</option><option value="3">3.0</option>
+    </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+      <div><label>מרווח לפני (pt):</label><input id="pa-mt" type="number" value="0" min="0"/></div>
+      <div><label>מרווח אחרי (pt):</label><input id="pa-mb" type="number" value="0" min="0"/></div>
+      <div><label>הזחה ימין (px):</label><input id="pa-pr" type="number" value="0" min="0"/></div>
+      <div><label>הזחה שמאל (px):</label><input id="pa-pl" type="number" value="0" min="0"/></div>
+    </div>
+    <label>הזחה שורה ראשונה (px):</label>
+    <input id="pa-ti" type="number" value="0"/>
+    <div style="margin-top:10px;padding:8px 12px;border:1px solid #ddd;background:#fafafa;font-size:.85em;line-height:1.6;direction:rtl;text-align:right" id="pa-prev">תצוגה מקדימה של הפסקה כאן</div>`;
+  const prev=dlg.querySelector('#pa-prev');
+  const upd=()=>{
+    const lh=dlg.querySelector('#pa-lh').value;
+    const mt=dlg.querySelector('#pa-mt').value;
+    const mb=dlg.querySelector('#pa-mb').value;
+    const pr=dlg.querySelector('#pa-pr').value;
+    const pl=dlg.querySelector('#pa-pl').value;
+    const ti=dlg.querySelector('#pa-ti').value;
+    const al=dlg.querySelector('#pa-al').value;
+    prev.style.cssText=`padding:8px 12px;border:1px solid #ddd;background:#fafafa;font-size:.85em;direction:rtl;line-height:${lh};margin-top:${mt}pt;margin-bottom:${mb}pt;padding-right:${pr}px;padding-left:${pl}px;text-indent:${ti}px;text-align:${al}`;
+  };
+  dlg.querySelectorAll('#pa-al,#pa-lh,#pa-mt,#pa-mb,#pa-pr,#pa-pl,#pa-ti').forEach(e=>e.addEventListener('input',upd));
+  addDlgBtn(dlg,'אישור',()=>{
+    const alMap={right:'justifyRight',center:'justifyCenter',left:'justifyLeft',justify:'justifyFull'};
+    ex(alMap[dlg.querySelector('#pa-al').value]||'justifyRight');
+    const target=cur||dp;
+    target.style.lineHeight=dlg.querySelector('#pa-lh').value;
+    const mt=dlg.querySelector('#pa-mt').value;const mb=dlg.querySelector('#pa-mb').value;
+    const pr=dlg.querySelector('#pa-pr').value;const pl=dlg.querySelector('#pa-pl').value;
+    const ti=dlg.querySelector('#pa-ti').value;
+    if(+mt)target.style.marginTop=mt+'pt';
+    if(+mb)target.style.marginBottom=mb+'pt';
+    if(+pr)target.style.paddingRight=pr+'px';
+    if(+pl)target.style.paddingLeft=pl+'px';
+    if(+ti)target.style.textIndent=ti+'px';
+    schedSave();dlg.remove();
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+
+/* ── FONT DIALOG ── */
+function openFontDlg(){
+  const dlg=makeDlg('גופן');
+  dlg.querySelector('.dlg-bd').style.minWidth='360px';
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <div style="display:flex;gap:12px">
+      <div style="flex:2">
+        <label>גופן:</label>
+        <select id="fd-fn" style="width:100%">
+          <option value="'Times New Roman',serif">Times New Roman</option>
+          <option value="'David Libre','David',serif">David</option>
+          <option value="'Frank Ruhl Libre',serif">Frank Ruhl Libre</option>
+          <option value="Arial,sans-serif">Arial</option>
+          <option value="'Rubik',sans-serif">Rubik</option>
+          <option value="'Calibri',sans-serif">Calibri</option>
+          <option value="'Courier New',monospace">Courier New</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label>גודל (pt):</label>
+        <select id="fd-sz" style="width:100%">
+          <option>8</option><option>9</option><option>10</option><option>11</option>
+          <option selected>12</option><option>14</option><option>16</option><option>18</option>
+          <option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      <label style="display:flex;align-items:center;gap:4px;font-size:.82em;margin:0"><input type="checkbox" id="fd-b"/> <strong>מודגש</strong></label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.82em;margin:0"><input type="checkbox" id="fd-i"/> <em>נטוי</em></label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.82em;margin:0"><input type="checkbox" id="fd-u"/> <u>קו תחתון</u></label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.82em;margin:0"><input type="checkbox" id="fd-s"/> <s>קו חוצה</s></label>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px">
+        <label style="font-size:.8em;margin:0">צבע:</label>
+        <input type="color" id="fd-col" value="#000000" style="width:36px;height:22px;cursor:pointer;border-radius:2px;border:1px solid #ccc"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <label style="font-size:.8em;margin:0">ריווח תווים:</label>
+        <select id="fd-sp" style="width:90px;font-size:.8em;border:1px solid #adadad;border-radius:2px;padding:2px 4px;outline:none">
+          <option value="normal">רגיל</option><option value="0.1em">מורחב</option>
+          <option value="-0.05em">צפוף</option><option value="0.05em">קצת מורחב</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:8px 12px;border:1px solid #ddd;background:#fafafa;min-height:40px;text-align:center;direction:rtl" id="fd-prev">טקסט לדוגמה — Text Sample</div>`;
+  const prev=dlg.querySelector('#fd-prev');
+  const upd=()=>{
+    const f=dlg.querySelector('#fd-fn').value;
+    const sz=dlg.querySelector('#fd-sz').value;
+    const b=dlg.querySelector('#fd-b').checked;
+    const i=dlg.querySelector('#fd-i').checked;
+    const u=dlg.querySelector('#fd-u').checked;
+    const s=dlg.querySelector('#fd-s').checked;
+    const c=dlg.querySelector('#fd-col').value;
+    const sp=dlg.querySelector('#fd-sp').value;
+    let td=[];if(u)td.push('underline');if(s)td.push('line-through');
+    prev.style.cssText=`padding:8px 12px;border:1px solid #ddd;background:#fafafa;min-height:40px;text-align:center;direction:rtl;font-family:${f};font-size:${sz}pt;font-weight:${b?'bold':'normal'};font-style:${i?'italic':'normal'};text-decoration:${td.join(' ')||'none'};color:${c};letter-spacing:${sp}`;
+  };
+  dlg.querySelectorAll('#fd-fn,#fd-sz,#fd-b,#fd-i,#fd-u,#fd-s,#fd-col,#fd-sp').forEach(el=>el.addEventListener('change',upd));
+  addDlgBtn(dlg,'אישור',()=>{
+    const f=dlg.querySelector('#fd-fn').value;
+    const sz=parseInt(dlg.querySelector('#fd-sz').value);
+    const b=dlg.querySelector('#fd-b').checked;
+    const i=dlg.querySelector('#fd-i').checked;
+    const u=dlg.querySelector('#fd-u').checked;
+    const s=dlg.querySelector('#fd-s').checked;
+    const c=dlg.querySelector('#fd-col').value;
+    const sp=dlg.querySelector('#fd-sp').value;
+    applyFont(f);applySize(sz);
+    // Set absolute states
+    if(b!==document.queryCommandState('bold'))ex('bold');
+    if(i!==document.queryCommandState('italic'))ex('italic');
+    if(u!==document.queryCommandState('underline'))ex('underline');
+    if(s!==document.queryCommandState('strikeThrough'))ex('strikeThrough');
+    applyColor(c);
+    if(sp!=='normal'){
+      restoreSel();
+      const sel=window.getSelection();
+      if(sel&&sel.rangeCount&&!sel.isCollapsed){
+        const range=sel.getRangeAt(0);
+        try{
+          const span=document.createElement('span');
+          span.style.letterSpacing=sp;
+          range.surroundContents(span);
+        }catch(e){}
+      }
+    }
+    schedSave();dlg.remove();
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+
+/* ══ REVIEW TAB ══ */
+let cmCount=0,comments=[],isTrackChanges=false,isDocProtected=false;
+
+/* ── COMMENTS ── */
+function addComment(){
+  const s=window.getSelection();
+  if(!s||s.isCollapsed){notify('בחר טקסט להוספת הערה');return;}
+  const selTxt=s.toString();
+  const dlg=makeDlg('הוסף הערה');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <p style="font-size:.78em;color:#666;margin-bottom:8px;direction:rtl">על הטקסט: <em>"${selTxt.slice(0,50).replace(/</g,'&lt;')}${selTxt.length>50?'...':''}"</em></p>
+    <label>הערה:</label>
+    <textarea id="cm-inp" style="min-height:70px" placeholder="כתוב הערה..."></textarea>
+    <label>מחבר:</label>
+    <input id="cm-auth" value="אני"/>`;
+  dlg.querySelector('#cm-inp').focus();
+  addDlgBtn(dlg,'הוסף',()=>{
+    const note=dlg.querySelector('#cm-inp').value.trim();
+    const auth=dlg.querySelector('#cm-auth').value.trim()||'אני';
+    if(!note){notify('כתוב הערה');return;}
+    cmCount++;
+    const id=cmCount;
+    const savedSel=window.getSelection().getRangeAt(0).cloneRange();
+    const mark=document.createElement('mark');
+    mark.className='cm-ref';mark.dataset.cid=id;
+    mark.title='הערה '+id+': '+note;
+    mark.onclick=()=>scrollToCm(id);
+    try{savedSel.surroundContents(mark);}catch(e){
+      ex('insertHTML','<mark class="cm-ref" data-cid="'+id+'" onclick="scrollToCm('+id+')" title="הערה '+id+'">'+selTxt.replace(/</g,'&lt;')+'</mark>');
+    }
+    comments.push({id,text:note,author:auth,ref:selTxt.slice(0,30),resolved:false});
+    updCommentPanel();
+    const cp=document.getElementById('cp');
+    if(cp.classList.contains('hide'))cp.classList.remove('hide');
+    schedSave();dlg.remove();notify('✓ הערה '+id+' נוספה');
+  },true);
+  addDlgBtn(dlg,'בטל',()=>dlg.remove(),false);
+}
+function updCommentPanel(){
+  const body=document.getElementById('cp-body');
+  if(!body)return;
+  if(!comments.length){body.innerHTML='<p style="font-size:.78em;color:#999;padding:10px">אין הערות</p>';return;}
+  body.innerHTML=comments.map(c=>`
+    <div class="cm-card${c.resolved?' resolved':''}" id="cmc-${c.id}" onclick="scrollToCmRef(${c.id})">
+      <button class="cm-del" onclick="event.stopPropagation();delComment(${c.id})" title="מחק הערה">✕</button>
+      <div class="cm-author">${c.author.replace(/</g,'&lt;')}</div>
+      <div class="cm-text">${c.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:.72em;color:#aaa;margin-top:3px">"${c.ref.replace(/</g,'&lt;')}"</div>
+      ${!c.resolved
+        ?`<button onclick="event.stopPropagation();resolveComment(${c.id})" style="font-size:.72em;color:var(--wb);background:none;border:none;cursor:pointer;padding:2px 0;margin-top:3px">✓ סמן כנפתר</button>`
+        :'<span style="font-size:.72em;color:#999;display:block;margin-top:2px">✓ נפתר</span>'}
+    </div>`).join('');
+}
+function delComment(id){
+  const mark=document.querySelector('.cm-ref[data-cid="'+id+'"]');
+  if(mark){const p=mark.parentNode;while(mark.firstChild)p.insertBefore(mark.firstChild,mark);p.removeChild(mark);}
+  comments=comments.filter(c=>c.id!==id);
+  updCommentPanel();schedSave();
+}
+function resolveComment(id){
+  const c=comments.find(x=>x.id===id);if(c){c.resolved=true;updCommentPanel();}
+}
+function scrollToCmRef(id){
+  const m=document.querySelector('.cm-ref[data-cid="'+id+'"]');
+  if(m)m.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function scrollToCm(id){
+  const el=document.getElementById('cmc-'+id);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});
+    document.querySelectorAll('.cm-card').forEach(c=>c.style.outline='');
+    el.style.outline='2px solid var(--wb)';}
+}
+function togCommentPanel(){
+  const cp=document.getElementById('cp');cp.classList.toggle('hide');
+  if(!cp.classList.contains('hide'))updCommentPanel();
+}
+
+/* ── TRACK CHANGES ── */
+function togTrackChanges(){
+  isTrackChanges=!isTrackChanges;
+  const btn=document.getElementById('tc-btn');
+  btn.classList.toggle('on',isTrackChanges);
+  btn.textContent=(isTrackChanges?'✓ ':'')+'מעקב שינויים';
+  notify(isTrackChanges?'מעקב שינויים פועל — שינויים יסומנו בצבע':'מעקב שינויים כבוי');
+  if(isTrackChanges){
+    // Intercept input via beforeinput
+    document.getElementById('dp')._tcActive=true;
+  }else{
+    document.getElementById('dp')._tcActive=false;
+  }
+}
+function acceptAllChanges(){
+  const dp=document.getElementById('dp');
+  dp.querySelectorAll('ins.tc-ins').forEach(el=>{
+    const p=el.parentNode;while(el.firstChild)p.insertBefore(el.firstChild,el);p.removeChild(el);
+  });
+  dp.querySelectorAll('del.tc-del').forEach(el=>el.remove());
+  schedSave();notify('✓ כל השינויים אושרו');
+}
+function rejectAllChanges(){
+  const dp=document.getElementById('dp');
+  dp.querySelectorAll('del.tc-del').forEach(el=>{
+    const p=el.parentNode;while(el.firstChild)p.insertBefore(el.firstChild,el);p.removeChild(el);
+  });
+  dp.querySelectorAll('ins.tc-ins').forEach(el=>el.remove());
+  schedSave();notify('✓ כל השינויים נדחו');
+}
+
+/* ── SPELL CHECK ── */
+function togSpellCheck(){
+  const dp=document.getElementById('dp');
+  const cur=dp.spellcheck;
+  dp.spellcheck=!cur;
+  const btn=document.getElementById('spell-btn');
+  btn.textContent=(!cur?'✓ ':'')+'בדיקת איות';
+  notify(!cur?'בדיקת איות פועלת':'בדיקת איות כבויה');
+}
+
+/* ── PROTECTION ── */
+function togDocProtect(){
+  isDocProtected=!isDocProtected;
+  const dp=document.getElementById('dp');
+  dp.contentEditable=isDocProtected?'false':'true';
+  const btn=document.getElementById('protect-btn');
+  btn.textContent=(isDocProtected?'🔓 בטל הגנה':'🔒 הגנת מסמך');
+  btn.classList.toggle('on',isDocProtected);
+  notify(isDocProtected?'🔒 המסמך מוגן מפני עריכה':'🔓 הגנה הוסרה');
+}
+
+/* ══ BOOK EDITOR ══ */
+function setBookHeading(level){
+  restoreSel();
+  document.execCommand('formatBlock',false,'H'+level);
+  schedSave();buildOutline();updFmt();
+}
+function togOutlinePanel(forceOpen){
+  const panel=document.getElementById('outline-panel');
+  const btn=document.getElementById('outline-btn');
+  if(forceOpen===true){
+    panel.classList.remove('hide');
+    if(btn)btn.classList.add('on');
+    buildOutline();
+    return;
+  }
+  const hidden=panel.classList.contains('hide');
+  panel.classList.toggle('hide',!hidden);
+  if(btn)btn.classList.toggle('on',hidden);
+  if(hidden)buildOutline();
+}
+function buildOutline(){
+  const body=document.getElementById('outline-body');
+  if(!body)return;
+  const dp=document.getElementById('dp');
+  const headers=dp.querySelectorAll('h1,h2,h3,h4,h5,h6');
+  body.innerHTML='';
+  if(headers.length===0){
+    const p=document.createElement('p');
+    p.style.cssText='font-size:.78em;color:#999;padding:10px';
+    p.textContent='אין כותרות';
+    body.appendChild(p);return;
+  }
+  headers.forEach(h=>{
+    const level=parseInt(h.tagName[1]);
+    const div=document.createElement('div');
+    div.className='outline-item';
+    div.style.paddingRight=((level-1)*10)+'px';
+    div.style.fontWeight=level<=2?'600':'400';
+    div.style.opacity=String(1-(level-1)*0.12);
+    div.textContent=h.textContent.trim()||'(ריק)';
+    div.onclick=()=>h.scrollIntoView({behavior:'smooth',block:'start'});
+    body.appendChild(div);
+  });
+}
+function replaceHeadingLvl(){
+  const from=prompt('מאיזה רמת כותרת להחליף? (1-6)');
+  if(!from)return;
+  const to=prompt('לאיזה רמת כותרת? (1-6)');
+  if(!to)return;
+  const f=parseInt(from),t=parseInt(to);
+  if(isNaN(f)||isNaN(t)||f<1||f>6||t<1||t>6){notify('רמה לא תקינה (1-6)');return;}
+  const dp=document.getElementById('dp');
+  let count=0;
+  dp.querySelectorAll('h'+f).forEach(h=>{
+    const nh=document.createElement('h'+t);
+    nh.innerHTML=h.innerHTML;
+    h.parentNode.replaceChild(nh,h);count++;
+  });
+  schedSave();buildOutline();notify('✓ הוחלפו '+count+' כותרות H'+f+' → H'+t);
+}
+function exportOtzaria(){
+  const title=document.getElementById('doc-title').value||'ספר';
+  const tmp=document.createElement('div');
+  tmp.innerHTML=document.getElementById('dp').innerHTML;
+  tmp.querySelectorAll('.pgbreak,.fn-area,.en-area').forEach(e=>e.remove());
+  tmp.querySelectorAll('mark.fhl').forEach(m=>{const p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);});
+  function cleanNode(n){
+    if(n.nodeType===3)return n.textContent;
+    if(n.nodeType!==1)return'';
+    const tag=n.tagName.toLowerCase();
+    const ch=Array.from(n.childNodes).map(cleanNode).join('');
+    if(/^h[1-6]$/.test(tag))return`<${tag}>${ch}</${tag}>\n`;
+    if(tag==='p')return`<p>${ch}</p>\n`;
+    if(tag==='strong'||tag==='b')return`<strong>${ch}</strong>`;
+    if(tag==='em'||tag==='i')return`<em>${ch}</em>`;
+    if(tag==='u')return`<u>${ch}</u>`;
+    if(tag==='sup')return`<sup>${ch}</sup>`;
+    if(tag==='sub')return`<sub>${ch}</sub>`;
+    if(tag==='br')return'\n';
+    if(tag==='hr')return'<hr/>\n';
+    if(tag==='li')return`<li>${ch}</li>\n`;
+    if(tag==='ul')return`<ul>\n${ch}</ul>\n`;
+    if(tag==='ol')return`<ol>\n${ch}</ol>\n`;
+    return ch;
+  }
+  let html=`<h1>${title}</h1>\n`;
+  html+=Array.from(tmp.childNodes).map(cleanNode).join('');
+  html=html.replace(/\n{3,}/g,'\n\n').trim();
+  const blob=new Blob([html],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=title+'.txt';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  notify('✓ '+title+'.txt נשמר');
+}
+function importDocxForBooks(){
+  if(typeof mammoth==='undefined'){notify('⚠ mammoth לא נטען');return;}
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.docx';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=async e=>{
+    document.body.removeChild(inp);
+    const file=e.target.files[0];
+    if(!file)return;
+    notify('⏳ מייבא '+file.name+'...');
+    try{
+      const ab=await file.arrayBuffer();
+      /* מיפוי סגנונות Word לתגי HTML — כולל שמות עבריים ואנגליים */
+      const styleMap=[
+        "p[style-name='כותרת 1'] => h1:fresh",
+        "p[style-name='כותרת 2'] => h2:fresh",
+        "p[style-name='כותרת 3'] => h3:fresh",
+        "p[style-name='כותרת 4'] => h4:fresh",
+        "p[style-name='כותרת 5'] => h5:fresh",
+        "p[style-name='כותרת 6'] => h6:fresh",
+        "p[style-name='Heading 1'] => h1:fresh",
+        "p[style-name='Heading 2'] => h2:fresh",
+        "p[style-name='Heading 3'] => h3:fresh",
+        "p[style-name='Heading 4'] => h4:fresh",
+        "p[style-name='Heading 5'] => h5:fresh",
+        "p[style-name='Heading 6'] => h6:fresh",
+        "p[style-name='Title'] => h1:fresh",
+        "p[style-name='כותרת'] => h1:fresh",
+        "p[style-name='1'] => h1:fresh",
+        "p[style-name='2'] => h2:fresh",
+        "p[style-name='3'] => h3:fresh",
+        "p[style-name='4'] => h4:fresh",
+        "p[style-name='5'] => h5:fresh",
+        "p[style-name='6'] => h6:fresh",
+        "r[style-name='Footnote Reference'] => sup",
+        "r[style-name='Footnote anchor'] => sup",
+      ];
+      const result=await mammoth.convertToHtml(
+        {arrayBuffer:ab},
+        {
+          styleMap,
+          includeDefaultStyleMap:true,
+          convertImage:mammoth.images.imgElement(img=>
+            img.read('base64').then(data=>({
+              src:'data:'+img.contentType+';base64,'+data,
+              style:'max-width:100%;height:auto;display:block;margin:4px 0'
+            }))
+          )
+        }
+      );
+      let html=result.value;
+      const titleName=file.name.replace(/\.docx?$/i,'');
+      if(!/<h1[\s>]/i.test(html))html=`<h1>${titleName}</h1>\n`+html;
+      html=html.replace(/<p>\s*<\/p>/g,'').replace(/\n{3,}/g,'\n\n');
+      const dp=document.getElementById('dp');
+      dp.innerHTML=html;
+      document.getElementById('doc-title').value=titleName;
+      schedSave();togOutlinePanel(true);
+      const warns=result.messages.filter(m=>m.type==='warning').length;
+      notify('✓ יובא: '+file.name+(warns?' ('+warns+' הערות המרה)':''));
+    }catch(err){notify('❌ שגיאה בייבוא: '+err.message);}
+  };
+  inp.click();
+}
+
+/* ══ FILE TAB ══ */
+function newDoc(){
+  if(document.getElementById('dp').innerHTML.trim()!=='<p><br></p>'&&
+     document.getElementById('dp').innerHTML.trim()!==''){
+    if(!confirm('לפתוח מסמך חדש? שינויים לא שמורים יאבדו.'))return;
+  }
+  document.getElementById('dp').innerHTML='<p><br></p>';
+  document.getElementById('doc-title').value='מסמך חדש';
+  fnCount=0;enCount=0;
+  // Hide outline panel
+  const panel=document.getElementById('outline-panel');
+  panel.classList.add('hide');
+  document.getElementById('outline-btn')?.classList.remove('on');
+  schedSave();updCount();updNav();notify('📄 מסמך חדש נוצר');
+}
+function openDocFile(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.docx,.html,.htm,.txt';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=async e=>{
+    document.body.removeChild(inp);
+    const file=e.target.files[0];if(!file)return;
+    const dp=document.getElementById('dp');
+    const titleName=file.name.replace(/\.[^.]+$/,'');
+    if(file.name.match(/\.docx?$/i)){
+      // Use mammoth for Word files — preserves formatting and handles Hebrew correctly
+      if(typeof mammoth==='undefined'){notify('mammoth לא נטען');return;}
+      notify('פותח '+file.name+'...');
+      try{
+        const ab=await file.arrayBuffer();
+        const styleMap=[
+          "p[style-name='כותרת 1'] => h1:fresh","p[style-name='כותרת 2'] => h2:fresh",
+          "p[style-name='כותרת 3'] => h3:fresh","p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh","p[style-name='Heading 3'] => h3:fresh",
+          "p[style-name='Title'] => h1:fresh",
+        ];
+        const result=await mammoth.convertToHtml({arrayBuffer:ab},{styleMap,includeDefaultStyleMap:true,
+          convertImage:mammoth.images.imgElement(img=>img.read('base64').then(d=>({
+            src:'data:'+img.contentType+';base64,'+d,style:'max-width:100%;height:auto;display:block;margin:4px 0'
+          })))
+        });
+        let html=result.value;
+        html=html.replace(/<p>\s*<\/p>/g,'').replace(/\n{3,}/g,'\n\n');
+        dp.innerHTML=html||'<p><br></p>';
+      }catch(err){notify('שגיאה בפתיחה: '+err.message);return;}
+    }else{
+      const txt=await file.text();
+      if(file.name.endsWith('.txt')){
+        dp.innerHTML=txt.split('\n').map(l=>`<p>${l.replace(/</g,'&lt;')||'<br>'}</p>`).join('');
+      }else{
+        const m=txt.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        dp.innerHTML=m?m[1]:txt;
+      }
+    }
+    document.getElementById('doc-title').value=titleName;
+    // Do NOT show outline panel when opening via File tab
+    const panel=document.getElementById('outline-panel');
+    panel.classList.add('hide');
+    document.getElementById('outline-btn')?.classList.remove('on');
+    schedSave();updCount();updNav();setTimeout(doRepaginate,200);notify('נפתח: '+file.name);
+  };
+  inp.click();
+}
+function saveDocAs(){
+  const title=prompt('שם הקובץ:',document.getElementById('doc-title').value)||document.getElementById('doc-title').value;
+  if(!title)return;
+  document.getElementById('doc-title').value=title;
+  const html=`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="UTF-8"/><title>${title}</title></head><body style="font-family:'Times New Roman',serif;font-size:12pt;direction:rtl;padding:60px 80px;line-height:1.5">${document.getElementById('dp').innerHTML}</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=title+'.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  schedSave();notify('💾 נשמר: '+title+'.html');
+}
+function showPluginInfo(){
+  const dlg=makeDlg('אודות עורך חידושים');
+  dlg.querySelector('.dlg-bd').innerHTML=`
+    <div style="text-align:center;padding:10px 0 16px">
+      <div style="font-size:2.5em;margin-bottom:8px">✦</div>
+      <div style="font-size:1.1em;font-weight:700;color:var(--wb);margin-bottom:4px">וורד לאוצריא</div>
+      <div style="font-size:.82em;color:#666;margin-bottom:12px">גרסה 1.0.7</div>
+      <div style="font-size:.84em;color:#444;line-height:1.7">
+        <div>✍ מחבר: <strong>יאיר דניאל</strong></div>
+        <div style="margin-top:8px;font-size:.9em;color:#666">עורך מסמכים בסגנון Word לכתיבת חידושי תורה,<br>עם שילוב מלא עם ספריית אוצריא</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #e8e8e8;padding-top:10px;font-size:.76em;color:#888;text-align:center">
+      עורך חידושים • אוצריא Plugin
+    </div>`;
+  addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
+}
+
+/* ── SYSTEM FONTS ── */
+async function loadSystemFonts(){
+  const base=['Times New Roman','David','Frank Ruhl Libre','Arial','Rubik','Calibri','Courier New','Georgia','Verdana','Tahoma','Segoe UI','Assistant','Heebo','Open Sans','Noto Sans Hebrew'];
+  const sel=document.getElementById('sf');
+  if(!sel)return;
+  const cur=sel.value;
+  const available=[];
+  // Test which fonts are available using canvas
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const testStr='אבגדהוזחטיAbcdefg';
+  ctx.font='16px monospace';
+  const baseW=ctx.measureText(testStr).width;
+  const systemFonts=[...base,'Alef','Almoni','Arial Hebrew','Arial Rounded MT Bold','Ariel','Cambria','Comic Sans MS','Consolas','David CLM','DejaVu Serif','Ezra SIL','FrankRuehl','Guttman Aharoni','Impact','Lucida Console','Microsoft Sans Serif','Miriam','Miriam CLM','Narkisim','Nazli','Palatino Linotype','Rashi','SBL Hebrew','Simplified Arabic','Times New Roman MT Std','Tinos','Yehuda CLM'];
+  for(const font of systemFonts){
+    ctx.font=`16px '${font}', monospace`;
+    if(Math.abs(ctx.measureText(testStr).width-baseW)>0.5)available.push(font);
+  }
+  // Also try document.fonts
+  try{
+    await document.fonts.ready;
+    document.fonts.forEach(f=>{
+      const nm=f.family.replace(/['"]/g,'');
+      if(!available.includes(nm))available.push(nm);
+    });
+  }catch(e){}
+  if(available.length<3)return; // fallback if detection fails
+  // Rebuild select
+  const unique=[...new Set([...base,...available.sort()])];
+  sel.innerHTML=unique.map(f=>`<option value="'${f}',sans-serif">${f}</option>`).join('');
+  // Also update font dialog select
+  const fdFn=document.getElementById('fd-fn');
+  if(fdFn)fdFn.innerHTML=unique.map(f=>`<option value="'${f}',sans-serif">${f}</option>`).join('');
+  // Restore selection
+  try{sel.value=cur;}catch(e){}
+}
+
+/* ══ OTZARIA THEME ══ */
+function applyOtzTheme(theme){
+  if(!theme)return;
+  const cs=theme.colorScheme;
+  const isDark=theme.mode==='dark';
+  const root=document.documentElement;
+  if(cs&&cs.primary){
+    root.style.setProperty('--wb',cs.primary);
+    root.style.setProperty('--otz',cs.primary);
+    root.style.setProperty('--wb-dk',_darken(cs.primary,.15));
+    root.style.setProperty('--wb-lt',_rgba(cs.primary,.12));
+    root.style.setProperty('--bh',_rgba(cs.primary,.12));
+    root.style.setProperty('--ba',_rgba(cs.primary,.28));
+    if(cs.surface){
+      root.style.setProperty('--rb',isDark?cs.surface:'#f3f3f3');
+      root.style.setProperty('--canvas',isDark?'#252525':'#d2d2d2');
+    }
+    if(cs.outline)root.style.setProperty('--rbb',isDark?cs.outline:'#d1d1d1');
+    if(isDark&&cs.surface){
+      document.getElementById('dp').style.setProperty('background',cs.surface,'important');
+      if(cs.onSurface)document.getElementById('dp').style.color=cs.onSurface;
+    }else{
+      document.getElementById('dp').style.removeProperty('background');
+      document.getElementById('dp').style.removeProperty('color');
+    }
+  }
+  document.body.classList.toggle('dark-mode',isDark);
+  document.body.classList.add('otz-theme');
+  document.getElementById('tt-btn').textContent='Word';
+}
+function _rgba(hex,a){
+  if(!hex||!hex.startsWith('#'))return`rgba(103,80,164,${a})`;
+  const r=parseInt(hex.slice(1,3),16)||0,g=parseInt(hex.slice(3,5),16)||0,b=parseInt(hex.slice(5,7),16)||0;
+  return`rgba(${r},${g},${b},${a})`;
+}
+function _darken(hex,amt){
+  if(!hex||!hex.startsWith('#')||hex.length<7)return'#1a4480';
+  const d=Math.round(255*amt);
+  const r=Math.max(0,parseInt(hex.slice(1,3),16)-d);
+  const g=Math.max(0,parseInt(hex.slice(3,5),16)-d);
+  const b=Math.max(0,parseInt(hex.slice(5,7),16)-d);
+  return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+/* ── NOTIFY ── */
+async function notify(msg){
+  try{await Otzaria.call('notifications.showInApp',{message:msg,type:'info'});}
+  catch(e){
+    const n=document.createElement('div');
+    n.textContent=msg;
+    n.style.cssText='position:fixed;bottom:32px;right:16px;background:#333;color:#fff;padding:6px 14px;border-radius:4px;font-size:.82em;z-index:999;pointer-events:none;opacity:1;transition:opacity .4s';
+    document.body.appendChild(n);
+    setTimeout(()=>{n.style.opacity='0';setTimeout(()=>n.remove(),400);},2200);
+  }
+}
+</script>
+</body>
+</html>

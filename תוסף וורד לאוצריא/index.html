@@ -1008,6 +1008,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   loadSystemFonts();
   updCount();
   updNav();
+  // Auto-save every 3 minutes
+  setInterval(saveDoc, 3 * 60 * 1000);
   // Sync doc-title changes to tab label
   document.getElementById('doc-title').addEventListener('change',()=>{
     if(docs[docIdx])docs[docIdx].title=document.getElementById('doc-title').value;
@@ -1133,13 +1135,13 @@ function applyBlock(tag){
 }
 
 function applySpacing(v){
-  const dp=document.getElementById('dp');
+  const pg=activePage();
   const s=window.getSelection();
   if(!s||!s.rangeCount)return;
   let n=s.focusNode;
   const BL=['P','DIV','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE'];
-  while(n&&n!==dp&&!BL.includes(n.nodeName))n=n.parentNode;
-  if(n&&n!==dp)n.style.lineHeight=v;else dp.style.lineHeight=v;
+  while(n&&n!==pg&&!BL.includes(n.nodeName))n=n.parentNode;
+  if(n&&n!==pg)n.style.lineHeight=v;else pg.style.lineHeight=v;
   schedSave();
 }
 
@@ -1891,7 +1893,7 @@ function exportDocx(){
   const RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NR}"><Relationship Id="rId1" Type="${NO}/officeDocument" Target="word/document.xml"/></Relationships>`;
   const WRELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NR}"><Relationship Id="rId1" Type="${NO}/styles" Target="styles.xml"/><Relationship Id="rId2" Type="${NO}/settings" Target="settings.xml"/></Relationships>`;
   const WSETTINGS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="${NW}"><w:defaultTabStop w:val="720"/><w:themeFontLang w:val="he-IL" w:bidi="he-IL"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>`;
-  const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${NW}"><w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:sz w:val="40"/><w:szCs w:val="40"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="2E74B5"/><w:sz w:val="32"/><w:szCs w:val="32"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="1F3763"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:rtl/></w:rPr></w:style></w:styles>`;
+  const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${NW}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="David"/><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:sz w:val="40"/><w:szCs w:val="40"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="2E74B5"/><w:sz w:val="32"/><w:szCs w:val="32"/><w:rtl/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="1F3763"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:rtl/></w:rPr></w:style></w:styles>`;
   const DOC=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="${NW}" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/><w:bidi/><w:rtlGutter/><w:docGrid w:type="lines" w:linePitch="360"/></w:sectPr></w:body></w:document>`;
   const zip=_makeZip([
     {name:'[Content_Types].xml',text:CT},
@@ -1945,7 +1947,8 @@ function _htmlToOoxml(html){
     if(!node)return'';
     if(node.nodeType===3){
       const t=node.textContent;if(!t)return'';
-      const rpr=extra?`<w:rPr>${extra}<w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr>`:'<w:rPr><w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr>';
+      const fontHint='<w:rFonts w:cs="David" w:hint="cs"/>';
+      const rpr=`<w:rPr>${fontHint}${extra||''}<w:rtl/><w:lang w:val="he-IL" w:bidi="he-IL"/></w:rPr>`;
       return`<w:r>${rpr}<w:t xml:space="preserve">${xe(t)}</w:t></w:r>`;
     }
     if(node.nodeType!==1)return'';

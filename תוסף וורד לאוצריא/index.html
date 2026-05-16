@@ -202,11 +202,19 @@ body.dark-mode .rsel{background:#333;color:#ddd;border-color:#555;}
 body.dark-mode .sty-btn{background:#333;color:#ddd;border-color:#555;}
 body.dark-mode .cm-card{background:#2d2a1a;border-color:#555;}
 body.dark-mode .list-item{border-color:#444;background:#2b2b2b;}
+body.dark-mode #dw{background:#1e1e1e;}
+body.dark-mode #dp{background:#1e1e1e;color:#e0e0e0;box-shadow:none;}
+body.dark-mode .pgbreak{background:var(--canvas);}
+body.dark-mode #dp h2{color:#82b4f0;}body.dark-mode #dp h3{color:#9ab8e0;}
+body.dark-mode #dp blockquote{border-right-color:#555;color:#bbb;}
+body.dark-mode #dp pre{background:#252525;border-color:#444;}
+body.dark-mode #dp td,body.dark-mode #dp th{border-color:#555;}
+body.dark-mode #dp th{background:#2a2a2a;}
 @media print{#tb,#tab-bar,#ribbon,#doc-tabbar,#nav-pane,#sb,#fb,#ctx{display:none!important;}#main{display:block!important;}#dw{background:#fff!important;padding:0!important;overflow:visible!important;}#dp{box-shadow:none!important;width:100%!important;padding:0!important;zoom:100%!important;}mark{background:none!important}.pgbreak{height:0!important;background:none!important;border:none!important;}}
 
-/* PAGE BREAK — real visual gap between pages */
-.pgbreak{display:block;height:56px;margin:0 -90px;background:var(--canvas);border-top:1px solid #c0c0c0;border-bottom:1px solid #c0c0c0;page-break-after:always!important;position:relative;user-select:none;-webkit-user-select:none;cursor:default;}
-.pgbreak::after{content:attr(data-pg);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62em;color:#aaa;letter-spacing:1px;pointer-events:none;}
+/* PAGE BREAK — gap between pages, blends with canvas so pages look like separate cards */
+.pgbreak{display:block;height:48px;margin:0 -90px;background:var(--canvas);border:none;page-break-after:always!important;position:relative;user-select:none;-webkit-user-select:none;cursor:default;box-shadow:inset 0 4px 8px rgba(0,0,0,.08),inset 0 -4px 8px rgba(0,0,0,.08);}
+.pgbreak::after{content:attr(data-pg);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62em;color:#999;letter-spacing:1px;pointer-events:none;}
 
 /* COMMENTS PANEL */
 #cp{width:260px;flex-shrink:0;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column;overflow:hidden;transition:width .2s;}
@@ -230,6 +238,16 @@ del.tc-del{background:rgba(200,0,0,.08);text-decoration:line-through;text-decora
 /* WATERMARK */
 #watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden;}
 #watermark span{font-size:5em;color:rgba(150,150,150,.18);transform:rotate(-35deg);white-space:nowrap;font-weight:900;user-select:none;letter-spacing:.1em;}
+
+/* FONT PICKER */
+.fp-wrap{position:relative;display:inline-block;}
+.fp-inp{width:130px!important;}
+.fp-dd{position:absolute;top:calc(100% + 2px);right:0;background:#fff;border:1px solid #b0b0b0;border-radius:2px;box-shadow:0 4px 14px rgba(0,0,0,.18);max-height:260px;overflow-y:auto;z-index:400;min-width:200px;display:none;}
+.fp-dd.open{display:block;}
+.fp-item{padding:4px 10px;cursor:pointer;font-size:.82em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fp-item:hover,.fp-item.sel{background:var(--bh);}
+body.dark-mode .fp-dd{background:#2b2b2b;border-color:#555;}
+body.dark-mode .fp-item:hover{background:rgba(255,255,255,.1);}
 
 /* DOC TAB BAR */
 #doc-tabbar{background:var(--rb);border-bottom:2px solid var(--rbb);display:flex;align-items:center;padding:3px 6px 0;gap:2px;flex-shrink:0;overflow-x:auto;min-height:30px;}
@@ -333,15 +351,14 @@ body.dark-mode .doc-tab{color:#ccc;}
   <div class="rg">
     <div class="rgb col">
       <div style="display:flex;gap:3px;align-items:center">
-        <select class="rsel" id="sf" onchange="applyFont(this.value)" style="width:112px">
-          <option value="'Times New Roman',serif">Times New Roman</option>
-          <option value="'David Libre','David',serif">David</option>
-          <option value="'Frank Ruhl Libre',serif">Frank Ruhl</option>
-          <option value="Arial,sans-serif">Arial</option>
-          <option value="'Rubik',sans-serif">Rubik</option>
-          <option value="'Calibri',sans-serif">Calibri</option>
-          <option value="'Courier New',monospace">Courier New</option>
-        </select>
+        <div class="fp-wrap" id="fp-wrap">
+          <input type="text" id="sf" class="rsel fp-inp" placeholder="גופן..." autocomplete="off"
+            oninput="filterFontPicker(this.value)"
+            onfocus="openFontPicker()"
+            onblur="setTimeout(closeFontPicker,220)"
+            value="Times New Roman"/>
+          <div id="fp-dd" class="fp-dd"></div>
+        </div>
         <select class="rsel" id="ss" onchange="applySize(+this.value)" style="width:44px">
           <option>8</option><option>9</option><option>10</option><option>11</option>
           <option selected>12</option><option>14</option><option>16</option><option>18</option>
@@ -433,7 +450,8 @@ body.dark-mode .doc-tab{color:#ccc;}
 
   <div class="rg"><div class="rgb">
     <button class="rb" onclick="openTableDlg()"><svg viewBox="0 0 24 24"><path d="M10 10.02h5V21h-5zM17 21h3a2 2 0 0 0 2-2v-9h-5v11zm3-18H5a2 2 0 0 0-2 2v3h19V5a2 2 0 0 0-2-2zM3 19a2 2 0 0 0 2 2h3V10H3v9z"/></svg><br>טבלה</button>
-  </div><div class="rgt">טבלה</div></div>
+    <button class="rb" onclick="insImageBtn()" title="הוסף תמונה"><svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg><br>תמונה</button>
+  </div><div class="rgt">מדיה</div></div>
 
   <div class="rg"><div class="rgb"><div class="rv">
     <button class="rb sm" onclick="insLink()">קישור Ctrl+K</button>
@@ -676,6 +694,7 @@ body.dark-mode .doc-tab{color:#ccc;}
     <div class="nav-srch"><input type="text" id="nav-si" placeholder="חיפוש במסמך..." oninput="navSearch(this.value)"/></div>
     <div class="nav-tabs">
       <button class="nav-tab on" onclick="swNavTab('h',this)">כותרות</button>
+      <button class="nav-tab" onclick="swNavTab('p',this)">עמודים</button>
       <button class="nav-tab" onclick="swNavTab('r',this)">תוצאות</button>
     </div>
     <div id="nav-body"><div class="nav-empty">אין כותרות</div></div>
@@ -990,7 +1009,50 @@ function fmt(cmd){
   updFmt();schedSave();
 }
 
-function applyFont(name){recFlush();if(isRecording)recPush({t:'font',name:name});ex('fontName',name);schedSave();}
+/* ── FONT PICKER ── */
+let _fontCatalog=[]; // [{label, value}]
+function openFontPicker(){
+  const dd=document.getElementById('fp-dd');
+  dd.classList.add('open');
+  if(!dd.children.length&&_fontCatalog.length)_renderFontDD(_fontCatalog);
+}
+function closeFontPicker(){
+  document.getElementById('fp-dd')?.classList.remove('open');
+}
+function filterFontPicker(q){
+  const dd=document.getElementById('fp-dd');
+  dd.classList.add('open');
+  const lower=q.toLowerCase();
+  [...dd.children].forEach(item=>{item.style.display=item.dataset.n.toLowerCase().includes(lower)?'':'none';});
+}
+function _renderFontDD(list){
+  const dd=document.getElementById('fp-dd');
+  if(!dd)return;
+  dd.innerHTML='';
+  list.forEach(f=>{
+    const div=document.createElement('div');
+    div.className='fp-item';
+    div.dataset.n=f.label;
+    div.textContent=f.label;
+    div.style.fontFamily=f.value;
+    div.addEventListener('mousedown',e=>{e.preventDefault();_pickFont(f);});
+    dd.appendChild(div);
+  });
+}
+function _pickFont(f){
+  const inp=document.getElementById('sf');
+  if(inp){inp.value=f.label;}
+  closeFontPicker();
+  applyFont(f.value);
+}
+function applyFont(name){
+  recFlush();if(isRecording)recPush({t:'font',name:name});
+  ex('fontName',name);
+  // Update font dialog if open
+  const fdFn=document.getElementById('fd-fn');
+  if(fdFn)try{fdFn.value=name;}catch(e){}
+  schedSave();
+}
 
 function applySize(pt){
   if(!pt||isNaN(pt))return;
@@ -1244,8 +1306,41 @@ function insFootnote(){
   fnCount++;const n=fnCount;
   ex('insertHTML','<sup class="fn-ref" style="color:var(--wb);font-size:.75em;cursor:pointer" title="הערת שוליים '+n+'">['+n+']</sup>');
   const dp=document.getElementById('dp');
-  let ar=dp.querySelector('.fn-area');
-  if(!ar){ar=document.createElement('div');ar.className='fn-area';ar.innerHTML='<div style="height:1px;background:#bbb;margin:30px 0 8px"></div>';dp.appendChild(ar);}
+  const sel=window.getSelection();
+  const curNode=sel?.anchorNode;
+  // Find which "page section" the cursor is in: look for next pgbreak after cursor
+  let nextBreak=null;
+  if(curNode){
+    const allBreaks=[...dp.querySelectorAll('.pgbreak')];
+    for(const br of allBreaks){
+      // If this break is after the cursor position in DOM order
+      if(br.compareDocumentPosition(curNode)&Node.DOCUMENT_POSITION_PRECEDING){
+        nextBreak=br;break;
+      }
+    }
+  }
+  // Find or create footnote area for this page section
+  // We store page-specific fn areas as .fn-area[data-pg]
+  let ar;
+  if(nextBreak){
+    // Look for fn-area BEFORE this break
+    let prev=nextBreak.previousElementSibling;
+    while(prev&&!prev.classList.contains('fn-area')&&!prev.classList.contains('pgbreak'))prev=prev.previousElementSibling;
+    if(prev&&prev.classList.contains('fn-area')){ar=prev;}
+    else{
+      ar=document.createElement('div');ar.className='fn-area';
+      ar.innerHTML='<div style="height:1px;background:#bbb;margin:20px 0 6px"></div>';
+      nextBreak.parentNode.insertBefore(ar,nextBreak);
+    }
+  }else{
+    // Last page — use or create fn-area at end of dp
+    ar=dp.querySelector('.fn-area:last-of-type')||null;
+    if(!ar||ar.nextElementSibling){
+      ar=document.createElement('div');ar.className='fn-area';
+      ar.innerHTML='<div style="height:1px;background:#bbb;margin:20px 0 6px"></div>';
+      dp.appendChild(ar);
+    }
+  }
   const p=document.createElement('p');p.style.cssText='font-size:.85em;color:#444;margin:2px 0';
   p.innerHTML='<span style="color:var(--wb)">['+n+']</span> ';
   ar.appendChild(p);
@@ -1282,6 +1377,44 @@ function insSpecialChar(){
   dlg.querySelector('.dlg-bd').innerHTML=html;
   addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
 }
+function insImageBtn(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=e=>{
+    document.body.removeChild(inp);
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=`<img src="${ev.target.result}" style="max-width:100%;height:auto;display:block;margin:6px 0;cursor:pointer" class="doc-img" onclick="_selImg(this)"/>`;
+      ex('insertHTML',img+'<p><br></p>');
+      schedSave();
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+// Simple image click-to-select with resize handles
+function _selImg(img){
+  document.querySelectorAll('.doc-img.selected').forEach(i=>{i.classList.remove('selected');i.style.outline='';});
+  img.classList.add('selected');
+  img.style.outline='2px solid var(--wb)';
+  img.style.cursor='nwse-resize';
+  // Allow resizing via drag on selected image
+  img.onmousedown=function(e){
+    if(!img.classList.contains('selected'))return;
+    const startX=e.clientX,startW=img.offsetWidth;
+    const onMove=ev=>{img.style.width=(startW+ev.clientX-startX)+'px';img.style.height='auto';};
+    const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);schedSave();};
+    window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);
+  };
+}
+// Deselect image on click elsewhere
+document.addEventListener('click',e=>{
+  if(!e.target.classList?.contains('doc-img')){
+    document.querySelectorAll('.doc-img.selected').forEach(i=>{i.classList.remove('selected');i.style.outline='';i.style.cursor='pointer';i.onmousedown=null;});
+  }
+},true);
 function insChidush(){
   recFlush();if(isRecording)recPush({t:'block',tag:'h2'});
   ex('formatBlock','<h2>');schedSave();
@@ -1386,7 +1519,29 @@ function swNavTab(t,el){
   el.classList.add('on');updNav();
 }
 function schedNav(){clearTimeout(navTimer);navTimer=setTimeout(updNav,500);}
-function updNav(){navMode==='h'?updNavH():updNavR();}
+function updNav(){
+  if(navMode==='h')updNavH();
+  else if(navMode==='p')updNavPages();
+  else updNavR();
+}
+function updNavPages(){
+  const nb=document.getElementById('nav-body');
+  const dp=document.getElementById('dp');
+  const dw=document.getElementById('dw');
+  const breaks=[...dp.querySelectorAll('.pgbreak')];
+  const total=breaks.length+1;
+  let html='';
+  for(let i=1;i<=total;i++){
+    html+=`<div class="nav-item nav-pg-item" onclick="scrollToPage(${i})" id="npg-${i}">
+      <span style="display:inline-block;width:28px;height:36px;background:#fff;border:1px solid #d1d1d1;box-shadow:0 1px 3px rgba(0,0,0,.15);margin-left:6px;border-radius:1px;font-size:.6em;line-height:36px;text-align:center;color:#888;flex-shrink:0">${i}</span>
+      עמוד ${i}
+    </div>`;
+  }
+  nb.innerHTML=html||'<div class="nav-empty">מסמך ריק</div>';
+  // Highlight current page
+  const cur=_getCurrentPage();
+  document.querySelectorAll('.nav-pg-item').forEach((el,i)=>el.classList.toggle('cur',i+1===cur));
+}
 function updNavH(){
   const dp=document.getElementById('dp');
   const hs=dp.querySelectorAll('h1,h2,h3');
@@ -1406,9 +1561,32 @@ function scrollToH(id){
     document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('cur'));
     document.querySelector(`.nav-item[onclick="scrollToH('${id}')"]`)?.classList.add('cur');}
 }
+function scrollToPage(n){
+  const dp=document.getElementById('dp');
+  const dw=document.getElementById('dw');
+  const breaks=[...dp.querySelectorAll('.pgbreak')];
+  let target;
+  if(n<=1){target=dp;}
+  else{target=breaks[n-2];}
+  if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.nav-pg-item').forEach((el,i)=>el.classList.toggle('cur',i+1===n));
+}
+function _getCurrentPage(){
+  const dp=document.getElementById('dp');
+  const dw=document.getElementById('dw');
+  const breaks=[...dp.querySelectorAll('.pgbreak')];
+  if(!breaks.length)return 1;
+  const scrollTop=dw.scrollTop;
+  const dpTop=dp.getBoundingClientRect().top-dw.getBoundingClientRect().top+dw.scrollTop;
+  for(let i=0;i<breaks.length;i++){
+    const bTop=breaks[i].getBoundingClientRect().top-dw.getBoundingClientRect().top+dw.scrollTop;
+    if(scrollTop+dw.clientHeight/2<bTop)return i+1;
+  }
+  return breaks.length+1;
+}
 function navSearch(q){
   if(!q.trim()){navMode='h';document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('on',i===0));updNavH();return;}
-  navMode='r';document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('on',i===1));
+  navMode='r';document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('on',i===2));
   updNavR(q);
 }
 function updNavR(q){
@@ -1535,6 +1713,10 @@ function updPageNum(){
   const midScroll=dw.scrollTop+dw.clientHeight/2-dpTop;
   const cur=Math.max(1,Math.min(total,Math.ceil(midScroll/_A4H)));
   document.getElementById('sbpg').textContent='עמוד '+cur+' / '+total;
+  // Update pages nav highlight if visible
+  if(navMode==='p'){
+    document.querySelectorAll('.nav-pg-item').forEach((el,i)=>el.classList.toggle('cur',i+1===cur));
+  }
 }
 function schedRepaginate(){clearTimeout(repagTimer);repagTimer=setTimeout(doRepaginate,1200);}
 function doRepaginate(){
@@ -1575,6 +1757,7 @@ function doRepaginate(){
     }catch(e){}
   }
   updPageNum();
+  if(navMode==='p')updNavPages();
 }
 function openWordCountDlg(){
   const txt=document.getElementById('dp').innerText||'';
@@ -2852,54 +3035,66 @@ function showPluginInfo(){
 /* ── SYSTEM FONTS ── */
 async function loadSystemFonts(){
   const base=['Times New Roman','David','Frank Ruhl Libre','Arial','Rubik','Calibri','Courier New','Georgia','Verdana','Tahoma','Segoe UI','Assistant','Heebo','Open Sans','Noto Sans Hebrew'];
-  const extendedList=[
+  // Comprehensive fallback list (Hebrew + Windows + Mac + Google common)
+  const fallbackList=[
     // Hebrew
     'Alef','Almoni','Almoni DL AAA','Almoni Neue','Arial Hebrew','David CLM','DejaVu Sans','DejaVu Serif',
     'Ezra SIL','FrankRuehl','Guttman Aharoni','Guttman Drogolin','Guttman Frank','Guttman Haim',
     'Guttman Keren','Guttman Stam','Guttman Yad','Keter YG','Keter YG Bold','Levenim MT',
-    'Miriam','Miriam CLM','Miriam Fixed','Narkisim','Rashi','SBL Hebrew','Simple CLM',
-    'Tinos','Yehuda CLM',
-    // Windows standard
-    'Arial Black','Arial Narrow','Arial Rounded MT Bold','Book Antiqua','Bookman Old Style',
-    'Calibri Light','Cambria','Cambria Math','Candara','Century','Century Gothic',
-    'Comic Sans MS','Consolas','Constantia','Corbel','Courier New','Franklin Gothic Medium',
-    'Garamond','Gil Sans MT','Impact','Lucida Console','Lucida Sans Unicode',
-    'Microsoft Sans Serif','Palatino Linotype','Segoe Print','Segoe Script','Segoe UI Light',
-    'Segoe UI Semibold','Symbol','Trebuchet MS','Wingdings',
-    // Google Fonts commonly used
-    'Lato','Merriweather','Montserrat','Nunito','Oswald','Playfair Display','Poppins',
-    'PT Sans','PT Serif','Raleway','Roboto','Roboto Condensed','Roboto Slab','Source Sans Pro',
-    'Ubuntu','Libre Baskerville','Libre Franklin',
+    'Miriam','Miriam CLM','Miriam Fixed','Narkisim','Rashi','SBL Hebrew','Simple CLM','Tinos','Yehuda CLM',
+    // Windows
+    'Arial Black','Arial Narrow','Arial Rounded MT Bold','Bahnschrift','Book Antiqua','Bookman Old Style',
+    'Calibri Light','Cambria','Cambria Math','Candara','Century','Century Gothic','Comic Sans MS',
+    'Consolas','Constantia','Corbel','Courier New','Ebrima','Franklin Gothic Medium','Garamond',
+    'Gil Sans MT','Impact','Javanese Text','Leelawadee UI','Lucida Console','Lucida Sans Unicode',
+    'Malgun Gothic','Microsoft JhengHei','Microsoft Sans Serif','Mongolian Baiti','MV Boli',
+    'Myanmar Text','Nirmala UI','Palatino Linotype','Segoe MDL2 Assets','Segoe Print','Segoe Script',
+    'Segoe UI Light','Segoe UI Semibold','Segoe UI Symbol','Sitka Heading','Symbol',
+    'Trebuchet MS','Wingdings','Yu Gothic',
+    // Mac
+    'Andale Mono','Apple Chancery','Apple Color Emoji','Arial Hebrew','Ayuthaya','Baghdad',
+    'Brush Script MT','Chalkboard','Chalkduster','Cochin','Copperplate','Damascus','Didot',
+    'Futura','Geneva','Gill Sans','Helvetica','Helvetica Neue','Herculanum','Hoefler Text',
+    'Lucida Grande','Marker Felt','Menlo','Monaco','Noteworthy','Optima','Papyrus',
+    'San Francisco','Skia','Zapfino',
+    // Google / web common
+    'Barlow','Bebas Neue','Bitter','Cabin','DM Sans','DM Serif Display','Exo 2',
+    'Fira Code','Fira Sans','IBM Plex Mono','IBM Plex Sans','Inconsolata','Inter',
+    'Josefin Sans','Lato','Libre Baskerville','Libre Franklin','Merriweather','Montserrat',
+    'Mulish','Noto Sans','Noto Sans Hebrew','Noto Serif','Nunito','Nunito Sans',
+    'Oswald','Playfair Display','Poppins','PT Mono','PT Sans','PT Serif','Quicksand',
+    'Raleway','Roboto','Roboto Condensed','Roboto Mono','Roboto Slab','Source Code Pro',
+    'Source Sans Pro','Space Grotesk','Ubuntu','Ubuntu Mono','Work Sans',
   ];
-  const sel=document.getElementById('sf');
-  if(!sel)return;
-  const cur=sel.value;
+
   const available=[];
 
-  // Try queryLocalFonts() (Chrome 103+ / some Flutter builds)
-  let localFontNames=null;
+  // First try queryLocalFonts() — returns ALL installed fonts when available
+  let gotAll=false;
   try{
     if(typeof window.queryLocalFonts==='function'){
       const localFonts=await window.queryLocalFonts();
-      localFontNames=[...new Set(localFonts.map(f=>f.family))];
+      const families=[...new Set(localFonts.map(f=>f.family))];
+      if(families.length>5){available.push(...families);gotAll=true;}
     }
   }catch(e){}
 
-  if(localFontNames&&localFontNames.length>5){
-    available.push(...localFontNames);
-  }else{
-    // Fallback: canvas test against comprehensive list
+  if(!gotAll){
+    // Fallback: canvas detection against comprehensive list
     const canvas=document.createElement('canvas');
     const ctx=canvas.getContext('2d');
-    const testStr='אבגדהוזחטיAbcdefg012';
+    const testHe='אבגדהוזחטי',testLat='AaBbCcDdEe012';
     ctx.font='16px monospace';
-    const baseW=ctx.measureText(testStr).width;
-    const allFonts=[...new Set([...base,...extendedList])];
+    const baseW_he=ctx.measureText(testHe).width;
+    const baseW_lat=ctx.measureText(testLat).width;
+    const allFonts=[...new Set([...base,...fallbackList])];
     for(const font of allFonts){
       ctx.font=`16px '${font}',monospace`;
-      if(Math.abs(ctx.measureText(testStr).width-baseW)>0.5)available.push(font);
+      const wHe=ctx.measureText(testHe).width;
+      const wLat=ctx.measureText(testLat).width;
+      if(Math.abs(wHe-baseW_he)>0.5||Math.abs(wLat-baseW_lat)>0.5)available.push(font);
     }
-    // Also read document.fonts (loaded web fonts)
+    // Supplement with document.fonts (loaded web fonts)
     try{
       await document.fonts.ready;
       document.fonts.forEach(f=>{
@@ -2909,18 +3104,21 @@ async function loadSystemFonts(){
     }catch(e){}
   }
 
-  // Always include base list even if detection found nothing
-  const unique=[...new Set([...base,...available])].sort((a,b)=>a.localeCompare(b,'he'));
-  // Put base fonts first, then rest alphabetically
-  const baseSorted=base.slice();
-  const rest=unique.filter(f=>!baseSorted.includes(f));
+  // Always keep base list at top, then sort rest
+  const baseSorted=[...base];
+  const rest=[...new Set(available)].filter(f=>!baseSorted.includes(f)).sort((a,b)=>a.localeCompare(b,'he'));
   const final=[...baseSorted,...rest];
 
-  const toOpt=f=>`<option value="'${f}',sans-serif">${f}</option>`;
-  sel.innerHTML=final.map(toOpt).join('');
+  // Build font catalog for custom picker: [{label, value}]
+  _fontCatalog=final.map(f=>({label:f,value:`'${f}',sans-serif`}));
+  _renderFontDD(_fontCatalog);
+
+  // Also populate the font dialog <select> if it exists
   const fdFn=document.getElementById('fd-fn');
-  if(fdFn)fdFn.innerHTML=final.map(toOpt).join('');
-  try{sel.value=cur;}catch(e){}
+  if(fdFn){
+    const toOpt=f=>`<option value="'${f}',sans-serif">${f}</option>`;
+    fdFn.innerHTML=final.map(toOpt).join('');
+  }
 }
 
 /* ══ OTZARIA THEME ══ */

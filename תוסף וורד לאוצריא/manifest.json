@@ -3,7 +3,7 @@
   "name": "וורד לאוצריא",
   "version": "1.2.1",
   "description": "עורך מסמכים בסגנון Word לכתיבת חידושי תורה, עם שילוב מלא עם ספריית אוצריא",
-  "author": "יאיר דניאל",
+  "author": "Yeir DANIEL",
   "type": "webapp",
   "entrypoint": "index.html",
   "icon": "",

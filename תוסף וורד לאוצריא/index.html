@@ -102,29 +102,33 @@ input[type=color].hc{opacity:0;width:0;height:0;position:absolute;pointer-events
 #ruler{width:794px;max-width:calc(100% - 20px);height:20px;background:#e8e8e8;border:1px solid #ccc;border-bottom:2px solid #aaa;flex-shrink:0;margin-bottom:6px;position:relative;font-size:0;display:none;}
 #ruler::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0px,transparent 9px,#bbb 9px,#bbb 10px);opacity:.5;}
 
-/* DOCUMENT */
-#dp{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.28);width:794px;max-width:calc(100% - 20px);min-height:1122px;padding:96px 90px;outline:none;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.5;direction:rtl;text-align:right;}
-#dp:focus{box-shadow:0 1px 6px rgba(0,0,0,.28),0 0 0 2px rgba(43,87,154,.22);}
-#dp p{margin:0;min-height:1.5em;}
-#dp p:empty::before{content:'​';}
-#dp:not(:focus) p:only-child:empty::before{content:'התחל לכתוב כאן...';color:#ccc;pointer-events:none;}
-#dp h1{font-size:2em;font-weight:700;margin:.4em 0 .3em;border-bottom:2px solid #111;padding-bottom:.15em;}
-#dp h2{font-size:1.5em;font-weight:700;margin:.35em 0 .25em;color:#2e74b5;}
-#dp h3{font-size:1.17em;font-weight:700;margin:.3em 0 .2em;color:#1f3763;}
-#dp blockquote{border-right:3px solid #ccc;margin:8px 0;padding:4px 14px;color:#555;font-style:italic;}
-#dp table{border-collapse:collapse;width:100%;margin:8px 0;}
-#dp td,#dp th{border:1px solid #b0b0b0;padding:5px 8px;min-width:40px;vertical-align:top;}
-#dp th{background:#f3f3f3;font-weight:700;}
-#dp a{color:var(--wb);}
-#dp pre{background:#f8f8f8;border:1px solid #e0e0e0;padding:8px 12px;border-radius:3px;font-family:monospace;font-size:.9em;}
-#dp .fn-area{margin-top:40px;padding-top:10px;border-top:1px solid #aaa;font-size:.85em;color:#555;}
-#dp .en-area{margin-top:40px;padding-top:10px;border-top:2px solid #888;font-size:.85em;color:#333;}
+/* DOCUMENT — pages container */
+#dp{display:flex;flex-direction:column;align-items:center;gap:32px;width:100%;padding:0;}
+/* PAGE — each page is a hard-bounded card */
+.page{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.28);width:794px;max-width:calc(100vw - 48px);height:1122px;padding:96px 90px;outline:none;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.5;direction:rtl;text-align:right;overflow:hidden;position:relative;flex-shrink:0;box-sizing:border-box;}
+.page:focus{box-shadow:0 1px 6px rgba(0,0,0,.28),0 0 0 2px rgba(43,87,154,.22);}
+.page p{margin:0;min-height:1.5em;}
+.page p:empty::before{content:'​';}
+.page:not(:focus) p:only-child:empty::before{content:'התחל לכתוב כאן...';color:#ccc;pointer-events:none;}
+.page h1{font-size:2em;font-weight:700;margin:.4em 0 .3em;border-bottom:2px solid #111;padding-bottom:.15em;}
+.page h2{font-size:1.5em;font-weight:700;margin:.35em 0 .25em;color:#2e74b5;}
+.page h3{font-size:1.17em;font-weight:700;margin:.3em 0 .2em;color:#1f3763;}
+.page blockquote{border-right:3px solid #ccc;margin:8px 0;padding:4px 14px;color:#555;font-style:italic;}
+.page table{border-collapse:collapse;width:100%;margin:8px 0;}
+.page td,.page th{border:1px solid #b0b0b0;padding:5px 8px;min-width:40px;vertical-align:top;}
+.page th{background:#f3f3f3;font-weight:700;}
+.page a{color:var(--wb);}
+.page pre{background:#f8f8f8;border:1px solid #e0e0e0;padding:8px 12px;border-radius:3px;font-family:monospace;font-size:.9em;}
+.page .fn-area{margin-top:40px;padding-top:10px;border-top:1px solid #aaa;font-size:.85em;color:#555;}
+.page .en-area{margin-top:40px;padding-top:10px;border-top:2px solid #888;font-size:.85em;color:#333;}
+.pg-num{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:9pt;color:#bbb;pointer-events:none;user-select:none;font-family:Arial,sans-serif;}
 mark.fhl{background:#fff176;}
 mark.fhl.cur{background:#ff9800;color:#fff;}
 body.focus-mode #tb,body.focus-mode #tab-bar,body.focus-mode #ribbon,body.focus-mode #sb{opacity:0;pointer-events:none;transition:opacity .4s;}
 body.focus-mode #nav-pane{width:0!important;}
 body.focus-mode #dw{padding:0;background:#fff;}
-body.focus-mode #dp{width:100%;min-height:100vh;box-shadow:none;padding:80px 120px;zoom:100%!important;}
+body.focus-mode #dp{gap:0;}
+body.focus-mode .page{width:100%;height:auto;max-height:none;overflow:visible;box-shadow:none;padding:80px 120px;zoom:100%!important;}
 body.focus-mode:hover #tb,body.focus-mode:hover #tab-bar,body.focus-mode:hover #ribbon,body.focus-mode:hover #sb{opacity:1;pointer-events:auto;}
 body.cursor-paint{cursor:crosshair!important;}
 body.cursor-paint *{cursor:crosshair!important;}
@@ -203,18 +207,13 @@ body.dark-mode .sty-btn{background:#333;color:#ddd;border-color:#555;}
 body.dark-mode .cm-card{background:#2d2a1a;border-color:#555;}
 body.dark-mode .list-item{border-color:#444;background:#2b2b2b;}
 body.dark-mode #dw{background:#1e1e1e;}
-body.dark-mode #dp{background:#1e1e1e;color:#e0e0e0;box-shadow:none;}
-body.dark-mode .pgbreak{background:var(--canvas);}
-body.dark-mode #dp h2{color:#82b4f0;}body.dark-mode #dp h3{color:#9ab8e0;}
-body.dark-mode #dp blockquote{border-right-color:#555;color:#bbb;}
-body.dark-mode #dp pre{background:#252525;border-color:#444;}
-body.dark-mode #dp td,body.dark-mode #dp th{border-color:#555;}
-body.dark-mode #dp th{background:#2a2a2a;}
-@media print{#tb,#tab-bar,#ribbon,#doc-tabbar,#nav-pane,#sb,#fb,#ctx{display:none!important;}#main{display:block!important;}#dw{background:#fff!important;padding:0!important;overflow:visible!important;}#dp{box-shadow:none!important;width:100%!important;padding:0!important;zoom:100%!important;}mark{background:none!important}.pgbreak{height:0!important;background:none!important;border:none!important;}}
-
-/* PAGE BREAK — gap between pages, blends with canvas so pages look like separate cards */
-.pgbreak{display:block;height:48px;margin:0 -90px;background:var(--canvas);border:none;page-break-after:always!important;position:relative;user-select:none;-webkit-user-select:none;cursor:default;box-shadow:inset 0 4px 8px rgba(0,0,0,.08),inset 0 -4px 8px rgba(0,0,0,.08);}
-.pgbreak::after{content:attr(data-pg);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62em;color:#999;letter-spacing:1px;pointer-events:none;}
+body.dark-mode .page{background:#1e1e1e;color:#e0e0e0;box-shadow:none;}
+body.dark-mode .page h2{color:#82b4f0;}body.dark-mode .page h3{color:#9ab8e0;}
+body.dark-mode .page blockquote{border-right-color:#555;color:#bbb;}
+body.dark-mode .page pre{background:#252525;border-color:#444;}
+body.dark-mode .page td,body.dark-mode .page th{border-color:#555;}
+body.dark-mode .page th{background:#2a2a2a;}
+@media print{#tb,#tab-bar,#ribbon,#doc-tabbar,#nav-pane,#sb,#fb,#ctx{display:none!important;}#main{display:block!important;}#dw{background:#fff!important;padding:0!important;overflow:visible!important;}#dp{gap:0!important;}.page{box-shadow:none!important;width:100%!important;height:auto!important;overflow:visible!important;padding:60px 80px!important;zoom:100%!important;page-break-after:always;}.pg-num{display:none!important;}mark{background:none!important}}
 
 /* COMMENTS PANEL */
 #cp{width:260px;flex-shrink:0;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column;overflow:hidden;transition:width .2s;}
@@ -727,12 +726,14 @@ body.dark-mode .doc-tab{color:#ccc;}
       </div>
     </div>
     <div id="ruler"></div>
-    <div id="dp" contenteditable="true" spellcheck="true"
+    <div id="dp"
          onkeydown="onKey(event)"
          onkeyup="updFmt();schedCount();"
          onmouseup="updFmt();onDocClick(event);"
          oninput="schedSave();schedNav();schedRepaginate();"
-         oncontextmenu="showCtx(event)"><p><br></p></div>
+         oncontextmenu="showCtx(event)">
+      <div class="page" contenteditable="true" spellcheck="true" dir="rtl"><p><br></p></div>
+    </div>
   </div>
 </div>
 
@@ -827,7 +828,7 @@ function swDoc(idx){
 }
 function _saveCurrentDocState(){
   if(!docs[docIdx])return;
-  docs[docIdx].content=document.getElementById('dp').innerHTML;
+  docs[docIdx].content=_getDocHTML();
   docs[docIdx].title=document.getElementById('doc-title').value;
   docs[docIdx].scroll=document.getElementById('dw').scrollTop;
   docs[docIdx].fn=fnCount;docs[docIdx].en=enCount;
@@ -835,7 +836,7 @@ function _saveCurrentDocState(){
 function _loadDocState(idx){
   const d=docs[idx];
   if(!d)return;
-  document.getElementById('dp').innerHTML=d.content||'<p><br></p>';
+  _setDocHTML(d.content||'<p><br></p>');
   document.getElementById('doc-title').value=d.title||'מסמך חדש';
   fnCount=d.fn||0;enCount=d.en||0;
   setTimeout(()=>{document.getElementById('dw').scrollTop=d.scroll||0;},50);
@@ -876,6 +877,38 @@ function _rebuildDocTabs(){
   // Sync title input to tab
   const dt=document.getElementById('doc-title');
   if(dt)dt.onchange=()=>{if(docs[docIdx])docs[docIdx].title=dt.value;_rebuildDocTabs();schedSave();};
+}
+
+/* ══ PAGE HELPERS ══ */
+function activePage(){
+  const a=document.activeElement;
+  if(a&&a.classList.contains('page'))return a;
+  return document.querySelector('.page');
+}
+function _newPage(html){
+  const pg=document.createElement('div');
+  pg.className='page';
+  pg.contentEditable='true';
+  pg.dir='rtl';
+  pg.setAttribute('spellcheck','true');
+  pg.innerHTML=html||'<p><br></p>';
+  return pg;
+}
+function _getDocHTML(){
+  return [...document.querySelectorAll('.page')]
+    .map(p=>p.innerHTML).join('\n<!-- PAGE_BREAK -->\n');
+}
+function _setDocHTML(html){
+  const dp=document.getElementById('dp');
+  dp.querySelectorAll('.page').forEach(p=>p.remove());
+  const parts=(html||'').split('\n<!-- PAGE_BREAK -->\n');
+  parts.forEach(part=>{
+    dp.appendChild(_newPage(part||'<p><br></p>'));
+  });
+  if(!dp.querySelector('.page'))dp.appendChild(_newPage());
+}
+function _getDocText(){
+  return [...document.querySelectorAll('.page')].map(p=>p.innerText||'').join('\n');
 }
 
 /* ── INIT ── */
@@ -985,8 +1018,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 /* ── SELECTION ── */
 function restoreSel(){
   if(!savedRange)return;
-  const dp=document.getElementById('dp');
-  dp.focus();
+  activePage().focus();
   const s=window.getSelection();s.removeAllRanges();
   try{s.addRange(savedRange);}catch(e){}
 }
@@ -994,7 +1026,7 @@ function restoreSel(){
 /* ── EXEC ── */
 function ex(cmd,val){
   restoreSel();
-  document.getElementById('dp').focus();
+  activePage().focus();
   try{document.execCommand(cmd,false,val??null);}catch(e){}
 }
 
@@ -1058,7 +1090,7 @@ function applySize(pt){
   if(!pt||isNaN(pt))return;
   if(isRecording){recFlush();recPush({t:'size',pt:pt});}
   restoreSel();
-  const dp=document.getElementById('dp');dp.focus();
+  const dp=activePage();dp.focus();
   try{document.execCommand('fontSize',false,'7');}catch(e){}
   dp.querySelectorAll('font[size="7"]').forEach(el=>{
     const sp=document.createElement('span');sp.style.fontSize=pt+'pt';

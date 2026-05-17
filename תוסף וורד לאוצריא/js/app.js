@@ -1256,11 +1256,11 @@ async function loadAll(){
   if(cm&&Array.isArray(cm.list)){comments=cm.list;cmCount=cm.count||cm.list.length;updCommentPanel();}
 }
 async function stSet(k,v){
-  try{await Otzaria.call('plugin.storage.set',{key:k,value:JSON.stringify(v)});}
+  try{await Otzaria.call('plugin.storage.write',{key:k,value:JSON.stringify(v)});}
   catch(e){try{localStorage.setItem('_otzw_'+k,JSON.stringify(v));}catch(ee){}}
 }
 async function stGet(k){
-  try{const{data}=await Otzaria.call('plugin.storage.get',{key:k});if(data?.value)return JSON.parse(data.value);}catch(e){}
+  try{const{data}=await Otzaria.call('plugin.storage.read',{key:k});if(data?.value)return JSON.parse(data.value);}catch(e){}
   try{const v=localStorage.getItem('_otzw_'+k);return v?JSON.parse(v):null;}catch(e){return null;}
 }
 
@@ -2659,14 +2659,16 @@ function showPluginInfo(){
     <div style="text-align:center;padding:10px 0 16px">
       <div style="margin-bottom:10px"><span class="tbl" style="font-size:2.2em;padding:6px 14px;border-radius:8px">W</span></div>
       <div style="font-size:1.1em;font-weight:700;color:var(--wb);margin-bottom:4px">וורד לאוצריא</div>
-      <div style="font-size:.82em;color:#666;margin-bottom:12px">גרסה 1.2.1</div>
+      <div style="font-size:.82em;color:#666;margin-bottom:12px">גרסה 1.2.2</div>
       <div style="font-size:.84em;color:#444;line-height:1.7">
         <div>מחבר: <strong>יאיר דניאל</strong></div>
         <div style="margin-top:8px;font-size:.9em;color:#666">עורך מסמכים בסגנון Word לכתיבת חידושי תורה,<br>עם שילוב מלא עם ספריית אוצריא</div>
       </div>
     </div>
-    <div style="border-top:1px solid #e8e8e8;padding-top:10px;font-size:.76em;color:#888;text-align:center">
-      וורד לאוצריא • אוצריא Plugin
+    <div style="border-top:1px solid #e8e8e8;padding-top:10px;font-size:.76em;color:#888;text-align:center;line-height:1.9">
+      <strong>חידושים בגרסה זו:</strong><br>
+      undo/redo מלא • בדיקת איות תורני (102,000+ מילים)<br>
+      סגנונות מאוחדים • זיהוי פונטים משופר • תיקוני ניווט וחלונית
     </div>`;
   addDlgBtn(dlg,'סגור',()=>dlg.remove(),false);
 }

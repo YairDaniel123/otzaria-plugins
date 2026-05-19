@@ -1,7 +1,7 @@
-{
+﻿{
   "id": "com.otzaria_word_editor.newplugin",
   "name": "וורד לאוצריא",
-  "version": "1.2.2",
+  "version": "1.2.7",
   "description": "עורך מסמכים בסגנון Word לכתיבת חידושי תורה, עם שילוב מלא עם ספריית אוצריא",
   "author": "Yeir DANIEL",
   "type": "webapp",
@@ -15,11 +15,9 @@
     "plugin.storage.read",
     "plugin.storage.write",
     "reader.open",
-    "library.books.read",
-    "library.content.read",
+    "reader.context_menu",
     "notifications.send",
     "ui.feedback",
-    "notifications.system",
     "app.info.read"
   ]
 }

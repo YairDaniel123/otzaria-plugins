@@ -1,17 +1,14 @@
-'use strict';
+﻿'use strict';
 
 /* ══ UTILITIES — notify, dialogs, theme, color, fonts ══ */
 
 /* ── NOTIFY ── */
-async function notify(msg) {
-  try { await Otzaria.call('notifications.showInApp', {message: msg, type: 'info'}); }
-  catch(e) {
-    const n = document.createElement('div');
-    n.textContent = msg;
-    n.style.cssText = 'position:fixed;bottom:32px;right:16px;background:#333;color:#fff;padding:6px 14px;border-radius:4px;font-size:.82em;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
-    document.body.appendChild(n);
-    setTimeout(() => { n.style.opacity = '0'; setTimeout(() => n.remove(), 400); }, 2200);
-  }
+function notify(msg) {
+  const n = document.createElement('div');
+  n.textContent = msg;
+  n.style.cssText = 'position:fixed;bottom:32px;right:16px;background:#333;color:#fff;padding:6px 14px;border-radius:4px;font-size:.82em;z-index:9999;pointer-events:none;opacity:1;transition:opacity .4s';
+  document.body.appendChild(n);
+  setTimeout(() => { n.style.opacity = '0'; setTimeout(() => n.remove(), 400); }, 2200);
 }
 
 /* ── DIALOG HELPERS ── */
@@ -84,18 +81,49 @@ function applyOtzTheme(theme) {
   const cs = theme.colorScheme;
   const isDark = theme.mode === 'dark';
   const root = document.documentElement;
-  if (cs && cs.primary) {
-    root.style.setProperty('--wb', cs.primary);
-    root.style.setProperty('--otz', cs.primary);
-    root.style.setProperty('--wb-dk', _darken(cs.primary, .15));
-    root.style.setProperty('--wb-lt', _rgba(cs.primary, .12));
-    root.style.setProperty('--bh', _rgba(cs.primary, .12));
-    root.style.setProperty('--ba', _rgba(cs.primary, .28));
+  if (cs) {
+    if (cs.primary) {
+      root.style.setProperty('--color-primary',   cs.primary);
+      root.style.setProperty('--color-on-primary', cs.onPrimary || '#ffffff');
+      root.style.setProperty('--wb',  cs.primary);
+      root.style.setProperty('--bh',  _rgba(cs.primary, .12));
+      root.style.setProperty('--ba',  _rgba(cs.primary, .28));
+      root.style.setProperty('--wb-lt', _rgba(cs.primary, .12));
+      root.style.setProperty('--color-primary-subtle', _rgba(cs.primary, .12));
+      root.style.setProperty('--color-focus-ring',   _rgba(cs.primary, .22));
+      root.style.setProperty('--color-border-hover', _rgba(cs.primary, .35));
+      root.style.setProperty('--color-border-active',_rgba(cs.primary, .60));
+    }
+    if (cs.secondary) {
+      root.style.setProperty('--color-secondary',   cs.secondary);
+      root.style.setProperty('--color-on-secondary', cs.onSecondary || '#ffffff');
+      root.style.setProperty('--wb-dk', cs.secondary);
+      root.style.setProperty('--color-secondary-subtle', _rgba(cs.secondary, .12));
+    }
     if (cs.surface) {
-      root.style.setProperty('--rb', isDark ? cs.surface : '#f3f3f3');
+      root.style.setProperty('--color-surface', cs.surface);
+      root.style.setProperty('--rb', cs.surface);
       root.style.setProperty('--canvas', isDark ? '#252525' : '#d2d2d2');
     }
-    if (cs.outline) root.style.setProperty('--rbb', isDark ? cs.outline : '#d1d1d1');
+    if (cs.onSurface) {
+      root.style.setProperty('--color-on-surface', cs.onSurface);
+    }
+    if (cs.outline) {
+      root.style.setProperty('--color-outline', cs.outline);
+      root.style.setProperty('--rbb', cs.outline);
+    }
+    if (cs.surfaceContainerHighest)
+      root.style.setProperty('--color-surface-container-highest', cs.surfaceContainerHighest);
+    if (cs.error) {
+      root.style.setProperty('--color-error', cs.error);
+      root.style.setProperty('--color-on-error', cs.onError || '#ffffff');
+    }
+  }
+  if (theme.typography) {
+    const t = theme.typography;
+    root.style.setProperty('--font-main', `'${t.fontFamily}', 'David', serif`);
+    root.style.setProperty('--font-size-base', `${t.fontSize}px`);
+    root.style.setProperty('--line-height', String(t.lineHeight));
   }
   document.body.classList.toggle('dark-mode', isDark);
   document.body.classList.add('otz-theme');

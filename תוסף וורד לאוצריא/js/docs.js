@@ -1,13 +1,13 @@
-'use strict';
+﻿'use strict';
 
 /* ══ STORAGE ══ */
 async function stSet(k, v) {
-  try { await Otzaria.call('plugin.storage.set', {key: k, value: JSON.stringify(v)}); }
+  try { await Otzaria.call('storage.set', {key: k, value: JSON.stringify(v)}); }
   catch(e) { try { localStorage.setItem('_otzw_' + k, JSON.stringify(v)); } catch(ee) {} }
 }
 async function stGet(k) {
   try {
-    const {data} = await Otzaria.call('plugin.storage.get', {key: k});
+    const {data} = await Otzaria.call('storage.get', {key: k});
     if (data?.value) return JSON.parse(data.value);
   } catch(e) {}
   try { const v = localStorage.getItem('_otzw_' + k); return v ? JSON.parse(v) : null; } catch(e) { return null; }

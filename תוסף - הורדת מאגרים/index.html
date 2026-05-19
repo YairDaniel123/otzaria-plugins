@@ -27,13 +27,13 @@
             font-size: var(--font-size, 16px);
             line-height: var(--line-height, 1.5);
             transition: background-color .25s, color .25s;
-            padding: 24px;
+            padding: 20px 24px 40px;
         }
 
         h2 {
             color: var(--primary);
-            font-size: 1.8rem;
-            margin: 0 0 16px;
+            font-size: 1.6rem;
+            margin: 0 0 12px;
         }
 
         .version-notice {
@@ -42,78 +42,148 @@
             border: 1px solid var(--error-border);
             border-radius: 12px;
             padding: 12px 16px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             font-size: 0.95rem;
             display: none;
         }
         .version-notice.visible { display: block; }
 
-        .assets-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
+        /* כפתור הורדת המאגר המלא */
+        .full-library-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             background: var(--surface-container);
-            color: var(--on-surface);
             border: 1px solid var(--outline);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+
+        .full-library-bar span {
+            flex: 1;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        #full-library-btn {
+            display: none;
             align-items: center;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .card-title {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            min-height: 2.5em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-size {
-            font-size: 0.85rem;
-            opacity: 0.6;
-            margin-bottom: 16px;
-        }
-
-        button {
+            gap: 6px;
             background: var(--primary);
             color: var(--on-primary);
             border: none;
-            border-radius: 24px;
-            padding: 12px 24px;
-            font-size: 1rem;
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
             font-weight: 700;
             cursor: pointer;
-            width: 100%;
             font-family: inherit;
             transition: opacity 0.2s;
+            white-space: nowrap;
         }
-        button:hover { opacity: 0.88; }
-        button:active { transform: scale(.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #full-library-btn:hover { opacity: 0.88; }
+
+        /* עץ תיקיות */
+        #tree {
+            border: 1px solid var(--outline);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .tree-node + .tree-node {
+            border-top: 1px solid var(--outline);
+        }
+
+        .tree-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            padding-left: 16px;
+            transition: background 0.15s;
+        }
+
+        .tree-row:hover {
+            background: var(--surface-container);
+        }
+
+        .tree-children .tree-node {
+            border-top: 1px solid var(--outline);
+        }
+
+        .toggle {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            font-size: 0.75rem;
+            user-select: none;
+            color: var(--primary);
+        }
+
+        .node-name {
+            flex: 1;
+            font-size: 0.97rem;
+        }
+
+        .node-name.clickable {
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .node-name.clickable:hover {
+            color: var(--primary);
+        }
+
+        .node-size {
+            font-size: 0.78rem;
+            opacity: 0.5;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .dl-btn {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            border-radius: 16px;
+            padding: 5px 16px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: inherit;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .dl-btn:hover { opacity: 0.88; }
+        .dl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .loading {
             text-align: center;
             padding: 40px;
-            opacity: 0.6;
+            opacity: 0.5;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
-    <h2>ניהול מאגר ספרים</h2>
+    <h2>הורדת מאגרי ספרים</h2>
 
     <div class="version-notice" id="version-notice"></div>
 
-    <div id="assets-list" class="assets-grid">
-        <div class="loading">טוען רשימה...</div>
+    <div class="full-library-bar">
+        <span>המאגר המלא — כל הספרים בקובץ אחד</span>
+        <button id="full-library-btn">הורד הכל</button>
+    </div>
+
+    <div id="tree">
+        <div class="loading" id="loading">טוען רשימה...</div>
     </div>
 
     <script src="otzaria_plugin.js"></script>
@@ -124,16 +194,15 @@
             if (!theme || !theme.colorScheme) return;
             const cs = theme.colorScheme;
             const r = document.documentElement.style;
-            if (cs.primary)                                      r.setProperty('--primary',           cs.primary);
-            if (cs.onPrimary)                                    r.setProperty('--on-primary',         cs.onPrimary);
-            if (cs.surface)                                      r.setProperty('--surface',            cs.surface);
-            if (cs.onSurface)                                    r.setProperty('--on-surface',         cs.onSurface);
-            if (cs.surfaceContainerHighest || cs.surfaceContainer) r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surfaceContainer);
-            if (cs.outline)                                      r.setProperty('--outline',            cs.outline);
-            if (cs.errorContainer)                               r.setProperty('--error-bg',           cs.errorContainer);
-            if (cs.onErrorContainer)                             r.setProperty('--error-color',        cs.onErrorContainer);
-            if (cs.error)                                        r.setProperty('--error-border',       cs.error);
-
+            if (cs.primary)                                          r.setProperty('--primary',           cs.primary);
+            if (cs.onPrimary)                                        r.setProperty('--on-primary',         cs.onPrimary);
+            if (cs.surface)                                          r.setProperty('--surface',            cs.surface);
+            if (cs.onSurface)                                        r.setProperty('--on-surface',         cs.onSurface);
+            if (cs.surfaceContainerHighest || cs.surfaceContainer)   r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surfaceContainer);
+            if (cs.outline)                                          r.setProperty('--outline',            cs.outline);
+            if (cs.errorContainer)                                   r.setProperty('--error-bg',           cs.errorContainer);
+            if (cs.onErrorContainer)                                 r.setProperty('--error-color',        cs.onErrorContainer);
+            if (cs.error)                                            r.setProperty('--error-border',       cs.error);
             if (theme.typography) {
                 const t = theme.typography;
                 if (t.fontFamily) r.setProperty('--font-family', t.fontFamily + ', system-ui, sans-serif');

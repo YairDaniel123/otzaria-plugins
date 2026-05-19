@@ -1,0 +1,33 @@
+﻿{
+  "schemaVersion": 1,
+  "id": "com.otzaria-github-downloader.newplugin",
+  "name": "מנהל הורדות מאגרים",
+  "version": "1.0.2",
+  "description": "הורדה ועדכון מאגרי ספרים מ-GitHub",
+  "author": "Yair Daniel",
+  "type": "webapp",
+  "category": "Utilities",
+  "stability": "beta",
+  "entrypoint": "index.html",
+  "minAppVersion": "0.9.91",
+  "sdkVersion": "1.x",
+  "permissions": [
+    "ui.feedback",
+    "network.access",
+    "events.subscribe:theme.changed"
+  ],
+  "network": {
+    "enabled": true,
+    "allowlist": []
+  },
+  "contributes": {
+    "toolTab": {
+      "title": "הורדת מאגרי ספרים",
+      "order": 100,
+      "defaultPinned": true,
+      "iconName": "library_24_regular"
+    },
+    "publishedDataTypes": []
+  },
+  "homepage": "https://github.com/YairDaniel123/Otzarya-Library"
+}

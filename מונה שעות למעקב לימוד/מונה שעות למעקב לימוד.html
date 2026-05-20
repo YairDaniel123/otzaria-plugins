@@ -1,0 +1,3519 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>מונה שעות Pro v5</title>
+<meta name="theme-color" content="#0d0f12"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="מונה שעות"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- ============================================================
+     מונה שעות Pro v2 — כלי קודש
+     ============================================================
+     קוד זה בנוי לשילוב עם תוסף "כלי קודש" לוורד.
+     כל הגדרות הנושאים, יעדים, ורשומות נשמרות ב-localStorage.
+     ניתן להחליף את localStorage ב-API חיצוני (ראה INTEGRATION POINTS).
+
+     INTEGRATION POINTS (נקודות חיבור חיצוני):
+     - loadState() / save() — החלף ב-API calls לשרת
+     - exportToExcel() — מבוסס SheetJS, ניתן לשנות endpoint
+     - syncWithGoogle() — הוסף Google OAuth + Drive API כאן
+     ============================================================ -->
+
+<style>
+/* ===== CSS VARIABLES — ערכת נושא ===== */
+:root {
+  /* --- Dark Theme (ברירת מחדל) --- */
+  --bg: #0d0f12;
+  --bg2: #13161b;
+  --bg3: #1a1e25;
+  --bg4: #21262f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaed;
+  --text2: #8b9099;
+  --text3: #565c66;
+  --accent: #4ade80;
+  --accent2: #22c55e;
+  --accent-dim: rgba(74,222,128,0.12);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.12);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 240px;
+  --transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+}
+
+/* --- Light Theme --- */
+[data-theme="light"] {
+  --bg: #f4f4ef;
+  --bg2: #ffffff;
+  --bg3: #eeede8;
+  --bg4: #e4e3de;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.13);
+  --text: #1a1a1a;
+  --text2: #5a5a5a;
+  --text3: #9a9a9a;
+  --accent: #16a34a;
+  --accent2: #15803d;
+  --accent-dim: rgba(22,163,74,0.1);
+  --amber: #d97706;
+  --amber-dim: rgba(217,119,6,0.1);
+  --red: #dc2626;
+  --red-dim: rgba(220,38,38,0.1);
+  --blue: #2563eb;
+  --blue-dim: rgba(37,99,235,0.1);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124,58,237,0.1);
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: var(--transition);
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 4px; }
+
+/* ===== LAYOUT ===== */
+.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  padding: 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: var(--transition);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.25rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.logo i { font-size: 20px; color: var(--accent); }
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.6rem 1rem 0.2rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: right;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.nav-item i { font-size: 16px; }
+.nav-sep { height: 1px; background: var(--border); margin: 0.3rem 0; }
+
+/* ===== MAIN CONTENT ===== */
+.main { padding: 2rem; overflow-y: auto; background: var(--bg); }
+.section { display: none; }
+.section.active { display: block; }
+.page-title { font-size: 22px; font-weight: 600; margin-bottom: 0.2rem; }
+.page-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  transition: var(--transition);
+}
+.card-sm { padding: 1rem 1.25rem; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+/* ===== STATS ===== */
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.stat-val {
+  font-size: 26px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-sub { font-size: 12px; color: var(--text2); margin-top: 6px; }
+.stat-accent { color: var(--accent); }
+.stat-amber { color: var(--amber); }
+.stat-red { color: var(--red); }
+.stat-blue { color: var(--blue); }
+
+/* ===== PROGRESS RING ===== */
+.progress-ring-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+.progress-ring-wrap svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.ring-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 140px;
+}
+.ring-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+}
+.ring-time.running { color: var(--accent); }
+.ring-label { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.ring-session { font-size: 11px; color: var(--accent); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+/* ===== PILLS / BADGES ===== */
+.goal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+.goal-pill.over { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.2); }
+.goal-pill.almost { background: var(--amber-dim); color: var(--amber); border-color: rgba(251,191,36,0.2); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-green { background: var(--accent-dim); color: var(--accent); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-gray { background: var(--bg4); color: var(--text2); }
+.badge-purple { background: var(--purple-dim); color: var(--purple); }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text);
+  transition: all 0.15s;
+  font-family: 'Sora', sans-serif;
+}
+.btn:hover { background: var(--bg4); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.35; pointer-events: none; }
+.btn-primary { background: var(--accent); color: #0d1117; border-color: transparent; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-amber { background: var(--amber-dim); color: var(--amber); border-color: rgba(251,191,36,0.2); }
+.btn-amber:hover { background: rgba(251,191,36,0.2); }
+.btn-red { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.2); }
+.btn-red:hover { background: rgba(248,113,113,0.2); }
+.btn-blue { background: var(--blue-dim); color: var(--blue); border-color: rgba(96,165,250,0.2); }
+.btn-blue:hover { background: rgba(96,165,250,0.2); }
+.btn-purple { background: var(--purple-dim); color: var(--purple); border-color: rgba(167,139,250,0.2); }
+.btn-purple:hover { background: rgba(167,139,250,0.2); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* ===== FORMS ===== */
+.form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
+.form-row.mb0 { margin-bottom: 0; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+.form-input, .form-select {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: rgba(74, 222, 128, 0.4); }
+.form-select option { background: var(--bg2); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+/* ===== MODALS ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.modal-title { font-size: 16px; font-weight: 600; }
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+}
+.modal-close:hover { color: var(--text); }
+
+/* ===== DAY CARDS ===== */
+.day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.day-card:hover { border-color: var(--border2); }
+.day-card.active-day { border-color: rgba(74,222,128,0.4); background: var(--accent-dim); }
+.day-card.today { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+.day-name { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+.day-goal { font-size: 12px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.day-done { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+/* ===== HISTORY LIST ===== */
+.entry-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.entry-item:last-child { border-bottom: none; }
+.entry-item:hover { background: var(--bg3); }
+.entry-left { display: flex; align-items: center; gap: 10px; }
+.entry-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.entry-dot.manual { background: var(--blue); }
+.entry-dot.topic { background: var(--purple); }
+.entry-meta { font-size: 11px; color: var(--text3); }
+.entry-dur { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); }
+.entry-del {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.entry-item:hover .entry-del { opacity: 1; }
+
+/* ===== CHART ===== */
+canvas { display: block; }
+.chart-wrap { position: relative; height: 200px; margin-top: 1rem; }
+
+/* ===== QUICK NOTE WIDGET ===== */
+.quick-note-widget {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 150;
+}
+.quick-note-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--purple);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+  position: relative;
+}
+.quick-note-btn:hover { transform: scale(1.08); }
+.quick-note-panel {
+  position: absolute;
+  bottom: 56px;
+  left: 0;
+  width: 280px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.quick-note-panel.open { display: block; }
+.quick-note-panel textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  padding: 8px 10px;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+}
+.quick-note-panel textarea:focus { border-color: rgba(167,139,250,0.4); }
+
+/* ===== TEMPLATE CARDS ===== */
+.template-card {
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg3);
+}
+.template-card:hover { border-color: var(--accent); background: var(--accent-dim); }
+.template-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+.template-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.template-desc { font-size: 12px; color: var(--text2); }
+
+/* ===== TOPIC CHIP ===== */
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--purple-dim);
+  color: var(--purple);
+  border: 1px solid rgba(167,139,250,0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.topic-chip:hover { background: rgba(167,139,250,0.2); }
+.topic-chip.active { background: var(--purple); color: white; border-color: transparent; }
+
+/* ===== MISC ===== */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm { gap: 8px; }
+.gap-md { gap: 1rem; }
+.mt1 { margin-top: 0.5rem; }
+.mt2 { margin-top: 1rem; }
+.mt3 { margin-top: 1.5rem; }
+.mb1 { margin-bottom: 0.5rem; }
+.mb2 { margin-bottom: 1rem; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; color: var(--text2); }
+.text-muted { color: var(--text2); }
+.divider { height: 1px; background: var(--border); margin: 1rem 0; }
+.empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
+.empty i { font-size: 28px; display: block; margin-bottom: 8px; opacity: 0.5; }
+.w100 { width: 100%; }
+
+/* ===== TOPIC COLOR DOTS ===== */
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ===== IDLE WARNING ===== */
+.idle-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--amber);
+  color: #000;
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 300;
+}
+.idle-banner.show { display: block; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .grid4, .grid3 { grid-template-columns: 1fr 1fr; }
+  .day-grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+/* ===== NARROW PANEL MODE (Word add-in / ~320–420px) ===== */
+@media (max-width: 480px) {
+  .app { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+  .sidebar { display: none !important; }
+  .main { padding: 0.75rem; }
+
+  /* Top nav bar replaces sidebar */
+  #topNav { display: flex !important; }
+
+  .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+  .form-grid, .form-grid3 { grid-template-columns: 1fr; }
+  .day-grid { grid-template-columns: repeat(4, 1fr); }
+
+  /* Timer layout: stack vertically */
+  #sec-timer > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  .progress-ring-wrap { width: 160px; height: 160px; }
+  .progress-ring-wrap svg { width: 160px; height: 160px; }
+  .ring-time { font-size: 22px; }
+
+  /* Smaller cards */
+  .card { padding: 1rem; }
+  .card-sm { padding: 0.75rem 1rem; }
+  .page-title { font-size: 18px; }
+
+  /* Buttons wrap nicely */
+  .btn-group { flex-direction: column; }
+  .btn-group .btn { width: 100%; justify-content: center; }
+
+  /* Modal full-width */
+  .modal { max-width: 100%; border-radius: 0; margin: 0; max-height: 100vh; }
+  .modal-overlay { align-items: flex-end; }
+}
+
+/* ===== TOP NAV (shown only in narrow mode) ===== */
+#topNav {
+  display: none;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#topNav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: 'Sora', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#topNav button:hover { background: var(--bg3); color: var(--text); }
+#topNav button.active { background: var(--accent-dim); color: var(--accent); }
+#topNav button i { font-size: 14px; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ===== TOP NAV (narrow/Word add-in mode only) ===== -->
+<div id="topNav">
+  <button onclick="nav('timer')" id="tnav-timer" class="active"><i class="ti ti-player-play"></i> טיימר</button>
+  <button onclick="nav('goals')" id="tnav-goals"><i class="ti ti-target"></i> יעדים</button>
+  <button onclick="nav('topics')" id="tnav-topics"><i class="ti ti-tag"></i> נושאים</button>
+  <button onclick="nav('manual')" id="tnav-manual"><i class="ti ti-pencil-plus"></i> ידני</button>
+  <button onclick="nav('weekly')" id="tnav-weekly"><i class="ti ti-chart-bar"></i> שבועי</button>
+  <button onclick="nav('monthly')" id="tnav-monthly"><i class="ti ti-chart-area-line"></i> חודשי</button>
+  <button onclick="nav('history')" id="tnav-history"><i class="ti ti-history"></i> היסטוריה</button>
+  <button onclick="nav('templates')" id="tnav-templates"><i class="ti ti-template"></i> תבניות</button>
+  <button onclick="nav('settings')" id="tnav-settings"><i class="ti ti-settings"></i> הגדרות</button>
+  <button onclick="nav('export')" id="tnav-export"><i class="ti ti-file-export"></i> יצוא</button>
+</div>
+
+<!-- ===== IDLE WARNING BANNER ===== -->
+<div class="idle-banner" id="idleBanner">
+  <i class="ti ti-clock-pause"></i> <span id="idleBannerMsg">זוהתה חוסר פעילות — הטיימר הושהה אוטומטית.</span>
+  <button onclick="resumeFromIdle()" style="margin-right:8px;background:rgba(0,0,0,0.25);border:none;padding:3px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">▶ המשך</button>
+  <button onclick="dismissIdle()" style="margin-right:4px;background:rgba(0,0,0,0.15);border:none;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:12px">סגור</button>
+</div>
+
+<div class="app">
+
+<!-- ============================================================
+     SIDEBAR — ניווט ראשי
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="logo"><i class="ti ti-clock-bolt"></i> מונה שעות Pro</div>
+  <div style="font-size:10px;color:var(--text3);padding:0 1rem 0.5rem;line-height:1.6">
+    גרסה 4.0<br/>
+    <span style="color:var(--purple);opacity:0.8">נבנה ע"י Claude Sonnet ✦</span>
+  </div>
+
+  <div class="nav-label">ניהול זמן</div>
+  <button class="nav-item" onclick="openGuide()" id="nav-guide" style="color:var(--amber);margin-bottom:2px"><i class="ti ti-help-circle"></i> מדריך למשתמש</button>
+  <div class="nav-sep" style="margin-top:2px"></div>
+  <button class="nav-item active" onclick="nav('timer')" id="nav-timer"><i class="ti ti-player-play"></i> טיימר</button>
+  <button class="nav-item" onclick="nav('goals')" id="nav-goals"><i class="ti ti-target"></i> יעדים יומיים</button>
+  <button class="nav-item" onclick="nav('topics')" id="nav-topics"><i class="ti ti-tag"></i> נושאים</button>
+  <button class="nav-item" onclick="nav('unitgoals')" id="nav-unitgoals"><i class="ti ti-list-check"></i> יעדי תוכן</button>
+  <button class="nav-item" onclick="nav('manual')" id="nav-manual"><i class="ti ti-pencil-plus"></i> הוספה ידנית</button>
+
+  <div class="nav-sep"></div>
+  <div class="nav-label">דוחות</div>
+  <button class="nav-item" onclick="nav('weekly')" id="nav-weekly"><i class="ti ti-chart-bar"></i> גרף שבועי</button>
+  <button class="nav-item" onclick="nav('monthly')" id="nav-monthly"><i class="ti ti-chart-area-line"></i> גרף חודשי</button>
+  <button class="nav-item" onclick="nav('history')" id="nav-history"><i class="ti ti-history"></i> היסטוריה</button>
+
+  <div class="nav-sep"></div>
+  <div class="nav-label">הגדרות</div>
+  <button class="nav-item" onclick="nav('templates')" id="nav-templates"><i class="ti ti-template"></i> תבניות חבורה</button>
+  <button class="nav-item" onclick="nav('settings')" id="nav-settings"><i class="ti ti-settings"></i> הגדרות</button>
+  <button class="nav-item" onclick="nav('export')" id="nav-export"><i class="ti ti-file-export"></i> יצוא / ייבוא</button>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main">
+
+<!-- ===== TIMER ===== -->
+<div class="section active" id="sec-timer">
+  <div class="flex justify-between items-center mb2">
+    <div>
+      <div class="page-title" id="today-heading">היום</div>
+      <div class="page-sub" id="today-date-sub"></div>
+      <div style="font-size:12px;color:var(--purple);margin-top:-8px;margin-bottom:1.25rem;font-weight:500;letter-spacing:0.01em;opacity:0.9" id="today-hebrew-date"></div>
+    </div>
+    <div class="flex gap-sm items-center">
+      <div id="today-goal-badge"></div>
+      <button onclick="toggleTheme()" class="btn btn-sm" title="החלף ערכת נושא"><i class="ti ti-sun-moon"></i></button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:auto 1fr;gap:1rem" class="mb2">
+
+    <!-- Ring -->
+    <div class="card" style="display:flex;align-items:center;justify-content:center;padding:2rem">
+      <div>
+        <div class="progress-ring-wrap">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+            <circle id="ringTrack" cx="100" cy="100" r="88" fill="none"
+              stroke="var(--accent)" stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="553" stroke-dashoffset="553"
+              style="transition:stroke-dashoffset 0.5s ease,stroke 0.5s"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-time" id="ringTime">00:00:00</div>
+            <div class="ring-label">סה"כ היום</div>
+            <div class="ring-session" id="ringSessionDisp"></div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:10px"><div id="remainPill"></div></div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="flex-col gap-md">
+      <!-- Topic selector -->
+      <div class="card card-sm">
+        <div class="stat-label">נושאים פעילים <span style="font-size:10px;color:var(--text3)">(ניתן לבחור מספר)</span></div>
+        <div id="timerTopicChips" class="flex gap-sm mt1" style="flex-wrap:wrap"></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px" id="timerTopicLabel">ללא נושא</div>
+      </div>
+      <!-- Slot selector -->
+      <div class="card card-sm">
+        <div class="stat-label">טווח שעות (סדר)</div>
+        <div id="timerSlotChips" class="flex gap-sm mt1" style="flex-wrap:wrap"></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px" id="timerSlotLabel">ללא טווח</div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">סשן נוכחי</div>
+        <div class="stat-val" id="sessionDisplay" style="font-family:'JetBrains Mono',monospace">00:00:00</div>
+        <div class="stat-sub" id="sessionStatus">לא פעיל</div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">יעד יומי</div>
+        <div class="stat-val stat-accent" id="todayGoalDisp">—</div>
+        <div class="stat-sub" id="todayGoalSub">הגדר ביעדים יומיים</div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">סה"כ השבוע</div>
+        <div class="stat-val" id="weekTotalDisp" style="font-family:'JetBrains Mono',monospace">0:00</div>
+        <div class="stat-sub" id="weekGoalSub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer Controls -->
+  <div class="card mb2">
+    <div class="btn-group">
+      <button class="btn btn-primary" id="startBtn" onclick="startTimer()">
+        <i class="ti ti-player-play" id="startIcon"></i><span id="startLabel">התחל</span>
+      </button>
+      <button class="btn btn-amber" id="pauseBtn" onclick="pauseTimer()" disabled>
+        <i class="ti ti-player-pause"></i> השהה
+      </button>
+      <button class="btn" id="lapBtn" onclick="saveLap()" disabled>
+        <i class="ti ti-flag"></i> סיום & שמור
+      </button>
+      <button class="btn btn-red" id="resetBtn" onclick="resetTimer()" disabled>
+        <i class="ti ti-refresh"></i> אפס
+      </button>
+    </div>
+    <div id="todaySessions" class="mt2"></div>
+  </div>
+
+  <!-- Time Slots today -->
+  <div class="card" id="timeSlotsCard" style="display:none">
+    <div class="stat-label mb1">חלוקת שעות היום לפי טווחים</div>
+    <div id="todayTimeSlots"></div>
+  </div>
+</div>
+
+<!-- ===== GOALS ===== -->
+<div class="section" id="sec-goals">
+  <div class="page-title">יעדים יומיים</div>
+  <div class="page-sub">הגדר כמה שעות ללמוד / לעבוד בכל יום</div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">ימי שבוע</div>
+    <div id="weekdayGoals"></div>
+  </div>
+
+  <div class="card mb2">
+    <div class="flex justify-between items-center mb2">
+      <div style="font-size:13px;font-weight:500">תאריכים מיוחדים / חגים</div>
+      <button class="btn btn-sm" onclick="openDateModal()"><i class="ti ti-plus"></i> הוסף</button>
+    </div>
+    <div id="specialDates"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">תצוגה מהירה — שבוע נוכחי</div>
+    <div class="day-grid" id="weekPreview"></div>
+  </div>
+</div>
+
+<!-- ===== TOPICS ===== -->
+<div class="section" id="sec-topics">
+  <div class="page-title">נושאים</div>
+  <div class="page-sub">הגדר נושאי לימוד, טווחי שעות, ויעדים לכל נושא</div>
+
+  <div class="card mb2">
+    <div class="flex justify-between items-center mb2">
+      <div style="font-size:13px;font-weight:500">הנושאים שלי</div>
+      <button class="btn btn-sm btn-purple" onclick="openTopicModal()"><i class="ti ti-plus"></i> נושא חדש</button>
+    </div>
+    <div id="topicsList"></div>
+  </div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">טווחי שעות (סדרים)</div>
+    <div class="text-xs mb2">הגדר טווחי שעות קבועים כגון "סדר א'" בין 08:00–13:30</div>
+    <div id="timeSlotsList"></div>
+    <button class="btn btn-sm mt2" onclick="openSlotModal()"><i class="ti ti-plus"></i> הוסף טווח</button>
+  </div>
+
+  <!-- Topic summary -->
+  <div class="card" id="topicSummaryCard">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">סיכום נושאים — היום</div>
+    <div id="topicSummary"></div>
+  </div>
+</div>
+
+<!-- ===== MANUAL ===== -->
+<div class="section" id="sec-manual">
+  <div class="page-title">הוספה ידנית</div>
+  <div class="page-sub">הוסף זמן שלמדת ולא דווח בזמן אמת</div>
+
+  <div class="card mb2">
+    <div class="form-grid3" style="align-items:end">
+      <div class="form-row mb0">
+        <label class="form-label">תאריך</label>
+        <input type="date" class="form-input" id="manDate" oninput="updateManHebrewDate()"/>
+        <div style="font-size:11px;color:var(--purple);margin-top:3px" id="manHebrewDate"></div>
+      </div>
+      <div class="form-row mb0"><label class="form-label">שעת התחלה</label><input type="time" class="form-input" id="manFrom"/></div>
+      <div class="form-row mb0"><label class="form-label">שעת סיום</label><input type="time" class="form-input" id="manTo"/></div>
+    </div>
+    <div class="form-grid mt2">
+      <div class="form-row mb0">
+        <label class="form-label">נושא (אופציונלי)</label>
+        <select class="form-select" id="manTopic"><option value="">— ללא נושא —</option></select>
+      </div>
+      <div class="form-row mb0">
+        <label class="form-label">טווח שעות (אופציונלי)</label>
+        <select class="form-select" id="manSlot" onchange="onManSlotChange()"><option value="">— ללא טווח —</option></select>
+      </div>
+    </div>
+    <div class="form-grid mt2">
+      <div class="form-row mb0">
+        <label class="form-label">הורד זמן הפסקה (דקות)</label>
+        <input type="number" class="form-input" id="manDeduct" min="0" placeholder="0" value="0"/>
+      </div>
+    </div>
+    <div class="form-row mt2"><label class="form-label">הערה</label><input type="text" class="form-input" id="manNote" placeholder="נושא, מטלה..."/></div>
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem">
+      <button class="btn btn-primary" onclick="addManual()"><i class="ti ti-plus"></i> הוסף רשומה</button>
+      <span id="manResult" style="font-size:13px;color:var(--accent)"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">רשומות ידניות אחרונות</div>
+    <div id="manualList"></div>
+  </div>
+</div>
+
+<!-- ===== WEEKLY ===== -->
+<div class="section" id="sec-weekly">
+  <div class="page-title">גרף שבועי</div>
+  <div class="page-sub" id="weekChartSub"></div>
+  <div class="grid4 mb2" id="weekStats"></div>
+  <div class="card mb2">
+    <div class="flex justify-between items-center mb1">
+      <span style="font-size:13px;font-weight:500">שעות לפי יום</span>
+      <div class="flex gap-sm">
+        <button class="btn btn-sm" onclick="prevWeek()"><i class="ti ti-chevron-right"></i></button>
+        <span id="weekNavLabel" style="font-size:12px;color:var(--text2);padding:6px 10px"></span>
+        <button class="btn btn-sm" onclick="nextWeek()"><i class="ti ti-chevron-left"></i></button>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+  </div>
+  <div class="card"><div style="font-size:13px;font-weight:500;margin-bottom:1rem">פירוט ימים</div><div id="weekDayList"></div></div>
+</div>
+
+<!-- ===== MONTHLY ===== -->
+<div class="section" id="sec-monthly">
+  <div class="page-title">גרף חודשי</div>
+  <div class="page-sub" id="monthChartSub"></div>
+  <div class="grid4 mb2" id="monthStats"></div>
+  <div class="card mb2">
+    <div class="flex justify-between items-center mb1">
+      <span style="font-size:13px;font-weight:500">שעות לפי יום בחודש</span>
+      <div class="flex gap-sm">
+        <button class="btn btn-sm" onclick="prevMonth()"><i class="ti ti-chevron-right"></i></button>
+        <span id="monthNavLabel" style="font-size:12px;color:var(--text2);padding:6px 10px"></span>
+        <button class="btn btn-sm" onclick="nextMonth()"><i class="ti ti-chevron-left"></i></button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:220px"><canvas id="monthChart"></canvas></div>
+  </div>
+  <div class="card"><div style="font-size:13px;font-weight:500;margin-bottom:1rem">סיכום שבועות</div><div id="monthWeekList"></div></div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div class="section" id="sec-history">
+  <div class="page-title">היסטוריה</div>
+  <div class="page-sub">כל הרשומות שנשמרו</div>
+  <div class="card">
+    <!-- Filters row 1 -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:center">
+      <input type="text" class="form-input" id="histSearch" placeholder="חיפוש חופשי..." style="flex:1;min-width:140px" oninput="renderHistory()"/>
+      <input type="date" id="histFrom" class="form-input" style="width:138px" onchange="renderHistory()"/>
+      <input type="date" id="histTo" class="form-input" style="width:138px" onchange="renderHistory()"/>
+    </div>
+    <!-- Filters row 2 -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">
+      <select class="form-select" id="histTopic" style="flex:1;min-width:130px" onchange="renderHistory()">
+        <option value="">כל הנושאים</option>
+      </select>
+      <select class="form-select" id="histSlot" style="flex:1;min-width:130px" onchange="renderHistory()">
+        <option value="">כל הטווחים</option>
+      </select>
+      <select class="form-select" id="histSort" style="width:145px" onchange="renderHistory()">
+        <option value="date-desc">תאריך ↓ חדש</option>
+        <option value="date-asc">תאריך ↑ ישן</option>
+        <option value="dur-desc">משך ↓ ארוך</option>
+        <option value="dur-asc">משך ↑ קצר</option>
+      </select>
+      <button class="btn btn-sm btn-red" onclick="if(confirm('למחוק הכל?')){clearAll()}"><i class="ti ti-trash"></i></button>
+    </div>
+    <!-- Summary row -->
+    <div id="histSummary" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
+    <!-- Table -->
+    <div style="overflow-x:auto">
+      <table id="historyTable" style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border2);color:var(--text3);font-size:11px;text-align:right">
+            <th style="padding:6px 10px;font-weight:600">תאריך</th>
+            <th style="padding:6px 10px;font-weight:600">שעות</th>
+            <th style="padding:6px 10px;font-weight:600">נושא</th>
+            <th style="padding:6px 10px;font-weight:600">טווח</th>
+            <th style="padding:6px 10px;font-weight:600">הערה</th>
+            <th style="padding:6px 10px;font-weight:600">משך</th>
+            <th style="padding:6px 4px;font-weight:600">סוג</th>
+            <th style="padding:6px 4px"></th>
+          </tr>
+        </thead>
+        <tbody id="historyList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEMPLATES ===== -->
+<div class="section" id="sec-templates">
+  <div class="page-title">תבניות חבורה</div>
+  <div class="page-sub">הגדרות מוכנות לחבורות לימוד</div>
+  <div id="templateFeedback" style="font-size:13px;min-height:20px;margin-bottom:0.75rem"></div>
+
+  <div class="grid2 mb2">
+    <div class="template-card" onclick="applyTemplate('10h')" id="tmpl-10h">
+      <div style="font-size:24px;color:var(--accent);margin-bottom:8px"><i class="ti ti-stars"></i></div>
+      <div class="template-title">חבורת י' שעות</div>
+      <div class="template-desc mt1">ימים א'–ה': 10 שעות | שישי-שבת: 5 שעות<br/>סיכום שבועי: 60 שעות</div>
+    </div>
+    <div class="template-card" onclick="applyTemplate('9h')" id="tmpl-9h">
+      <div style="font-size:24px;color:var(--blue);margin-bottom:8px"><i class="ti ti-certificate"></i></div>
+      <div class="template-title">חבורת ט' שעות</div>
+      <div class="template-desc mt1">ימים א'–ה': 9 שעות | שישי-שבת: 4.5 שעות<br/>סיכום שבועי: 54 שעות</div>
+    </div>
+  </div>
+
+  <div class="card mb2" id="templateExclusionsCard">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">החרגות — ימים מיוחדים</div>
+    <div class="text-xs mb2">הוסף תאריכים שבהם היעד שונה (חגים, ערבי חג, כו')</div>
+    <div id="templateExclusions"></div>
+    <button class="btn btn-sm mt2" onclick="openDateModal(true)"><i class="ti ti-plus"></i> הוסף החרגה</button>
+  </div>
+
+  <div class="card" id="templateSummaryCard">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem">סיכום לפי תבנית</div>
+    <div id="templateSummary"></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div class="section" id="sec-settings">
+  <div class="page-title">הגדרות</div>
+  <div class="page-sub">התאמות אישיות לאפליקציה</div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-sun-moon"></i> תצוגה</div>
+    <div class="form-row">
+      <label class="form-label">ערכת נושא</label>
+      <select class="form-select" id="themeSelect" onchange="setTheme(this.value)">
+        <option value="auto">אוטומטי (לפי שעה)</option>
+        <option value="dark">כהה תמיד</option>
+        <option value="light">בהיר תמיד</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">שעת מעבר לתצוגה בהירה (אם "אוטומטי")</label>
+      <input type="time" class="form-input" id="lightStartTime" value="06:00"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">שעת מעבר לתצוגה כהה (אם "אוטומטי")</label>
+      <input type="time" class="form-input" id="darkStartTime" value="21:00"/>
+    </div>
+  </div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-clock-cog"></i> שעות ויעדים</div>
+    <div class="form-row">
+      <label class="form-label">שעת החלפת יום (ברירת מחדל חצות)</label>
+      <input type="time" class="form-input" id="dayChangeTime" value="00:00"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">הפעל טיימר אוטומטי בפתיחה</label>
+      <select class="form-select" id="autoStartSel">
+        <option value="0">לא</option>
+        <option value="1">כן</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-zzz"></i> זיהוי חוסר פעילות</div>
+    <div class="form-row">
+      <label class="form-label">השהה טיימר אחרי חוסר פעילות (דקות, 0 = כבוי)</label>
+      <input type="number" class="form-input" id="idleMinutes" value="5" min="0" max="120"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">סיים וצא מהסשן אחרי חוסר פעילות (דקות, 0 = כבוי)</label>
+      <input type="number" class="form-input" id="idleSaveMinutes" value="20" min="0" max="240"/>
+    </div>
+    <div class="text-xs" style="color:var(--text3)">לדוגמה: השהה אחרי 5 דקות, יציאה אוטומטית אחרי 20 דקות</div>
+  </div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-bell"></i> תזכורות יעד</div>
+    <div class="form-row">
+      <label class="form-label">הפעל התראת יעד</label>
+      <select class="form-select" id="reminderEnabled">
+        <option value="1">כן</option>
+        <option value="0">לא</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">התראה לפי זמן שנותר (דקות, 0 = כבוי)</label>
+      <input type="number" class="form-input" id="reminderValue" value="30" min="0" max="240" placeholder="30"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">תזכורות בשעות קבועות (הפרד בפסיקים)</label>
+      <input type="text" class="form-input" id="reminderClockTimes" placeholder="09:00, 13:00, 21:00"/>
+      <span style="font-size:11px;color:var(--text3);margin-top:4px">תופיע גם אם היעד הושג — לריענון כללי</span>
+    </div>
+  </div>
+
+  <div class="card mb2" id="syncSection">
+    <div style="font-size:13px;font-weight:500;margin-bottom:0.5rem"><i class="ti ti-brand-google-drive" style="color:#4285f4"></i> סנכרון Google Drive</div>
+    <div class="text-xs mb2" style="color:var(--text2)">שמור את הנתונים שלך ב-Google Drive לגישה ממכשירים שונים. הקובץ פרטי לחלוטין (AppData folder).</div>
+    <div id="syncOnlineView">
+      <div class="flex gap-sm" style="flex-wrap:wrap">
+        <button class="btn btn-blue" onclick="syncWithGoogle()"><i class="ti ti-cloud-upload"></i> גבה ל-Drive</button>
+        <button class="btn" onclick="driveDownload()"><i class="ti ti-cloud-download"></i> טען מ-Drive</button>
+        <button class="btn" onclick="toggleOfflineMode()"><i class="ti ti-wifi-off"></i> מצב מנותק</button>
+      </div>
+    </div>
+    <div id="syncOfflineView" style="display:none">
+      <div class="flex items-center gap-sm mb2">
+        <span class="badge badge-amber"><i class="ti ti-wifi-off"></i> מצב מנותק פעיל</span>
+        <span style="font-size:12px;color:var(--text2)">הסנכרון מוסתר</span>
+      </div>
+      <button class="btn btn-primary" onclick="toggleOfflineMode()"><i class="ti ti-wifi"></i> חזור למצב מקוון</button>
+    </div>
+    <div id="syncStatus" class="text-xs mt2" style="min-height:16px"></div>
+  </div>
+
+  <div class="card">
+    <button class="btn btn-primary w100" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> שמור הגדרות</button>
+  </div>
+
+  <div class="card mt2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-device-desktop"></i> הרצה כאפליקציה עצמאית</div>
+    <div class="text-xs mb2" style="line-height:1.7">
+      <strong>Chrome / Edge:</strong> פתח את הקובץ בדפדפן ← לחץ על ☰ ← "כלים נוספים" ← "צור קיצור דרך" ← סמן "פתח כחלון" ← אישור.<br/>
+      הקובץ ייפתח כחלון עצמאי ללא כרטיסיות דפדפן.<br/><br/>
+      <strong>PWA (התקנה):</strong> ב-Chrome לחץ על אייקון ה-⊕ בסרגל הכתובת → "התקן".<br/><br/>
+      <strong>Word Add-in:</strong> הקובץ מותאם לחלוניות צרות (300–420px). ניתן להטמיע דרך Office Add-in manifest ב-iframe רוחב 360px.
+    </div>
+    <button class="btn btn-sm" onclick="window.open(location.href,'_blank','width=420,height=800,menubar=no,toolbar=no,location=no')"><i class="ti ti-external-link"></i> פתח כחלון עצמאי עכשיו</button>
+  </div>
+</div>
+
+<!-- ===== EXPORT / IMPORT ===== -->
+<div class="section" id="sec-export">
+  <div class="page-title">יצוא / ייבוא</div>
+  <div class="page-sub">שמור את הנתונים שלך או ייבא נתונים קיימים</div>
+
+  <div class="card mb2">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-file-export"></i> יצוא נתונים</div>
+    <div class="form-grid mb2">
+      <div class="form-row mb0"><label class="form-label">מתאריך</label><input type="date" class="form-input" id="expFrom"/></div>
+      <div class="form-row mb0"><label class="form-label">עד תאריך</label><input type="date" class="form-input" id="expTo"/></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">טווח</label>
+      <select class="form-select" id="expRange">
+        <option value="all">הכל</option>
+        <option value="week">שבוע הנוכחי</option>
+        <option value="month">חודש הנוכחי</option>
+        <option value="custom">תאריכים מותאמים</option>
+      </select>
+    </div>
+    <div class="btn-group" style="justify-content:flex-start;margin-top:0.5rem">
+      <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-file-spreadsheet"></i> יצוא Excel / CSV</button>
+      <button class="btn" onclick="exportJSON()"><i class="ti ti-file-code"></i> יצוא JSON (גיבוי)</button>
+      <button class="btn" onclick="exportText()"><i class="ti ti-file-text"></i> יצוא טקסט</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:500;margin-bottom:1rem"><i class="ti ti-file-import"></i> ייבוא נתונים</div>
+    <div class="text-xs mb2">ייבא קובץ JSON שיוצא ממונה שעות Pro</div>
+    <input type="file" id="importFile" accept=".json,.csv" style="display:none" onchange="importData(this)"/>
+    <button class="btn" onclick="document.getElementById('importFile').click()"><i class="ti ti-upload"></i> בחר קובץ לייבוא</button>
+    <div id="importResult" class="text-xs mt2"></div>
+  </div>
+</div>
+
+<!-- ===== UNIT GOALS ===== -->
+<div class="section" id="sec-unitgoals">
+  <div class="page-title">יעדי תוכן</div>
+  <div class="page-sub">עקוב אחר דפים, פרקים, סימנים וכל יחידת תוכן לפי נושא</div>
+
+  <div class="card mb2">
+    <div class="flex justify-between items-center mb2">
+      <div style="font-size:13px;font-weight:500">יעדי תוכן לפי נושא</div>
+      <button class="btn btn-sm btn-purple" onclick="openUnitGoalModal()"><i class="ti ti-plus"></i> יעד חדש</button>
+    </div>
+    <div id="unitGoalsList"></div>
+  </div>
+</div>
+
+</main>
+</div><!-- end .app -->
+
+<!-- ===== QUICK NOTE WIDGET ===== -->
+<!-- ===== QUICK NOTES WIDGET ===== -->
+<div class="quick-note-widget" id="quickNoteWidget">
+  <div class="quick-note-panel" id="quickNotePanel">
+    <div class="flex justify-between items-center mb1">
+      <span style="font-size:13px;font-weight:600;color:var(--purple)"><i class="ti ti-note"></i> תזכורות מהירות</span>
+      <button onclick="closeQuickNote()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;line-height:1"><i class="ti ti-x"></i></button>
+    </div>
+    <!-- Input area -->
+    <div style="display:flex;gap:6px;align-items:flex-start">
+      <textarea id="quickNoteText"
+        placeholder="כתוב תזכורת... (Enter לשמור)"
+        style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:'Sora',sans-serif;font-size:13px;padding:8px 10px;resize:none;min-height:60px;outline:none;line-height:1.5;transition:border-color 0.15s"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveQuickNote();}"
+        onfocus="this.style.borderColor='rgba(167,139,250,0.5)'"
+        onblur="this.style.borderColor=''"
+      ></textarea>
+    </div>
+    <!-- Scheduled reminder option -->
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <label style="font-size:11px;color:var(--text2)"><i class="ti ti-bell"></i> תזכורת בשעה:</label>
+      <input type="time" id="noteReminderTime" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:12px;padding:4px 8px;outline:none;width:90px"/>
+      <span style="font-size:11px;color:var(--text3)">(ריק = רק ביציאה)</span>
+    </div>
+    <button onclick="saveQuickNote()" class="btn btn-sm btn-purple w100" style="margin-top:8px"><i class="ti ti-device-floppy"></i> שמור תזכורת</button>
+    <!-- Saved notes list -->
+    <div id="savedNotesList" style="margin-top:0.75rem;max-height:200px;overflow-y:auto"></div>
+  </div>
+  <button class="quick-note-btn" onclick="toggleQuickNote()" title="תזכורות מהירות" id="quickNoteFab">
+    <i class="ti ti-note"></i>
+    <span id="quickNoteBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;line-height:18px;text-align:center"></span>
+  </button>
+</div>
+
+<!-- ===== MODAL: Special Date ===== -->
+<div class="modal-overlay" id="dateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="dateModalTitle">הוסף תאריך מיוחד</span>
+      <button class="modal-close" onclick="closeDateModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">תאריך</label>
+      <input type="date" class="form-input" id="specialDate" oninput="updateSpecialHebrewDate()"/>
+      <div style="font-size:11px;color:var(--purple);margin-top:3px" id="specialHebrewDate"></div>
+    </div>
+    <div class="form-row"><label class="form-label">יעד (שעות, 0 = יום מנוחה)</label><input type="number" class="form-input" id="specialGoal" min="0" max="24" step="0.5" placeholder="למשל 3"/></div>
+    <div class="form-row"><label class="form-label">הערה</label><input type="text" class="form-input" id="specialNote" placeholder="חג, ערב יום כיפור..."/></div>
+    <button class="btn btn-primary w100" onclick="saveSpecialDate()">שמור</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: Topic ===== -->
+<div class="modal-overlay" id="topicModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">נושא חדש</span>
+      <button class="modal-close" onclick="closeTopicModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">קטגוריה</label>
+      <select class="form-select" id="topicCategory" onchange="onTopicCategoryChange()">
+        <option value="לימוד">📚 לימוד</option>
+        <option value="זמנים">🕐 זמנים</option>
+        <option value="אישי">✏️ אישי</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">בחר מהרשימה (או הוסף שם אישי למטה)</label>
+      <select class="form-select" id="topicPreset" onchange="onTopicPresetChange()">
+        <option value="">— בחר —</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">שם מותאם אישית</label><input type="text" class="form-input" id="topicName" placeholder="בחר מהרשימה או כתוב שם חדש..."/></div>
+    <div class="form-row">
+      <label class="form-label">צבע</label>
+      <div class="flex gap-sm" style="flex-wrap:wrap">
+        <div class="color-option" data-color="#a78bfa" style="width:28px;height:28px;border-radius:50%;background:#a78bfa;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#60a5fa" style="width:28px;height:28px;border-radius:50%;background:#60a5fa;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#4ade80" style="width:28px;height:28px;border-radius:50%;background:#4ade80;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#fbbf24" style="width:28px;height:28px;border-radius:50%;background:#fbbf24;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#f87171" style="width:28px;height:28px;border-radius:50%;background:#f87171;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#fb923c" style="width:28px;height:28px;border-radius:50%;background:#fb923c;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+        <div class="color-option" data-color="#2dd4bf" style="width:28px;height:28px;border-radius:50%;background:#2dd4bf;cursor:pointer;border:2px solid transparent" onclick="selectTopicColor(this)"></div>
+      </div>
+      <input type="hidden" id="topicColor" value="#a78bfa"/>
+    </div>
+    <div class="form-row"><label class="form-label">יעד יומי לנושא (שעות, 0 = ללא)</label><input type="number" class="form-input" id="topicGoal" min="0" max="24" step="0.5" value="0"/></div>
+    <div class="form-row"><label class="form-label">תקופה</label>
+      <select class="form-select" id="topicPeriod">
+        <option value="always">תמיד</option>
+        <option value="range">טווח תאריכים</option>
+      </select>
+    </div>
+    <div id="topicDateRange" style="display:none">
+      <div class="form-grid">
+        <div class="form-row mb0"><label class="form-label">מתאריך</label><input type="date" class="form-input" id="topicFrom"/></div>
+        <div class="form-row mb0"><label class="form-label">עד תאריך</label><input type="date" class="form-input" id="topicTo"/></div>
+      </div>
+    </div>
+    <button class="btn btn-primary w100 mt2" onclick="saveTopic()">שמור נושא</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: Time Slot ===== -->
+<div class="modal-overlay" id="slotModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">הוסף טווח שעות</span>
+      <button class="modal-close" onclick="closeSlotModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row"><label class="form-label">שם הטווח</label><input type="text" class="form-input" id="slotName" placeholder="למשל: סדר א', בוקר..."/></div>
+    <input type="hidden" id="slotEditId" value=""/>
+    <div class="form-grid">
+      <div class="form-row mb0"><label class="form-label">שעת התחלה</label><input type="time" class="form-input" id="slotFrom"/></div>
+      <div class="form-row mb0"><label class="form-label">שעת סיום</label><input type="time" class="form-input" id="slotTo"/></div>
+    </div>
+    <button class="btn btn-primary w100 mt2" onclick="saveSlot()">שמור טווח</button>
+  </div>
+</div>
+
+<!-- ===== SESSIONS REMINDER MODAL ===== -->
+<div class="modal-overlay" id="reminderModal" style="cursor:default" onclick="event.stopPropagation()">
+  <div class="modal" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
+    <div style="font-size:44px;color:var(--amber);margin-bottom:10px;animation:bell-ring 0.6s ease infinite alternate"><i class="ti ti-bell-ringing"></i></div>
+    <div class="modal-title mb1" id="reminderMsg"></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:1.25rem" id="reminderSubMsg"></div>
+    <div class="flex gap-sm" style="justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="confirmReminder()"><i class="ti ti-check"></i> קיבלתי — אמשיך!</button>
+      <button class="btn btn-amber" onclick="snoozeReminder()"><i class="ti ti-clock-pause"></i> הזכר עוד 15 דקות</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:1rem">לא ניתן לסגור בלי אישור</div>
+  </div>
+</div>
+<style>
+@keyframes bell-ring {
+  0%   { transform: rotate(-12deg); }
+  100% { transform: rotate(12deg); }
+}
+</style>
+
+<!-- ===== SESSION EXIT NOTES MODAL ===== -->
+<div class="modal-overlay" id="exitNotesModal" onclick="event.stopPropagation()">
+  <div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-note" style="color:var(--purple)"></i> תזכורות לסיום הסשן</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:1rem">עבור על התזכורות ואשר כל אחת לפני הסגירה</div>
+    <div id="exitNotesList"></div>
+    <button class="btn btn-primary w100 mt2" id="exitNotesCloseBtn" onclick="tryCloseExitNotes()" disabled><i class="ti ti-check"></i> אישרתי הכל — סגור</button>
+    <div style="font-size:11px;color:var(--text3);margin-top:0.5rem;text-align:center" id="exitNotesPendingMsg"></div>
+  </div>
+</div>
+
+<!-- ===== GOOGLE DRIVE SETUP MODAL ===== -->
+<div class="modal-overlay" id="gdrive-setup-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-brand-google-drive" style="color:#4285f4"></i> הגדרת סנכרון Google Drive</span>
+      <button class="modal-close" onclick="document.getElementById('gdrive-setup-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:1rem">
+      כדי להפעיל סנכרון אמיתי, יש לבצע הגדרה חד-פעמית:
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:1rem;font-size:12px;line-height:2;margin-bottom:1rem">
+      <b>1.</b> כנס ל-<a href="https://console.cloud.google.com" target="_blank" style="color:var(--blue)">console.cloud.google.com</a><br/>
+      <b>2.</b> צור פרויקט חדש → הפעל את <b>Google Drive API</b><br/>
+      <b>3.</b> APIs &amp; Services → Credentials → OAuth 2.0 Client ID<br/>
+      <b>4.</b> סוג: <b>Web application</b> · הוסף את כתובת הקובץ כ-Authorized origin<br/>
+      <b>5.</b> העתק את ה-Client ID והדבק כאן:
+    </div>
+    <div class="form-row">
+      <label class="form-label">Google OAuth Client ID</label>
+      <input type="text" class="form-input" id="gdriveClientInput" placeholder="XXXXXXXX.apps.googleusercontent.com"/>
+    </div>
+    <div class="flex gap-sm">
+      <button class="btn btn-primary w100" onclick="applyGdriveClientId()"><i class="ti ti-check"></i> שמור והתחבר</button>
+    </div>
+    <div class="text-xs mt2" style="color:var(--text3)">
+      הנתונים נשמרים ב-AppData folder — פרטיים לחלוטין, גלויים רק לאפליקציה זו.
+    </div>
+  </div>
+</div>
+
+<!-- ===== CREDIT FOOTER ===== -->
+<div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text3);padding:4px 12px;background:var(--bg2);border-top:1px solid var(--border);border-radius:8px 8px 0 0;z-index:50;opacity:0.7;pointer-events:none">
+  מונה שעות Pro v4 · נבנה בסיוע Claude Sonnet (Anthropic)
+</div>
+
+<script>
+// ============================================================
+// STATE & PERSISTENCE
+// ============================================================
+// INTEGRATION POINT: Replace loadState/save with API calls for server sync
+function loadState() {
+  try {
+    const s = localStorage.getItem('kkp_timetracker_v2');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return {
+    entries: [],          // {id, date, from, to, ms, note, type, topicId}
+    weekdayGoals: { 0:3, 1:3, 2:3, 3:3, 4:3, 5:2, 6:2 }, // Sun=0..Sat=6
+    specialDates: {},     // 'YYYY-MM-DD': {goal, note}
+    topics: [],           // {id, name, color, goal, period, from, to}
+    timeSlots: [],        // {id, name, from, to}
+    quickNotes: [],       // {id, text, ts, dismissed}
+    topicUnitGoals: [],   // {id, topicId, unit, total, completed, items:[{id,label,done}]}
+    settings: {
+      theme: 'auto',
+      lightStart: '06:00',
+      darkStart: '21:00',
+      dayChangeTime: '00:00',
+      autoStart: false,
+      idleMinutes: 5,
+      idleSaveMinutes: 20,
+      reminderEnabled: true,
+      reminderType: 'remaining',
+      reminderValue: '30',
+      offlineMode: false,
+    },
+    activeTemplate: null, // '10h' | '9h' | null
+  };
+}
+// ============================================================
+// JEWISH HOLIDAYS 5785 (2024-2025) — default exclusions
+// Add/extend for future years in the same format.
+// Each entry: { goal: hours, note: string }
+// Goal 0 = day off; adjust to taste.
+// ============================================================
+const JEWISH_HOLIDAYS_DEFAULT = {
+  // Rosh Hashana 5785
+  '2024-10-02': { goal: 2, note: 'ערב ראש השנה' },
+  '2024-10-03': { goal: 0, note: 'ראש השנה א׳' },
+  '2024-10-04': { goal: 0, note: 'ראש השנה ב׳' },
+  // Yom Kippur
+  '2024-10-11': { goal: 1, note: 'ערב יום כיפור' },
+  '2024-10-12': { goal: 0, note: 'יום כיפור' },
+  // Sukkot
+  '2024-10-16': { goal: 2, note: 'ערב סוכות' },
+  '2024-10-17': { goal: 0, note: 'סוכות א׳' },
+  '2024-10-18': { goal: 0, note: 'סוכות ב׳ (חו"ל)' },
+  '2024-10-23': { goal: 3, note: 'חול המועד סוכות' },
+  '2024-10-23': { goal: 3, note: 'חול המועד סוכות' },
+  '2024-10-23': { goal: 2, note: 'ערב שמיני עצרת' },
+  '2024-10-24': { goal: 0, note: 'שמיני עצרת / שמחת תורה' },
+  // Chanukah
+  '2024-12-25': { goal: 5, note: 'חנוכה' },
+  '2024-12-26': { goal: 5, note: 'חנוכה' },
+  // Tu Bishvat
+  '2025-02-13': { goal: 7, note: 'ט"ו בשבט' },
+  // Purim
+  '2025-03-13': { goal: 5, note: 'תענית אסתר' },
+  '2025-03-14': { goal: 2, note: 'פורים' },
+  '2025-03-15': { goal: 4, note: 'שושן פורים' },
+  // Pesach 5785
+  '2025-04-12': { goal: 2, note: 'ערב פסח' },
+  '2025-04-13': { goal: 0, note: 'פסח א׳' },
+  '2025-04-14': { goal: 0, note: 'פסח ב׳' },
+  '2025-04-15': { goal: 4, note: 'חול המועד פסח' },
+  '2025-04-16': { goal: 4, note: 'חול המועד פסח' },
+  '2025-04-17': { goal: 4, note: 'חול המועד פסח' },
+  '2025-04-18': { goal: 4, note: 'חול המועד פסח' },
+  '2025-04-19': { goal: 2, note: 'ערב פסח ז׳' },
+  '2025-04-20': { goal: 0, note: 'פסח ז׳' },
+  '2025-04-21': { goal: 0, note: 'פסח ח׳ (חו"ל)' },
+  // Yom Haatzmaut
+  '2025-05-01': { goal: 4, note: 'יום העצמאות' },
+  // Shavuot
+  '2025-06-01': { goal: 2, note: 'ערב שבועות' },
+  '2025-06-02': { goal: 0, note: 'שבועות א׳' },
+  '2025-06-03': { goal: 0, note: 'שבועות ב׳ (חו"ל)' },
+};
+
+function initDefaultHolidays() {
+  if (state.settings.holidaysInitialized) return;
+  Object.entries(JEWISH_HOLIDAYS_DEFAULT).forEach(([date, val]) => {
+    if (!state.specialDates[date]) state.specialDates[date] = val;
+  });
+  state.settings.holidaysInitialized = true;
+  save();
+}
+
+function initDefaultTopicsAndSlots() {
+  if (state.settings.topicsInitialized) return;
+  const now = Date.now();
+  // Default topics
+  const defaultTopics = [
+    { id: now+1, name: 'תנ"ך',                  category: 'לימוד', color: '#60a5fa', goal: 0, period: 'always', from: '', to: '' },
+    { id: now+2, name: 'הלכה — משנה ברורה',      category: 'לימוד', color: '#4ade80', goal: 0, period: 'always', from: '', to: '' },
+    { id: now+3, name: 'ש"ס — תלמוד בבלי',       category: 'לימוד', color: '#a78bfa', goal: 0, period: 'always', from: '', to: '' },
+  ];
+  defaultTopics.forEach(t => { if (!state.topics.find(x => x.name === t.name)) state.topics.push(t); });
+  // Default time slots
+  const defaultSlots = [
+    { id: now+10, name: 'סד"א', from: '08:00', to: '13:30' },
+    { id: now+11, name: 'סד"ב', from: '14:30', to: '18:00' },
+    { id: now+12, name: 'סד"ג', from: '20:00', to: '22:30' },
+    { id: now+13, name: 'בוקר', from: '06:00', to: '08:00' },
+    { id: now+14, name: 'צהרים', from: '13:30', to: '14:30' },
+    { id: now+15, name: 'ערב',  from: '18:00', to: '20:00' },
+  ];
+  defaultSlots.forEach(s => { if (!state.timeSlots.find(x => x.name === s.name)) state.timeSlots.push(s); });
+  state.settings.topicsInitialized = true;
+  save();
+}
+
+let state = loadState();
+
+function save() {
+  localStorage.setItem('kkp_timetracker_v3', JSON.stringify(state));
+  // Also keep v2 key for backward compat
+  localStorage.setItem('kkp_timetracker_v2', JSON.stringify(state));
+}
+
+// ============================================================
+// HEBREW DATE — full letter format (כ"ב באייר תשפ"ה)
+// ============================================================
+const HEB_MONTHS = ['','ניסן','אייר','סיון','תמוז','אב','אלול','תשרי','חשון','כסלו','טבת','שבט','אדר','אדר ב׳'];
+const HEB_UNITS  = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+const HEB_TENS   = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+const HEB_HUNDREDS = ['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+
+function numToHebLetters(n) {
+  // skip 15 (טו) and 16 (טז)
+  if (n === 15) return 'ט"ו';
+  if (n === 16) return 'ט"ז';
+  let result = '';
+  const h = Math.floor(n / 100); n %= 100;
+  const t = Math.floor(n / 10);  n %= 10;
+  result += (HEB_HUNDREDS[h] || '') + (HEB_TENS[t] || '') + (HEB_UNITS[n] || '');
+  // insert gershayim before last char if >1 char, or geresh if 1 char
+  if (result.length === 1) return result + '׳';
+  return result.slice(0, -1) + '"' + result.slice(-1);
+}
+
+const HEB_MILLENIUM = 5000; // subtract for short form (תש״פ not ה׳תש״פ)
+
+function getHebrewDate(d) {
+  try {
+    // Use Intl formatToParts to get month as long string (name) not number
+    const hebParts = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    }).formatToParts(d);
+    // Extract pieces by type
+    let hebDay='', hebMonthName='', hebYear='';
+    hebParts.forEach(p => {
+      if (p.type === 'day')   hebDay       = p.value;
+      if (p.type === 'month') hebMonthName = p.value;
+      if (p.type === 'year')  hebYear      = p.value;
+    });
+    // day to Hebrew letters
+    const dayNum = parseInt(hebDay);
+    const dayLetters = numToHebLetters(dayNum);
+    // year: Intl gives full year like ה׳תשפ"ה — extract short form תשפ"ה
+    // The year string from Intl already uses geresh/gershayim in he locale
+    // strip leading millennium digit+geresh if present
+    const shortYearStr = hebYear.replace(/^ה['׳]/, '').replace(/^ה"/, '');
+    const hebrewFull = `${dayLetters} ב${hebMonthName} ${shortYearStr}`;
+    // Gregorian
+    const gregorian = d.toLocaleDateString('he-IL', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    return `${hebrewFull}  ·  ${gregorian}`;
+  } catch(e) {
+    return '';
+  }
+}
+
+// ============================================================
+// GOOGLE DRIVE SYNC — using Google Identity Services (no API key needed)
+// Uses Google Drive AppData folder (private to this app)
+// ============================================================
+const GDRIVE = {
+  CLIENT_ID: '___YOUR_GOOGLE_CLIENT_ID___', // הכנס כאן את ה-Client ID שלך מ-Google Cloud Console
+  SCOPES: 'https://www.googleapis.com/auth/drive.appdata',
+  FILE_NAME: 'kkp_timetracker_backup.json',
+  token: null,
+  fileId: null,
+};
+
+function initGoogleSync() {
+  // Load Google Identity Services script dynamically
+  if (document.getElementById('gsi-script')) return;
+  const s = document.createElement('script');
+  s.id = 'gsi-script';
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.defer = true;
+  document.head.appendChild(s);
+}
+
+function syncWithGoogle() {
+  if (GDRIVE.CLIENT_ID === '___YOUR_GOOGLE_CLIENT_ID___') {
+    // Show setup instructions modal instead of alert
+    document.getElementById('gdrive-setup-modal').classList.add('open');
+    return;
+  }
+  initGoogleSync();
+  // Wait for GSI to load, then request token
+  const tryAuth = () => {
+    if (!window.google || !window.google.accounts) {
+      setTimeout(tryAuth, 300);
+      return;
+    }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE.CLIENT_ID,
+      scope: GDRIVE.SCOPES,
+      callback: (resp) => {
+        if (resp.error) {
+          setSyncStatus('שגיאה: ' + resp.error, 'red');
+          return;
+        }
+        GDRIVE.token = resp.access_token;
+        setSyncStatus('מחובר ✓ — מסנכרן...', 'green');
+        driveUpload();
+      },
+    });
+    client.requestAccessToken();
+  };
+  tryAuth();
+}
+
+async function driveUpload() {
+  const data = JSON.stringify(state);
+  try {
+    // Check if file already exists
+    if (!GDRIVE.fileId) {
+      const listRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22' + GDRIVE.FILE_NAME + '%22',
+        { headers: { Authorization: 'Bearer ' + GDRIVE.token } }
+      );
+      const list = await listRes.json();
+      if (list.files && list.files.length > 0) GDRIVE.fileId = list.files[0].id;
+    }
+
+    let res;
+    if (GDRIVE.fileId) {
+      // Update existing file
+      res = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files/' + GDRIVE.fileId + '?uploadType=media',
+        { method: 'PATCH', headers: { Authorization: 'Bearer ' + GDRIVE.token, 'Content-Type': 'application/json' }, body: data }
+      );
+    } else {
+      // Create new file in appDataFolder
+      const meta = JSON.stringify({ name: GDRIVE.FILE_NAME, parents: ['appDataFolder'] });
+      const form = new FormData();
+      form.append('metadata', new Blob([meta], { type: 'application/json' }));
+      form.append('file', new Blob([data], { type: 'application/json' }));
+      res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method: 'POST', headers: { Authorization: 'Bearer ' + GDRIVE.token }, body: form });
+      const created = await res.json();
+      GDRIVE.fileId = created.id;
+    }
+    const now = new Date().toLocaleTimeString('he-IL');
+    setSyncStatus('✓ גובה לאחרונה: ' + now, 'green');
+    state.settings.lastSync = new Date().toISOString();
+    save();
+  } catch(e) {
+    setSyncStatus('שגיאת סנכרון: ' + e.message, 'red');
+  }
+}
+
+async function driveDownload() {
+  if (!GDRIVE.token) { syncWithGoogle(); return; }
+  try {
+    const listRes = await fetch(
+      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22' + GDRIVE.FILE_NAME + '%22',
+      { headers: { Authorization: 'Bearer ' + GDRIVE.token } }
+    );
+    const list = await listRes.json();
+    if (!list.files || !list.files.length) { setSyncStatus('לא נמצא קובץ גיבוי ב-Drive', 'amber'); return; }
+    GDRIVE.fileId = list.files[0].id;
+    const fileRes = await fetch(
+      'https://www.googleapis.com/drive/v3/files/' + GDRIVE.fileId + '?alt=media',
+      { headers: { Authorization: 'Bearer ' + GDRIVE.token } }
+    );
+    const remote = await fileRes.json();
+    if (!remote.entries) { setSyncStatus('פורמט קובץ שגוי', 'red'); return; }
+    if (confirm('ייבא נתונים מ-Google Drive? (ימחק נתונים מקומיים שאינם בענן)')) {
+      state = { ...state, ...remote };
+      save();
+      updateTimerPage(); renderGoals(); renderHistory(); renderTopics();
+      setSyncStatus('✓ נתונים יובאו מ-Drive', 'green');
+    }
+  } catch(e) {
+    setSyncStatus('שגיאה: ' + e.message, 'red');
+  }
+}
+
+function setSyncStatus(msg, color) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const colors = { green: 'var(--accent)', red: 'var(--red)', amber: 'var(--amber)' };
+  el.style.color = colors[color] || 'var(--text2)';
+  el.textContent = msg;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+const DOW_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const DOW_SHORT = ['א','ב','ג','ד','ה','ו','ש'];
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmt(ms, short) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (short) return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+function hFmt(ms) {
+  if (!ms) return '0:00';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}:${pad(m)}`;
+}
+function dateKey(d) { return d.toISOString().slice(0, 10); }
+function timeStr(d) { return d.toTimeString().slice(0, 5); }
+function formatDate(dk) { const [y,m,d] = dk.split('-'); return `${+d}/${+m}/${y}`; }
+function formatDateShort(dk) { const [,m,d] = dk.split('-'); return `${+d}/${+m}`; }
+function todayKey() { return dateKey(new Date()); }
+
+// ============================================================
+// THEME
+// ============================================================
+function applyTheme() {
+  const s = state.settings;
+  let theme = s.theme;
+  if (theme === 'auto') {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const [lh, lm] = (s.lightStart || '06:00').split(':').map(Number);
+    const [dh, dm] = (s.darkStart || '21:00').split(':').map(Number);
+    const lightMin = lh * 60 + lm;
+    const darkMin = dh * 60 + dm;
+    theme = (nowMin >= lightMin && nowMin < darkMin) ? 'light' : 'dark';
+  }
+  document.body.setAttribute('data-theme', theme);
+}
+function toggleTheme() {
+  const cur = document.body.getAttribute('data-theme');
+  document.body.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+function setTheme(v) { state.settings.theme = v; save(); applyTheme(); }
+setInterval(applyTheme, 60000);
+
+// ============================================================
+// TIMER
+// ============================================================
+let running = false, paused = false;
+let startTime = null, elapsed = 0, rafId = null;
+let currentTopicId = '';
+let activeTopicIds = []; // multi-topic support
+let activeTimerSlotId = null; // active time slot in timer
+let lastActivityTime = Date.now();
+// Reset idle timer on any user interaction
+['mousemove','keydown','mousedown','touchstart','scroll'].forEach(ev =>
+  document.addEventListener(ev, () => {
+    lastActivityTime = Date.now();
+    if (idleStage === 1) { /* timer already paused — user must click Resume explicitly */ }
+  }, { passive: true })
+);
+
+// Two-stage idle: pauseMs → pause, saveMs → auto save & exit
+let idleStage = 0; // 0=active, 1=paused-by-idle, 2=saved-by-idle
+
+function checkIdle() {
+  if (!running && idleStage === 0) return; // timer not running, nothing to do
+  const now = Date.now();
+  const idlePauseMs = (state.settings.idleMinutes || 0) * 60000;
+  const idleSaveMs  = (state.settings.idleSaveMinutes || 0) * 60000;
+  const inactive = now - lastActivityTime;
+
+  // Stage 1: pause after idlePauseMs
+  if (idlePauseMs > 0 && running && inactive >= idlePauseMs && idleStage === 0) {
+    idleStage = 1;
+    pauseTimer();
+    document.getElementById('idleBannerMsg').textContent =
+      `זוהתה חוסר פעילות (${state.settings.idleMinutes} דקות) — הטיימר הושהה. ${idleSaveMs ? 'סיום אוטומטי אחרי ' + state.settings.idleSaveMinutes + ' דקות.' : ''}`;
+    document.getElementById('idleBanner').classList.add('show');
+    return;
+  }
+
+  // Stage 2: auto save & exit after idleSaveMs (counted from first pause moment)
+  if (idleSaveMs > 0 && idleStage === 1 && inactive >= idleSaveMs) {
+    idleStage = 2;
+    document.getElementById('idleBanner').classList.remove('show');
+    // Only save if there's meaningful time recorded
+    if (elapsed >= 5000) {
+      saveLap();
+      document.getElementById('idleBannerMsg').textContent = 'זוהתה חוסר פעילות — הסשן נשמר ונסגר אוטומטית.';
+      document.getElementById('idleBanner').classList.add('show');
+      setTimeout(() => {
+        document.getElementById('idleBanner').classList.remove('show');
+        idleStage = 0;
+      }, 5000);
+    } else {
+      resetTimer();
+      idleStage = 0;
+    }
+  }
+}
+
+function resumeFromIdle() {
+  document.getElementById('idleBanner').classList.remove('show');
+  idleStage = 0;
+  lastActivityTime = Date.now();
+  startTimer();
+}
+
+function dismissIdle() {
+  document.getElementById('idleBanner').classList.remove('show');
+  // keep paused, reset stage so countdown restarts if user stays away
+  idleStage = 0;
+}
+
+function tick() {
+  const cur = elapsed + (Date.now() - startTime);
+  document.getElementById('sessionDisplay').textContent = fmt(cur);
+  document.getElementById('ringSessionDisp').textContent = 'סשן: ' + fmt(cur, true);
+  updateRing();
+  rafId = requestAnimationFrame(tick);
+}
+
+function startTimer() {
+  if (running) return;
+  startTime = Date.now();
+  running = true;
+  paused = false;
+  rafId = requestAnimationFrame(tick);
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('lapBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+  document.getElementById('sessionStatus').textContent = '⏱ פועל עכשיו...';
+}
+
+function pauseTimer() {
+  if (!running) return;
+  elapsed += Date.now() - startTime;
+  cancelAnimationFrame(rafId);
+  running = false;
+  paused = true;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startIcon').className = 'ti ti-player-play';
+  document.getElementById('startLabel').textContent = 'המשך';
+  document.getElementById('sessionStatus').textContent = 'מושהה';
+}
+
+function saveLap() {
+  const ms = elapsed + (running ? Date.now() - startTime : 0);
+  if (ms < 5000) { alert('הזמן קצר מדי (פחות מ-5 שניות)'); return; }
+  const now = new Date();
+  const startDt = new Date(now - ms);
+  state.entries.push({
+    id: Date.now(),
+    date: dateKey(now),
+    from: timeStr(startDt),
+    to: timeStr(now),
+    ms,
+    note: '',
+    type: 'session',
+    topicId: currentTopicId || null,
+    topicIds: activeTopicIds.length ? [...activeTopicIds] : null,
+    slotId: activeTimerSlotId || null,
+  });
+  save();
+  resetTimer();
+  updateTimerPage();
+  renderHistory();
+  // show exit notes if any
+  showExitNotes();
+}
+
+function resetTimer() {
+  if (running) { cancelAnimationFrame(rafId); running = false; }
+  elapsed = 0; startTime = null; paused = false;
+  document.getElementById('sessionDisplay').textContent = '00:00:00';
+  document.getElementById('sessionStatus').textContent = 'לא פעיל';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startIcon').className = 'ti ti-player-play';
+  document.getElementById('startLabel').textContent = 'התחל';
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('lapBtn').disabled = true;
+  document.getElementById('resetBtn').disabled = true;
+  document.getElementById('ringSessionDisp').textContent = '';
+  updateRing();
+}
+
+function renderTimerTopicChips() {
+  const container = document.getElementById('timerTopicChips');
+  const label = document.getElementById('timerTopicLabel');
+  if (!container) return;
+  if (!state.topics.length) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text3)">אין נושאים מוגדרים</span>';
+    if (label) label.textContent = 'ללא נושא';
+    return;
+  }
+  container.innerHTML = state.topics.map(t => {
+    const isActive = activeTopicIds.includes(t.id);
+    return `<span class="topic-chip${isActive ? ' active' : ''}"
+      style="${isActive ? 'background:' + t.color + ';border-color:' + t.color + ';color:#fff' : 'border-color:' + t.color + ';color:' + t.color}"
+      onclick="toggleTimerTopic(${t.id})">${t.name}</span>`;
+  }).join('');
+  if (label) {
+    label.textContent = activeTopicIds.length
+      ? state.topics.filter(t => activeTopicIds.includes(t.id)).map(t => t.name).join(' + ')
+      : 'ללא נושא';
+  }
+  // keep backward-compat: currentTopicId = first selected
+  currentTopicId = activeTopicIds[0] || '';
+}
+
+function toggleTimerTopic(id) {
+  const idx = activeTopicIds.indexOf(id);
+  if (idx >= 0) activeTopicIds.splice(idx, 1);
+  else activeTopicIds.push(id);
+  currentTopicId = activeTopicIds[0] || '';
+  renderTimerTopicChips();
+}
+
+function updateTimerTopic() {
+  // legacy — kept for backward compat
+  currentTopicId = activeTopicIds[0] || '';
+}
+
+function renderTimerSlotChips() {
+  const container = document.getElementById('timerSlotChips');
+  const label = document.getElementById('timerSlotLabel');
+  if (!container) return;
+  if (!state.timeSlots.length) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text3)">אין טווחים מוגדרים</span>';
+    if (label) label.textContent = 'ללא טווח';
+    return;
+  }
+  container.innerHTML = state.timeSlots.map(s => {
+    const isActive = activeTimerSlotId === s.id;
+    return `<span class="topic-chip${isActive ? ' active' : ''}"
+      style="${isActive ? 'background:var(--amber);border-color:var(--amber);color:#000' : 'border-color:var(--amber);color:var(--amber)'}"
+      onclick="toggleTimerSlot(${s.id})">${s.name}</span>`;
+  }).join('');
+  if (label) {
+    const slot = activeTimerSlotId ? state.timeSlots.find(s => s.id === activeTimerSlotId) : null;
+    label.textContent = slot ? `${slot.name} (${slot.from}–${slot.to})` : 'ללא טווח';
+  }
+}
+
+function toggleTimerSlot(id) {
+  activeTimerSlotId = activeTimerSlotId === id ? null : id;
+  renderTimerSlotChips();
+}
+
+// ============================================================
+// GOALS
+// ============================================================
+function getGoalForDate(d) {
+  const dk = dateKey(d);
+  if (state.specialDates[dk]) return state.specialDates[dk].goal;
+  // If template active, use template goals
+  if (state.activeTemplate === '10h') {
+    return [1,2,3,4,5].includes(d.getDay()) ? 10 : 5;
+  }
+  if (state.activeTemplate === '9h') {
+    return [1,2,3,4,5].includes(d.getDay()) ? 9 : 4.5;
+  }
+  return state.weekdayGoals[d.getDay()] || 0;
+}
+
+function getTotalForDate(dk) {
+  return state.entries.filter(e => e.date === dk).reduce((s, e) => s + e.ms, 0);
+}
+
+// ============================================================
+// TIMER PAGE UPDATE
+// ============================================================
+function updateTimerPage() {
+  const today = new Date();
+  const dk = dateKey(today);
+  const goal = getGoalForDate(today);
+  const done = getTotalForDate(dk);
+  const sessionMs = elapsed + (running ? Date.now() - startTime : 0);
+  const total = done + sessionMs;
+
+  document.getElementById('today-heading').textContent = formatDate(dk);
+  document.getElementById('today-date-sub').textContent = DOW_NAMES[today.getDay()];
+  document.getElementById('today-hebrew-date').textContent = getHebrewDate(today);
+  document.getElementById('todayGoalDisp').textContent = goal ? `${goal}h` : 'לא הוגדר';
+  document.getElementById('todayGoalSub').textContent = goal ? `${hFmt(done)} עד כה` : 'הגדר ביעדים יומיים';
+
+  // Week total
+  const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
+  let weekMs = 0, weekGoalMs = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sun); d.setDate(sun.getDate() + i);
+    weekMs += getTotalForDate(dateKey(d));
+    weekGoalMs += getGoalForDate(d) * 3600000;
+  }
+  document.getElementById('weekTotalDisp').textContent = hFmt(weekMs);
+  document.getElementById('weekGoalSub').textContent = weekGoalMs ? `יעד: ${hFmt(weekGoalMs)}` : '';
+
+  updateRing(total, goal);
+
+  // Remain pill
+  const pill = document.getElementById('remainPill');
+  if (goal) {
+    const goalMs = goal * 3600000;
+    const rem = goalMs - total;
+    const pct = Math.round(total / goalMs * 100);
+    if (rem > 0) {
+      const cls = pct >= 70 ? 'almost' : '';
+      pill.innerHTML = `<span class="goal-pill ${cls}"><i class="ti ti-clock-minus" style="font-size:13px"></i> נותר ${hFmt(rem)} מתוך ${goal}h</span>`;
+    } else {
+      pill.innerHTML = `<span class="goal-pill over"><i class="ti ti-check" style="font-size:13px"></i> יעד הושג! +${hFmt(-rem)}</span>`;
+    }
+  } else { pill.innerHTML = ''; }
+
+  // Goal badge
+  const gb = document.getElementById('today-goal-badge');
+  if (goal) {
+    const pct = Math.min(100, Math.round(total / goal / 36000));
+    const cls = pct >= 100 ? 'badge-green' : pct >= 70 ? 'badge-amber' : 'badge-blue';
+    gb.innerHTML = `<span class="badge ${cls}">${pct}% מהיעד</span>`;
+  } else { gb.innerHTML = ''; }
+
+  // Sessions list
+  const sessions = state.entries.filter(e => e.date === dk);
+  const sc = document.getElementById('todaySessions');
+  if (!sessions.length) { sc.innerHTML = ''; return; }
+  sc.innerHTML = `<div class="divider"></div><div style="font-size:12px;color:var(--text3);margin-bottom:8px">סשנים היום</div>` +
+    sessions.map(e => {
+      const topic = e.topicId ? state.topics.find(t => t.id === e.topicId) : null;
+      return `<div class="entry-item">
+        <div class="entry-left">
+          <div class="entry-dot${e.type === 'manual' ? ' manual' : topic ? ' topic' : ''}" style="${topic ? 'background:' + topic.color : ''}"></div>
+          <div>
+            <div style="font-size:13px">${topic ? `<span style="color:${topic.color}">${topic.name}</span> · ` : ''}${e.note || 'סשן'} ${e.type === 'manual' ? '<span class="badge badge-blue" style="font-size:10px">ידני</span>' : ''}</div>
+            <div class="entry-meta">${e.from} – ${e.to}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-sm">
+          <span class="entry-dur">${fmt(e.ms, true)}</span>
+          <button class="entry-del" onclick="deleteEntry(${e.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+
+  // Time slots display
+  updateTimeSlots(dk, today);
+}
+
+function updateTimeSlots(dk, today) {
+  const card = document.getElementById('timeSlotsCard');
+  if (!state.timeSlots.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const entries = state.entries.filter(e => e.date === dk);
+  // Add virtual entry for current running session
+  const sessionMs = elapsed + (running ? Date.now() - startTime : 0);
+  const virtualEntries = [...entries];
+  if (running && sessionMs > 0) {
+    const now = today || new Date();
+    const startDt = new Date(now - sessionMs);
+    virtualEntries.push({ from: timeStr(startDt), to: timeStr(now) });
+  }
+  const c = document.getElementById('todayTimeSlots');
+  c.innerHTML = state.timeSlots.map(slot => {
+    const slotMs = calcOverlap(virtualEntries, slot.from, slot.to);
+    const slotTotal = timeDiffMs(slot.from, slot.to);
+    const pct = slotTotal ? Math.min(100, Math.round(slotMs / slotTotal * 100)) : 0;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:500;min-width:80px">${slot.name}</span>
+      <span style="font-size:11px;color:var(--text3);min-width:90px">${slot.from}–${slot.to}</span>
+      <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px">
+        <div style="height:6px;background:var(--accent);border-radius:3px;width:${pct}%;transition:width 0.5s"></div>
+      </div>
+      <span style="font-size:12px;font-family:'JetBrains Mono',monospace;min-width:50px">${hFmt(slotMs)}</span>
+    </div>`;
+  }).join('');
+}
+
+function calcOverlap(entries, slotFrom, slotTo) {
+  const sf = timeToMin(slotFrom), st = timeToMin(slotTo);
+  let total = 0;
+  entries.forEach(e => {
+    const ef = timeToMin(e.from), et = timeToMin(e.to);
+    const start = Math.max(ef, sf), end = Math.min(et, st);
+    if (end > start) total += (end - start) * 60000;
+  });
+  return total;
+}
+function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+function timeDiffMs(f, t) { return (timeToMin(t) - timeToMin(f)) * 60000; }
+
+function updateRing(total, goal) {
+  if (total === undefined) {
+    const today = new Date();
+    total = getTotalForDate(dateKey(today)) + (elapsed + (running ? Date.now() - startTime : 0));
+    goal = getGoalForDate(today);
+  }
+  const ring = document.getElementById('ringTrack');
+  const rt = document.getElementById('ringTime');
+  const circ = 2 * Math.PI * 88; // r=88
+  let pct = goal ? Math.min(1.05, total / (goal * 3600000)) : 0;
+  ring.style.strokeDashoffset = circ * (1 - pct);
+  ring.style.stroke = pct >= 1 ? 'var(--accent)' : pct >= 0.7 ? 'var(--amber)' : 'var(--accent)';
+  rt.textContent = fmt(total);
+  rt.className = 'ring-time' + (running ? ' running' : '');
+}
+
+// ============================================================
+// GOALS PAGE
+// ============================================================
+function renderGoals() {
+  const c = document.getElementById('weekdayGoals');
+  c.innerHTML = '';
+  for (let d = 0; d < 7; d++) {
+    const g = state.weekdayGoals[d] || 0;
+    c.innerHTML += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--text2);width:50px">${DOW_NAMES[d]}</span>
+      <input type="range" min="0" max="14" step="0.5" value="${g}"
+        style="flex:1;accent-color:var(--accent)"
+        oninput="state.weekdayGoals[${d}]=+this.value;this.nextElementSibling.textContent=this.value+'h';save();renderWeekPreview();updateTimerPage()"/>
+      <span style="font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--accent);min-width:40px">${g}h</span>
+    </div>`;
+  }
+  renderSpecialDates();
+  renderWeekPreview();
+}
+
+function renderSpecialDates() {
+  const c = document.getElementById('specialDates');
+  const dates = Object.entries(state.specialDates).sort((a,b) => a[0] < b[0] ? 1 : -1);
+  if (!dates.length) { c.innerHTML = '<div class="empty"><i class="ti ti-calendar-off"></i>אין תאריכים מיוחדים</div>'; return; }
+  c.innerHTML = dates.map(([d, v]) => `
+    <div class="entry-item">
+      <div class="entry-left">
+        <div class="entry-dot" style="background:var(--blue)"></div>
+        <div>
+          <div style="font-size:13px;font-weight:500">${formatDate(d)}</div>
+          <div class="entry-meta">${v.note || ''}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-sm">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--blue)">${v.goal}h</span>
+        <button class="entry-del" style="opacity:1" onclick="deleteSpecial('${d}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function renderWeekPreview() {
+  const c = document.getElementById('weekPreview');
+  const today = new Date();
+  const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
+  c.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sun); d.setDate(sun.getDate() + i);
+    const dk = dateKey(d);
+    const goal = getGoalForDate(d);
+    const done = getTotalForDate(dk);
+    const isToday = dk === dateKey(today);
+    c.innerHTML += `<div class="day-card${isToday ? ' today' : ''}">
+      <div class="day-name">${DOW_SHORT[d.getDay()]}'</div>
+      <div class="day-goal" style="color:${goal ? 'var(--accent)' : 'var(--text3)'}">${goal ? goal + 'h' : '—'}</div>
+      <div class="day-done">${done ? hFmt(done) : ''}</div>
+    </div>`;
+  }
+}
+
+let _dateModalForTemplate = false;
+function openDateModal(forTemplate) {
+  _dateModalForTemplate = !!forTemplate;
+  document.getElementById('dateModalTitle').textContent = forTemplate ? 'הוסף החרגה לתבנית' : 'הוסף תאריך מיוחד';
+  document.getElementById('specialDate').value = dateKey(new Date());
+  document.getElementById('specialGoal').value = '';
+  document.getElementById('specialNote').value = '';
+  document.getElementById('dateModal').classList.add('open');
+}
+function closeDateModal() { document.getElementById('dateModal').classList.remove('open'); }
+function saveSpecialDate() {
+  const d = document.getElementById('specialDate').value;
+  const g = parseFloat(document.getElementById('specialGoal').value);
+  const n = document.getElementById('specialNote').value;
+  if (!d || isNaN(g)) { alert('מלא תאריך ויעד'); return; }
+  state.specialDates[d] = { goal: g, note: n };
+  save();
+  renderSpecialDates();
+  renderWeekPreview();
+  updateTimerPage();
+  if (_dateModalForTemplate) renderTemplateSummary();
+  closeDateModal();
+}
+function deleteSpecial(d) { delete state.specialDates[d]; save(); renderSpecialDates(); renderWeekPreview(); }
+
+// ============================================================
+// TOPICS
+// ============================================================
+function renderTopics() {
+  const c = document.getElementById('topicsList');
+  if (!state.topics.length) {
+    c.innerHTML = '<div class="empty"><i class="ti ti-tag-off"></i>אין נושאים מוגדרים</div>';
+  } else {
+    c.innerHTML = state.topics.map(t => `
+      <div class="entry-item">
+        <div class="entry-left">
+          <div class="color-dot" style="background:${t.color}"></div>
+          <div>
+            <div style="font-size:13px;font-weight:500">${t.name} ${t.category ? '<span class="badge badge-gray" style="font-size:10px">' + t.category + '</span>' : ''}</div>
+            <div class="entry-meta">${t.goal ? t.goal + 'h יעד יומי · ' : ''}${t.period === 'range' ? `${formatDate(t.from)}–${formatDate(t.to)}` : 'תמיד'}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-sm">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2)">${hFmt(getTotalForTopic(t.id, dateKey(new Date())))}</span>
+          <button class="entry-del" style="opacity:1" onclick="deleteTopic(${t.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+  renderTimeSlots();
+  renderTopicSummary();
+  refreshTopicSelects();
+  renderTimerSlotChips();
+}
+
+function getTotalForTopic(topicId, dk) {
+  return state.entries.filter(e => e.date === dk && e.topicId === topicId).reduce((s,e) => s + e.ms, 0);
+}
+
+function renderTopicSummary() {
+  const c = document.getElementById('topicSummary');
+  const dk = dateKey(new Date());
+  if (!state.topics.length) { c.innerHTML = '<div class="empty">אין נושאים</div>'; return; }
+  // Include current running session for the active topic
+  const sessionMs = elapsed + (running ? Date.now() - startTime : 0);
+  c.innerHTML = state.topics.map(t => {
+    let done = getTotalForTopic(t.id, dk);
+    // Add running session if this topic is active
+    if (running && sessionMs > 0 && (activeTopicIds.includes(t.id) || currentTopicId == t.id)) {
+      done += sessionMs;
+    }
+    const goal = t.goal ? t.goal * 3600000 : 0;
+    const pct = goal ? Math.min(100, Math.round(done / goal * 100)) : null;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="color-dot" style="background:${t.color}"></div>
+      <span style="font-size:13px;min-width:100px">${t.name}</span>
+      <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px">
+        <div style="height:6px;background:${t.color};border-radius:3px;width:${pct || 0}%;transition:width 0.5s"></div>
+      </div>
+      <span style="font-size:12px;font-family:'JetBrains Mono',monospace;min-width:50px">${hFmt(done)}</span>
+      ${goal ? `<span class="badge ${pct >= 100 ? 'badge-green' : 'badge-amber'}">${pct}%</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function refreshTopicSelects() {
+  const opts = ['<option value="">— ללא נושא —</option>',
+    ...state.topics.map(t => `<option value="${t.id}">${t.name}</option>`)].join('');
+  // manTopic select stays as dropdown
+  const manEl = document.getElementById('manTopic');
+  if (manEl) manEl.innerHTML = opts;
+  // manSlot select
+  const manSlotEl = document.getElementById('manSlot');
+  if (manSlotEl) {
+    manSlotEl.innerHTML = '<option value="">— ללא טווח —</option>' +
+      state.timeSlots.map(s => `<option value="${s.id}">${s.name} (${s.from}–${s.to})</option>`).join('');
+  }
+  // timer uses chips now
+  renderTimerTopicChips();
+  renderTimerSlotChips();
+}
+
+let selectedTopicColor = '#a78bfa';
+function selectTopicColor(el) {
+  document.querySelectorAll('.color-option').forEach(e => e.style.borderColor = 'transparent');
+  el.style.borderColor = 'white';
+  selectedTopicColor = el.dataset.color;
+  document.getElementById('topicColor').value = selectedTopicColor;
+}
+
+// ============================================================
+// TOPIC CATEGORIES & PRESETS
+// ============================================================
+const TOPIC_PRESETS = {
+  'לימוד': ['תנ"ך', 'הלכה — משנה ברורה', 'ש"ס — תלמוד בבלי', 'מוסר', 'פרשת שבוע', 'מחשבה', 'הוסף אישי...'],
+  'זמנים': ['סד"א', 'סד"ב', 'סד"ג', 'בוקר', 'צהרים', 'ערב', 'דרכים', 'הוסף אישי...'],
+  'אישי': ['הוסף אישי...'],
+};
+
+function onTopicCategoryChange() {
+  const cat = document.getElementById('topicCategory').value;
+  const presets = TOPIC_PRESETS[cat] || [];
+  const sel = document.getElementById('topicPreset');
+  sel.innerHTML = '<option value="">— בחר —</option>' +
+    presets.map(p => `<option value="${p === 'הוסף אישי...' ? '' : p}">${p}</option>`).join('');
+  document.getElementById('topicName').value = '';
+}
+
+function onTopicPresetChange() {
+  const val = document.getElementById('topicPreset').value;
+  if (val) document.getElementById('topicName').value = val;
+}
+
+function openTopicModal() {
+  document.getElementById('topicName').value = '';
+  document.getElementById('topicGoal').value = '0';
+  document.getElementById('topicPeriod').value = 'always';
+  document.getElementById('topicDateRange').style.display = 'none';
+  document.getElementById('topicCategory').value = 'לימוד';
+  onTopicCategoryChange();
+  document.getElementById('topicModal').classList.add('open');
+}
+function closeTopicModal() { document.getElementById('topicModal').classList.remove('open'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('topicPeriod').addEventListener('change', function() {
+    document.getElementById('topicDateRange').style.display = this.value === 'range' ? 'block' : 'none';
+  });
+});
+
+function saveTopic() {
+  const preset = document.getElementById('topicPreset').value;
+  const name = document.getElementById('topicName').value.trim() || preset;
+  if (!name) { alert('בחר נושא מהרשימה או הכנס שם אישי'); return; }
+  const t = {
+    id: Date.now(),
+    name,
+    category: document.getElementById('topicCategory').value,
+    color: document.getElementById('topicColor').value,
+    goal: parseFloat(document.getElementById('topicGoal').value) || 0,
+    period: document.getElementById('topicPeriod').value,
+    from: document.getElementById('topicFrom').value,
+    to: document.getElementById('topicTo').value,
+  };
+  state.topics.push(t);
+  save();
+  closeTopicModal();
+  renderTopics();
+}
+
+function deleteTopic(id) {
+  state.topics = state.topics.filter(t => t.id !== id);
+  save();
+  renderTopics();
+}
+
+// ============================================================
+// TIME SLOTS
+// ============================================================
+function renderTimeSlots() {
+  const c = document.getElementById('timeSlotsList');
+  if (!state.timeSlots.length) {
+    c.innerHTML = '<div class="empty" style="padding:1rem"><i class="ti ti-clock-off"></i>אין טווחים מוגדרים</div>';
+    return;
+  }
+  c.innerHTML = state.timeSlots.map(s => `
+    <div class="entry-item">
+      <div class="entry-left">
+        <i class="ti ti-clock" style="color:var(--amber);font-size:16px"></i>
+        <div>
+          <div style="font-size:13px;font-weight:500">${s.name}</div>
+          <div class="entry-meta">${s.from} – ${s.to}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-sm">
+        <button class="btn btn-sm" onclick="openEditSlotModal(${s.id})" title="עריכה"><i class="ti ti-pencil"></i></button>
+        <button class="entry-del" style="opacity:1" onclick="deleteSlot(${s.id})"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function openEditSlotModal(id) {
+  const slot = state.timeSlots.find(s => s.id === id);
+  if (!slot) return;
+  document.getElementById('slotName').value = slot.name;
+  document.getElementById('slotFrom').value = slot.from;
+  document.getElementById('slotTo').value = slot.to;
+  document.getElementById('slotEditId').value = id;
+  document.getElementById('slotModal').classList.add('open');
+}
+
+function openSlotModal() {
+  document.getElementById('slotName').value = '';
+  document.getElementById('slotFrom').value = '';
+  document.getElementById('slotTo').value = '';
+  document.getElementById('slotEditId').value = '';
+  document.getElementById('slotModal').classList.add('open');
+}
+function closeSlotModal() { document.getElementById('slotModal').classList.remove('open'); }
+
+function saveSlot() {
+  const name = document.getElementById('slotName').value.trim();
+  const from = document.getElementById('slotFrom').value;
+  const to = document.getElementById('slotTo').value;
+  const editId = document.getElementById('slotEditId').value;
+  if (!name || !from || !to) { alert('מלא את כל השדות'); return; }
+  if (editId) {
+    const idx = state.timeSlots.findIndex(s => s.id == editId);
+    if (idx >= 0) state.timeSlots[idx] = { ...state.timeSlots[idx], name, from, to };
+  } else {
+    state.timeSlots.push({ id: Date.now(), name, from, to });
+  }
+  save();
+  closeSlotModal();
+  renderTimeSlots();
+  updateTimerPage();
+  refreshTopicSelects();
+  renderTimerSlotChips();
+}
+
+function deleteSlot(id) {
+  if (activeTimerSlotId === id) activeTimerSlotId = null;
+  state.timeSlots = state.timeSlots.filter(s => s.id !== id);
+  save();
+  renderTimeSlots();
+  updateTimerPage();
+  renderTimerSlotChips();
+}
+
+// ============================================================
+// MANUAL ENTRY
+// ============================================================
+function onManSlotChange() {
+  const slotId = document.getElementById('manSlot').value;
+  if (!slotId) return;
+  const slot = state.timeSlots.find(s => s.id == slotId);
+  if (slot) {
+    document.getElementById('manFrom').value = slot.from;
+    document.getElementById('manTo').value = slot.to;
+  }
+}
+
+function addManual() {
+  const date = document.getElementById('manDate').value;
+  const from = document.getElementById('manFrom').value;
+  const to = document.getElementById('manTo').value;
+  const note = document.getElementById('manNote').value;
+  const topicId = document.getElementById('manTopic').value || null;
+  const slotId = document.getElementById('manSlot').value || null;
+  const slotName = slotId ? (state.timeSlots.find(s => s.id == slotId)?.name || null) : null;
+  const deductMin = parseFloat(document.getElementById('manDeduct').value) || 0;
+
+  if (!date || !from || !to) { document.getElementById('manResult').textContent = 'מלא את כל השדות'; return; }
+  const [fh,fm] = from.split(':').map(Number);
+  const [th,tm] = to.split(':').map(Number);
+  let ms = ((th*60+tm) - (fh*60+fm)) * 60000 - deductMin * 60000;
+  if (ms <= 0) { document.getElementById('manResult').textContent = 'זמן שגוי'; return; }
+
+  state.entries.push({ id: Date.now(), date, from, to, ms, note: slotName ? (note || slotName) : note, type: 'manual', topicId, slotId });
+  save();
+  document.getElementById('manResult').textContent = `✓ נוסף: ${fmt(ms, true)}`;
+  document.getElementById('manNote').value = '';
+  document.getElementById('manDeduct').value = '0';
+  setTimeout(() => document.getElementById('manResult').textContent = '', 3000);
+  renderManualList();
+  renderHistory();
+  updateTimerPage();
+}
+
+function renderManualList() {
+  const list = state.entries.filter(e => e.type === 'manual')
+    .sort((a,b) => b.date.localeCompare(a.date)).slice(0, 20);
+  const c = document.getElementById('manualList');
+  if (!list.length) { c.innerHTML = '<div class="empty"><i class="ti ti-pencil-off"></i>אין רשומות ידניות</div>'; return; }
+  c.innerHTML = list.map(e => {
+    const topic = e.topicId ? state.topics.find(t => t.id == e.topicId) : null;
+    return `<div class="entry-item">
+      <div class="entry-left">
+        <div class="entry-dot manual" style="${topic ? 'background:' + topic.color : ''}"></div>
+        <div>
+          <div style="font-size:13px">${topic ? `<span style="color:${topic.color}">${topic.name}</span> · ` : ''}${e.note || '—'}</div>
+          <div class="entry-meta">${formatDate(e.date)} · ${e.from}–${e.to}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-sm">
+        <span class="entry-dur">${fmt(e.ms, true)}</span>
+        <button class="entry-del" style="opacity:1" onclick="deleteEntry(${e.id})"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+let weekOffset = 0, monthOffset = 0;
+let weekChartInst = null, monthChartInst = null;
+
+const CHART_OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: {
+    backgroundColor: '#1a1e25', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+    titleColor: '#e8eaed', bodyColor: '#8b9099', padding: 10,
+    callbacks: { label: ctx => `${(ctx.raw / 3600000).toFixed(2)}h` }
+  }},
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#565c66', font: { size: 11 }}},
+    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#565c66', font: { size: 11 },
+      callback: v => `${(v/3600000).toFixed(0)}h` }, beginAtZero: true }
+  }
+};
+
+function getSunOfWeek(offset) {
+  const d = new Date(); d.setDate(d.getDate() - d.getDay() + offset * 7); d.setHours(0,0,0,0); return d;
+}
+
+function renderWeekChart() {
+  const sun = getSunOfWeek(weekOffset);
+  const labels = [], data = [], goalData = [], colors = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sun); d.setDate(sun.getDate() + i);
+    const dk = dateKey(d);
+    labels.push(DOW_NAMES[d.getDay()]);
+    const ms = getTotalForDate(dk);
+    const gMs = getGoalForDate(d) * 3600000;
+    data.push(ms); goalData.push(gMs);
+    const isFuture = d > today;
+    colors.push(isFuture ? 'rgba(74,222,128,0.15)' : ms >= gMs && gMs ? 'rgba(74,222,128,0.8)' : ms >= gMs * 0.7 ? 'rgba(251,191,36,0.7)' : 'rgba(96,165,250,0.7)');
+  }
+  document.getElementById('weekNavLabel').textContent =
+    `${formatDateShort(dateKey(sun))} – ${formatDateShort(dateKey(new Date(sun.getTime() + 6*86400000)))}`;
+
+  const ctx = document.getElementById('weekChart').getContext('2d');
+  if (weekChartInst) weekChartInst.destroy();
+  weekChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      { data: goalData, type: 'line', borderColor: 'rgba(251,191,36,0.4)', backgroundColor: 'transparent', borderDash: [4,4], pointRadius: 0, tension: 0.3, order: 1 },
+      { data, backgroundColor: colors, borderRadius: 6, barPercentage: 0.6, order: 2 }
+    ]},
+    options: { ...CHART_OPTS }
+  });
+
+  const totalMs = data.reduce((s,v) => s+v, 0);
+  const goalMs = goalData.reduce((s,v) => s+v, 0);
+  const daysHit = data.filter((v,i) => goalData[i] && v >= goalData[i]).length;
+  document.getElementById('weekStats').innerHTML = `
+    <div class="card card-sm"><div class="stat-label">סה"כ שבוע</div><div class="stat-val stat-accent">${hFmt(totalMs)}</div></div>
+    <div class="card card-sm"><div class="stat-label">יעד שבועי</div><div class="stat-val">${hFmt(goalMs)}</div></div>
+    <div class="card card-sm"><div class="stat-label">ימים שהושג</div><div class="stat-val stat-accent">${daysHit}/7</div></div>
+    <div class="card card-sm"><div class="stat-label">אחוז ביצוע</div><div class="stat-val ${goalMs && totalMs/goalMs >= 1 ? 'stat-accent' : 'stat-amber'}">${goalMs ? Math.round(totalMs/goalMs*100) : 0}%</div></div>`;
+
+  document.getElementById('weekChartSub').textContent = weekOffset === 0 ? 'שבוע נוכחי' : Math.abs(weekOffset) + ' שבועות ' + (weekOffset < 0 ? 'אחורה' : 'קדימה');
+
+  document.getElementById('weekDayList').innerHTML = labels.map((l, i) => {
+    const pct = goalData[i] ? Math.round(data[i]/goalData[i]*100) : null;
+    const cls = pct === null ? 'badge-gray' : pct >= 100 ? 'badge-green' : pct >= 70 ? 'badge-amber' : 'badge-blue';
+    return `<div class="entry-item">
+      <div class="flex items-center gap-sm">
+        <span style="font-size:13px;font-weight:500;min-width:55px">${l}</span>
+        ${pct !== null ? `<span class="badge ${cls}">${pct}%</span>` : '<span class="badge badge-gray">ללא יעד</span>'}
+      </div>
+      <div class="flex items-center gap-sm">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px">${hFmt(data[i])}</span>
+        ${goalData[i] ? `<span style="font-size:11px;color:var(--text3)">/ ${hFmt(goalData[i])}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function prevWeek() { weekOffset--; renderWeekChart(); }
+function nextWeek() { weekOffset++; renderWeekChart(); }
+
+function renderMonthChart() {
+  const today = new Date();
+  const target = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const year = target.getFullYear(), month = target.getMonth();
+  const days = new Date(year, month+1, 0).getDate();
+  const labels = [], data = [], goalData = [], colors = [];
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(year, month, d);
+    const dk = `${year}-${pad(month+1)}-${pad(d)}`;
+    labels.push(String(d));
+    const ms = getTotalForDate(dk);
+    const gMs = getGoalForDate(dt) * 3600000;
+    data.push(ms); goalData.push(gMs);
+    const isFuture = dt > today;
+    colors.push(isFuture ? 'rgba(74,222,128,0.1)' : ms >= gMs && gMs ? 'rgba(74,222,128,0.75)' : ms > 0 ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.07)');
+  }
+  const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  document.getElementById('monthNavLabel').textContent = `${MONTHS_HE[month]} ${year}`;
+  document.getElementById('monthChartSub').textContent = `${MONTHS_HE[month]} ${year}`;
+
+  const ctx = document.getElementById('monthChart').getContext('2d');
+  if (monthChartInst) monthChartInst.destroy();
+  monthChartInst = new Chart(ctx, {
+    type: 'bar', data: { labels, datasets: [
+      { data: goalData, type: 'line', borderColor: 'rgba(251,191,36,0.3)', backgroundColor: 'transparent', borderDash: [3,3], pointRadius: 0, tension: 0.2, order: 1 },
+      { data, backgroundColor: colors, borderRadius: 4, barPercentage: 0.75, order: 2 }
+    ]},
+    options: { ...CHART_OPTS }
+  });
+
+  const totalMs = data.reduce((s,v) => s+v, 0);
+  const goalMs = goalData.reduce((s,v) => s+v, 0);
+  const activeDays = data.filter(v => v > 0).length;
+  const bestDay = Math.max(0, ...data);
+  document.getElementById('monthStats').innerHTML = `
+    <div class="card card-sm"><div class="stat-label">סה"כ חודש</div><div class="stat-val stat-accent">${hFmt(totalMs)}</div></div>
+    <div class="card card-sm"><div class="stat-label">יעד חודשי</div><div class="stat-val">${hFmt(goalMs)}</div></div>
+    <div class="card card-sm"><div class="stat-label">ימים פעילים</div><div class="stat-val">${activeDays}</div></div>
+    <div class="card card-sm"><div class="stat-label">יום שיא</div><div class="stat-val stat-amber">${hFmt(bestDay)}</div></div>`;
+
+  const weeks = [];
+  let cur = [];
+  for (let d = 1; d <= days; d++) { cur.push(data[d-1]); if (cur.length === 7 || d === days) { weeks.push([...cur]); cur = []; } }
+  document.getElementById('monthWeekList').innerHTML = weeks.map((w, i) => {
+    const s = weeks.slice(0, i).flat().length + 1;
+    const e = s + w.length - 1;
+    const ms = w.reduce((a,b) => a+b, 0);
+    return `<div class="entry-item">
+      <span style="font-size:13px;color:var(--text2)">ימים ${s}–${e}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500">${hFmt(ms)}</span>
+    </div>`;
+  }).join('');
+}
+function prevMonth() { monthOffset--; renderMonthChart(); }
+function nextMonth() { monthOffset++; renderMonthChart(); }
+
+// ============================================================
+// HISTORY
+// ============================================================
+function initHistoryFilters() {
+  const topicSel = document.getElementById('histTopic');
+  const slotSel = document.getElementById('histSlot');
+  if (!topicSel || !slotSel) return;
+  topicSel.innerHTML = '<option value="">כל הנושאים</option>' +
+    state.topics.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  slotSel.innerHTML = '<option value="">כל הטווחים</option>' +
+    state.timeSlots.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function renderHistory() {
+  initHistoryFilters();
+  const q = (document.getElementById('histSearch')?.value || '').toLowerCase();
+  const fromD = document.getElementById('histFrom')?.value;
+  const toD = document.getElementById('histTo')?.value;
+  const filterTopic = document.getElementById('histTopic')?.value;
+  const filterSlot = document.getElementById('histSlot')?.value;
+  const sortVal = document.getElementById('histSort')?.value || 'date-desc';
+
+  let entries = [...state.entries].filter(e => {
+    if (q && !e.date.includes(q) && !(e.note||'').toLowerCase().includes(q)) {
+      const topic = e.topicId ? state.topics.find(t => t.id == e.topicId) : null;
+      if (!topic || !topic.name.toLowerCase().includes(q)) return false;
+    }
+    if (fromD && e.date < fromD) return false;
+    if (toD && e.date > toD) return false;
+    if (filterTopic && String(e.topicId) !== String(filterTopic) &&
+        !(e.topicIds && e.topicIds.map(String).includes(String(filterTopic)))) return false;
+    if (filterSlot && String(e.slotId) !== String(filterSlot)) return false;
+    return true;
+  });
+
+  // Sort
+  entries.sort((a,b) => {
+    if (sortVal === 'date-desc') return b.date.localeCompare(a.date) || b.id - a.id;
+    if (sortVal === 'date-asc')  return a.date.localeCompare(b.date) || a.id - b.id;
+    if (sortVal === 'dur-desc')  return b.ms - a.ms;
+    if (sortVal === 'dur-asc')   return a.ms - b.ms;
+    return 0;
+  });
+
+  // Summary
+  const sumEl = document.getElementById('histSummary');
+  if (sumEl) {
+    const totalMs = entries.reduce((s,e) => s+e.ms, 0);
+    sumEl.innerHTML = `<span style="color:var(--accent);font-weight:600">${hFmt(totalMs)}</span> סה"כ · <span>${entries.length} רשומות</span>`;
+  }
+
+  const tbody = document.getElementById('historyList');
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3)"><i class="ti ti-database-off"></i> אין רשומות</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(e => {
+    const topic = e.topicId ? state.topics.find(t => t.id == e.topicId) : null;
+    const slot = e.slotId ? state.timeSlots.find(s => s.id == e.slotId) : null;
+    const topicColor = topic?.color || 'var(--text3)';
+    const rowBg = e.type === 'manual' ? 'rgba(96,165,250,0.04)' : '';
+    return `<tr style="border-bottom:1px solid var(--border);transition:background 0.1s;background:${rowBg}"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='${rowBg}'">
+      <td style="padding:9px 10px;font-size:12px;color:var(--text2);white-space:nowrap">
+        ${formatDate(e.date)}<br/><span style="font-size:10px;color:var(--text3)">${DOW_NAMES[new Date(e.date+'T12:00:00').getDay()]}</span>
+      </td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text3);white-space:nowrap;font-family:'JetBrains Mono',monospace">${e.from||'—'} – ${e.to||'—'}</td>
+      <td style="padding:9px 10px">
+        ${topic ? `<span style="color:${topicColor};font-size:12px;font-weight:500">${topic.name}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}
+      </td>
+      <td style="padding:9px 10px">
+        ${slot ? `<span class="badge badge-amber" style="font-size:10px">${slot.name}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}
+      </td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(e.note||'')}">${e.note||'—'}</td>
+      <td style="padding:9px 10px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text);white-space:nowrap">${fmt(e.ms,true)}</td>
+      <td style="padding:9px 4px">
+        ${e.type==='manual'
+          ? '<span class="badge badge-blue" style="font-size:10px">ידני</span>'
+          : '<span class="badge badge-gray" style="font-size:10px">טיימר</span>'}
+      </td>
+      <td style="padding:9px 4px">
+        <button onclick="deleteEntry(${e.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 4px" title="מחק"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  state.entries = state.entries.filter(e => e.id !== id);
+  save(); renderHistory(); renderManualList(); updateTimerPage();
+}
+function clearAll() { state.entries = []; save(); renderHistory(); renderManualList(); updateTimerPage(); }
+
+// ============================================================
+// TEMPLATES
+// ============================================================
+function applyTemplate(name) {
+  const label = name === '10h' ? 'חבורת י׳ שעות' : 'חבורת ט׳ שעות';
+  if (!confirm(`להחיל תבנית "${label}"?\nהיעדים היומיים יעודכנו אוטומטית.\nחגים וערביהם יוגדרו עם יעד מותאם.`)) return;
+  state.activeTemplate = name;
+  // ט' שעות = שבת 4.5h, י' שעות = שבת 5h
+  const erevGoal = name === '10h' ? 5 : 4.5;
+  const yomTovGoal = 0;
+  // Update weekdayGoals to match template so Goals page reflects correctly
+  const weekGoals = name === '10h'
+    ? { 0:10, 1:10, 2:10, 3:10, 4:10, 5:5, 6:5 }
+    : { 0:9,  1:9,  2:9,  3:9,  4:9,  5:4.5, 6:4.5 };
+  state.weekdayGoals = weekGoals;
+  // Auto-apply holiday exclusions from JEWISH_HOLIDAYS_DEFAULT
+  Object.entries(JEWISH_HOLIDAYS_DEFAULT).forEach(([date, val]) => {
+    // Only set if not already overridden by user
+    const note = val.note || '';
+    const isErev = note.includes('ערב') || note.includes('ערבי');
+    const isYomTov = val.goal === 0;
+    if (!state.specialDates[date]) {
+      if (isYomTov) {
+        state.specialDates[date] = { goal: yomTovGoal, note: val.note };
+      } else if (isErev) {
+        state.specialDates[date] = { goal: erevGoal, note: val.note };
+      } else {
+        // חול המועד וכד' - שמור יעד יחסי
+        state.specialDates[date] = { goal: val.goal, note: val.note };
+      }
+    } else {
+      // Update existing erev/yomtov entries to match template
+      if (isYomTov) state.specialDates[date].goal = yomTovGoal;
+      if (isErev) state.specialDates[date].goal = erevGoal;
+    }
+  });
+  save();
+  updateTimerPage();
+  renderGoals();
+  renderTemplateSummary();
+  document.querySelectorAll('.template-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`tmpl-${name}`).classList.add('selected');
+  // Show feedback
+  const fb = document.getElementById('templateFeedback');
+  if (fb) { fb.textContent = `✓ תבנית "${label}" הופעלה — יעדים עודכנו · ערבי חג: ${erevGoal}h · ימי חג: 0h`; fb.style.color='var(--accent)'; setTimeout(()=>fb.textContent='',5000); }
+}
+
+function renderTemplateSummary() {
+  const c = document.getElementById('templateSummary');
+  if (!state.activeTemplate) {
+    c.innerHTML = '<div class="text-muted text-sm">אין תבנית פעילה. לחץ על אחת מהתבניות למעלה.</div>';
+    document.getElementById('templateExclusions').innerHTML = '<div class="empty" style="padding:1rem">הפעל תבנית תחילה</div>';
+    return;
+  }
+  const today = new Date();
+  const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
+  let weekTotal = 0, weekGoal = 0;
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sun); d.setDate(sun.getDate() + i);
+    const dk = dateKey(d);
+    const goal = getGoalForDate(d);
+    const done = getTotalForDate(dk);
+    weekTotal += done; weekGoal += goal * 3600000;
+    rows.push(`<div class="entry-item">
+      <div class="flex items-center gap-sm">
+        <span style="font-size:13px;min-width:60px">${DOW_NAMES[d.getDay()]}</span>
+        ${state.specialDates[dk] ? `<span class="badge badge-amber">${state.specialDates[dk].note || 'החרגה'}</span>` : ''}
+      </div>
+      <div class="flex items-center gap-sm">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px">${hFmt(done)}</span>
+        <span style="font-size:11px;color:var(--text3)">/ ${goal}h</span>
+      </div>
+    </div>`);
+  }
+  c.innerHTML = `
+    <div class="flex gap-sm mb2" style="flex-wrap:wrap;align-items:center">
+      <span class="badge badge-green">תבנית פעילה: ${state.activeTemplate === '10h' ? 'י׳ שעות' : 'ט׳ שעות'}</span>
+      <span class="badge badge-blue">יעד שבועי: ${hFmt(weekGoal)}</span>
+      <span class="badge ${weekTotal >= weekGoal ? 'badge-green' : 'badge-amber'}">ביצוע: ${hFmt(weekTotal)}</span>
+      <button class="btn btn-sm btn-red" onclick="state.activeTemplate=null;save();renderTemplateSummary();document.querySelectorAll('.template-card').forEach(el=>el.classList.remove('selected'))"><i class="ti ti-x"></i> בטל תבנית</button>
+    </div>
+    ${rows.join('')}`;
+
+  document.getElementById('templateExclusions').innerHTML = Object.entries(state.specialDates).length
+    ? Object.entries(state.specialDates).map(([d,v]) => `
+        <div class="entry-item">
+          <div><div style="font-size:13px">${formatDate(d)}</div><div class="entry-meta">${v.note || ''}</div></div>
+          <div class="flex items-center gap-sm">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px">${v.goal}h</span>
+            <button class="entry-del" style="opacity:1" onclick="deleteSpecial('${d}');renderTemplateSummary()"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:1rem">אין החרגות</div>';
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function loadSettingsUI() {
+  const s = state.settings;
+  document.getElementById('themeSelect').value = s.theme || 'auto';
+  document.getElementById('lightStartTime').value = s.lightStart || '06:00';
+  document.getElementById('darkStartTime').value = s.darkStart || '21:00';
+  document.getElementById('dayChangeTime').value = s.dayChangeTime || '00:00';
+  document.getElementById('autoStartSel').value = s.autoStart ? '1' : '0';
+  document.getElementById('idleMinutes').value = s.idleMinutes ?? 5;
+  document.getElementById('idleSaveMinutes').value = s.idleSaveMinutes ?? 20;
+  document.getElementById('reminderEnabled').value = s.reminderEnabled ? '1' : '0';
+  document.getElementById('reminderValue').value = s.reminderValue || '30';
+  document.getElementById('reminderClockTimes').value = s.reminderClockTimes || '';
+  // sync section
+  if (s.offlineMode) {
+    document.getElementById('syncOnlineView').style.display = 'none';
+    document.getElementById('syncOfflineView').style.display = 'block';
+  } else {
+    document.getElementById('syncOnlineView').style.display = 'block';
+    document.getElementById('syncOfflineView').style.display = 'none';
+  }
+}
+
+function saveSettings() {
+  state.settings.theme = document.getElementById('themeSelect').value;
+  state.settings.lightStart = document.getElementById('lightStartTime').value;
+  state.settings.darkStart = document.getElementById('darkStartTime').value;
+  state.settings.dayChangeTime = document.getElementById('dayChangeTime').value;
+  state.settings.autoStart = document.getElementById('autoStartSel').value === '1';
+  state.settings.idleMinutes = parseInt(document.getElementById('idleMinutes').value) || 0;
+  state.settings.idleSaveMinutes = parseInt(document.getElementById('idleSaveMinutes').value) || 0;
+  state.settings.reminderEnabled = document.getElementById('reminderEnabled').value === '1';
+  state.settings.reminderValue = document.getElementById('reminderValue').value;
+  state.settings.reminderClockTimes = document.getElementById('reminderClockTimes').value;
+  save();
+  applyTheme();
+  alert('✓ ההגדרות נשמרו');
+}
+
+function toggleOfflineMode() {
+  state.settings.offlineMode = !state.settings.offlineMode;
+  save();
+  if (state.settings.offlineMode) {
+    document.getElementById('syncOnlineView').style.display = 'none';
+    document.getElementById('syncOfflineView').style.display = 'block';
+  } else {
+    document.getElementById('syncOnlineView').style.display = 'block';
+    document.getElementById('syncOfflineView').style.display = 'none';
+  }
+}
+
+// INTEGRATION POINT: GDRIVE.CLIENT_ID above — replace with your Google Cloud Console OAuth Client ID
+// To get one: console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client ID (Web application)
+// Authorized JS origins: the URL where you serve this file
+
+function applyGdriveClientId() {
+  const id = document.getElementById('gdriveClientInput').value.trim();
+  if (!id || !id.includes('.apps.googleusercontent.com')) {
+    alert('Client ID לא תקין — צריך להסתיים ב-.apps.googleusercontent.com');
+    return;
+  }
+  GDRIVE.CLIENT_ID = id;
+  state.settings.gdriveClientId = id;
+  save();
+  document.getElementById('gdrive-setup-modal').classList.remove('open');
+  setSyncStatus('Client ID נשמר — מנסה להתחבר...', 'green');
+  syncWithGoogle();
+}
+
+// ============================================================
+// REMINDERS — time-remaining + multiple scheduled clock times
+// ============================================================
+let reminderSnooze = null;
+let lastReminderMinute = -1;
+
+function checkReminder() {
+  if (!state.settings.reminderEnabled) return;
+  const today = new Date();
+  const nowMin = today.getHours() * 60 + today.getMinutes();
+  if (nowMin === lastReminderMinute) return;
+  const dk = dateKey(today);
+  const goal = getGoalForDate(today);
+  const done = getTotalForDate(dk);
+  const goalMs = goal ? goal * 3600000 : 0;
+  const rem = goalMs - done;
+
+  // 1. Time-remaining reminder (only when behind goal)
+  if (goal && rem > 0) {
+    const remMinSetting = parseInt(state.settings.reminderValue) || 0;
+    if (remMinSetting > 0 && rem <= remMinSetting * 60000) {
+      if (!reminderSnooze || Date.now() > reminderSnooze) {
+        lastReminderMinute = nowMin;
+        showReminder(
+          `⏰ נותרו ${Math.ceil(rem/60000)} דקות להשלמת היעד!`,
+          `יעד: ${goal}h · בוצע: ${hFmt(done)} · נותר: ${hFmt(rem)}`
+        );
+        return;
+      }
+    }
+  }
+
+  // 2. Scheduled clock-time reminders (multiple, comma-separated)
+  const clockTimes = (state.settings.reminderClockTimes || '').split(',').map(s => s.trim()).filter(Boolean);
+  for (const t of clockTimes) {
+    const [h, m] = t.split(':').map(Number);
+    if (!isNaN(h) && nowMin === h * 60 + m) {
+      if (!reminderSnooze || Date.now() > reminderSnooze) {
+        lastReminderMinute = nowMin;
+        const statusMsg = goal
+          ? (rem > 0 ? `עוד ${hFmt(rem)} עד היעד` : 'יעד הושג! 🎉')
+          : 'אין יעד מוגדר';
+        showReminder(`🔔 תזכורת שעה ${t}`, `${statusMsg}${goal ? ' · יעד: ' + goal + 'h · בוצע: ' + hFmt(done) : ''}`);
+        return;
+      }
+    }
+  }
+
+  // 3. Per-note scheduled reminders
+  const nowStr = `${pad(today.getHours())}:${pad(today.getMinutes())}`;
+  const noteReminders = state.quickNotes.filter(n => !n.dismissed && n.reminderTime === nowStr);
+  if (noteReminders.length > 0) {
+    if (!reminderSnooze || Date.now() > reminderSnooze) {
+      lastReminderMinute = nowMin;
+      showReminder(`📝 ${noteReminders[0].text}`, noteReminders.length > 1 ? `ועוד ${noteReminders.length-1} תזכורות` : '');
+    }
+  }
+}
+
+function showReminder(msg, sub) {
+  document.getElementById('reminderMsg').textContent = msg;
+  const subEl = document.getElementById('reminderSubMsg');
+  if (subEl) subEl.textContent = sub || '';
+  document.getElementById('reminderModal').classList.add('open');
+}
+function confirmReminder() {
+  document.getElementById('reminderModal').classList.remove('open');
+  reminderSnooze = null;
+}
+function closeReminderModal() { confirmReminder(); }
+function snoozeReminder() {
+  reminderSnooze = Date.now() + 15 * 60000;
+  document.getElementById('reminderModal').classList.remove('open');
+}
+
+// ============================================================
+// QUICK NOTES — editable inline, badge counter, scheduled reminder
+// ============================================================
+function toggleQuickNote() {
+  const p = document.getElementById('quickNotePanel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    renderSavedNotes();
+    setTimeout(() => { const ta = document.getElementById('quickNoteText'); if(ta) ta.focus(); }, 120);
+  }
+}
+function closeQuickNote() { document.getElementById('quickNotePanel').classList.remove('open'); }
+
+function saveQuickNote() {
+  const text = document.getElementById('quickNoteText').value.trim();
+  if (!text) return;
+  const rt = document.getElementById('noteReminderTime');
+  const reminderTime = rt ? rt.value : '';
+  state.quickNotes.push({ id: Date.now(), text, ts: new Date().toISOString(), reminderTime, dismissed: false });
+  save();
+  document.getElementById('quickNoteText').value = '';
+  if (rt) rt.value = '';
+  renderSavedNotes();
+  updateNoteBadge();
+}
+
+function updateNoteBadge() {
+  const active = state.quickNotes.filter(n => !n.dismissed).length;
+  const b = document.getElementById('quickNoteBadge');
+  if (!b) return;
+  b.style.display = active ? 'block' : 'none';
+  b.textContent = active > 9 ? '9+' : active;
+}
+
+function renderSavedNotes() {
+  const active = state.quickNotes.filter(n => !n.dismissed);
+  const c = document.getElementById('savedNotesList');
+  if (!active.length) {
+    c.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">אין תזכורות פעילות</div>';
+    return;
+  }
+  c.innerHTML = active.map(n => `
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding:8px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <i class="ti ti-note" style="color:var(--purple);font-size:13px;margin-top:2px;flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div contenteditable="true"
+          style="font-size:12px;color:var(--text);outline:none;cursor:text;word-break:break-word;min-height:16px;line-height:1.4"
+          onblur="updateNoteText(${n.id}, this.textContent.trim())"
+          title="לחץ לעריכה"
+        >${escHtml(n.text)}</div>
+        ${n.reminderTime ? `<div style="font-size:10px;color:var(--purple);margin-top:2px"><i class="ti ti-bell"></i> ${n.reminderTime}</div>` : ''}
+      </div>
+      <button onclick="dismissNote(${n.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;padding:0" title="מחק"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateNoteText(id, newText) {
+  const n = state.quickNotes.find(n => n.id === id);
+  if (n && newText) { n.text = newText; save(); }
+  else if (n && !newText) dismissNote(id);
+}
+
+function dismissNote(id) {
+  const n = state.quickNotes.find(n => n.id === id);
+  if (n) n.dismissed = true;
+  save();
+  renderSavedNotes();
+  updateNoteBadge();
+}
+
+// Exit notes — must confirm each one before closing
+function showExitNotes() {
+  const active = state.quickNotes.filter(n => !n.dismissed);
+  if (!active.length) return;
+
+  function renderExitList() {
+    const c = document.getElementById('exitNotesList');
+    c.innerHTML = active.map(n => `
+      <div id="enote_${n.id}" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;padding:12px;background:${n._ok ? 'var(--accent-dim)' : 'var(--bg3)'};border-radius:var(--radius-sm);border:1px solid ${n._ok ? 'rgba(74,222,128,0.3)' : 'var(--border)'}">
+        <i class="ti ti-note" style="color:${n._ok ? 'var(--accent)' : 'var(--purple)'};font-size:16px;margin-top:1px;flex-shrink:0"></i>
+        <span style="font-size:13px;flex:1;${n._ok ? 'text-decoration:line-through;color:var(--text2)' : ''}">${escHtml(n.text)}</span>
+        ${!n._ok
+          ? `<button onclick="okExitNote(${n.id})" class="btn btn-sm btn-primary" style="flex-shrink:0"><i class="ti ti-check"></i> ✓</button>`
+          : `<i class="ti ti-check-circle" style="color:var(--accent);flex-shrink:0"></i>`}
+      </div>`).join('');
+    const pending = active.filter(n => !n._ok).length;
+    const btn = document.getElementById('exitNotesCloseBtn');
+    const msg = document.getElementById('exitNotesPendingMsg');
+    if (btn) btn.disabled = pending > 0;
+    if (msg) {
+      msg.textContent = pending > 0 ? `יש לאשר ${pending} תזכורות נוספות` : 'הכל אושר ✓';
+      msg.style.color = pending > 0 ? 'var(--amber)' : 'var(--accent)';
+    }
+  }
+
+  window.okExitNote = function(id) {
+    const n = active.find(n => n.id === id);
+    if (n) n._ok = true;
+    renderExitList();
+  };
+
+  renderExitList();
+  document.getElementById('exitNotesModal').classList.add('open');
+}
+
+function tryCloseExitNotes() {
+  state.quickNotes.filter(n => n._ok).forEach(n => { n.dismissed = true; delete n._ok; });
+  save();
+  updateNoteBadge();
+  document.getElementById('exitNotesModal').classList.remove('open');
+}
+function closeExitNotes() { tryCloseExitNotes(); }
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function getExportEntries() {
+  const range = document.getElementById('expRange').value;
+  const today = new Date();
+  let fromD = '', toD = '';
+  if (range === 'week') {
+    const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
+    fromD = dateKey(sun);
+    const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+    toD = dateKey(sat);
+  } else if (range === 'month') {
+    fromD = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
+    toD = dateKey(new Date(today.getFullYear(), today.getMonth()+1, 0));
+  } else if (range === 'custom') {
+    fromD = document.getElementById('expFrom').value;
+    toD = document.getElementById('expTo').value;
+  }
+  return state.entries.filter(e => {
+    if (fromD && e.date < fromD) return false;
+    if (toD && e.date > toD) return false;
+    return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+}
+
+function exportCSV() {
+  const entries = getExportEntries();
+  const rows = [['תאריך','מ','עד','משך (שעות)','נושא','הערה','סוג']];
+  entries.forEach(e => {
+    const topic = e.topicId ? (state.topics.find(t => t.id == e.topicId) || {}).name || '' : '';
+    rows.push([e.date, e.from, e.to, (e.ms/3600000).toFixed(2), topic, e.note || '', e.type === 'manual' ? 'ידני' : 'אוטומטי']);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  downloadBlob(blob, `שעות_${dateKey(new Date())}.csv`);
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `גיבוי_שעות_${dateKey(new Date())}.json`);
+}
+
+function exportText() {
+  const entries = getExportEntries();
+  const byDate = {};
+  entries.forEach(e => { (byDate[e.date] || (byDate[e.date] = [])).push(e); });
+  const DOW_NAMES_LOCAL = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  let txt = `דוח שעות — ${dateKey(new Date())}\n${'='.repeat(40)}\n\n`;
+  Object.entries(byDate).forEach(([d, es]) => {
+    const total = es.reduce((s,e) => s+e.ms, 0);
+    txt += `${formatDate(d)} (${DOW_NAMES_LOCAL[new Date(d+'T12:00:00').getDay()]}) — ${hFmt(total)}\n`;
+    es.forEach(e => {
+      const topic = e.topicId ? (state.topics.find(t => t.id == e.topicId) || {}).name || '' : '';
+      txt += `  ${e.from}–${e.to}  ${fmt(e.ms, true)}${topic ? '  [' + topic + ']' : ''}${e.note ? '  ' + e.note : ''}\n`;
+    });
+    txt += '\n';
+  });
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  downloadBlob(blob, `שעות_${dateKey(new Date())}.txt`);
+}
+
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.entries) throw new Error('פורמט לא תקין');
+      const existingIds = new Set(state.entries.map(e => e.id));
+      let added = 0;
+      data.entries.forEach(e => { if (!existingIds.has(e.id)) { state.entries.push(e); added++; } });
+      save();
+      document.getElementById('importResult').textContent = `✓ יובאו ${added} רשומות`;
+      renderHistory();
+      updateTimerPage();
+    } catch(e) {
+      document.getElementById('importResult').textContent = 'שגיאה: ' + e.message;
+    }
+    input.value = '';
+  };
+  r.readAsText(file);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function nav(page) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('#topNav button').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  const tnav = document.getElementById('tnav-' + page);
+  if (tnav) tnav.classList.add('active');
+
+  if (page === 'weekly') renderWeekChart();
+  if (page === 'monthly') renderMonthChart();
+  if (page === 'goals') renderGoals();
+  if (page === 'topics') renderTopics();
+  if (page === 'unitgoals') renderUnitGoals();
+  if (page === 'templates') {
+    renderTemplateSummary();
+    if (state.activeTemplate) document.getElementById(`tmpl-${state.activeTemplate}`)?.classList.add('selected');
+  }
+  if (page === 'settings') loadSettingsUI();
+  if (page === 'manual') {
+    renderManualList();
+    document.getElementById('manDate').value = dateKey(new Date());
+    updateManHebrewDate();
+    refreshTopicSelects();
+  }
+  if (page === 'history') renderHistory();
+  if (page === 'timer') updateTimerPage();
+  if (page === 'export') {
+    const today = new Date();
+    document.getElementById('expFrom').value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-01`;
+    document.getElementById('expTo').value = dateKey(today);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function updateSpecialHebrewDate() {
+  const v = document.getElementById('specialDate').value;
+  const el = document.getElementById('specialHebrewDate');
+  if (!el) return;
+  el.textContent = v ? getHebrewDate(new Date(v + 'T12:00:00')) : '';
+}
+
+function updateManHebrewDate() {
+  const v = document.getElementById('manDate').value;
+  const el = document.getElementById('manHebrewDate');
+  if (!el) return;
+  if (v) {
+    el.textContent = getHebrewDate(new Date(v + 'T12:00:00'));
+  } else {
+    el.textContent = '';
+  }
+}
+
+function init() {
+  // Restore saved Google Client ID if any
+  if (state.settings.gdriveClientId) GDRIVE.CLIENT_ID = state.settings.gdriveClientId;
+  initDefaultHolidays();
+  initDefaultTopicsAndSlots();
+
+  applyTheme();
+  updateTimerPage();
+  renderGoals();
+  refreshTopicSelects();
+  renderTimerTopicChips();
+  renderTimerSlotChips();
+  document.getElementById('manDate').value = dateKey(new Date());
+
+  // topic period toggle
+  document.getElementById('topicPeriod').addEventListener('change', function() {
+    document.getElementById('topicDateRange').style.display = this.value === 'range' ? 'block' : 'none';
+  });
+
+  // auto-start
+  if (state.settings.autoStart) startTimer();
+  updateNoteBadge();
+
+  // ── שמירה אוטומטית בסגירת הדף ──
+  window.addEventListener('beforeunload', function(e) {
+    // תמיד שמור
+    save();
+    // אם יש תזכורות פעילות — עצור סגירה והצג אותן
+    const activeNotes = state.quickNotes.filter(n => !n.dismissed);
+    if (activeNotes.length > 0) {
+      showExitNotes();
+      e.preventDefault();
+      e.returnValue = 'יש תזכורות פעילות שטרם אושרו!';
+      return e.returnValue;
+    }
+    // אם טיימר רץ — שמור סשן
+    if (running && elapsed > 5000) {
+      saveLap();
+    }
+  });
+
+  // periodic updates
+  setInterval(() => { if (running) { updateTimerPage(); } }, 1000);
+  setInterval(applyTheme, 60000);
+  setInterval(checkReminder, 60000);
+  setInterval(checkIdle, 10000); // two-stage idle check every 10s
+}
+
+// ============================================================
+// UNIT GOALS (דפים / פרקים / סימנים)
+// ============================================================
+function ensureTopicUnitGoals() {
+  if (!state.topicUnitGoals) state.topicUnitGoals = [];
+}
+
+function openUnitGoalModal() {
+  ensureTopicUnitGoals();
+  const sel = document.getElementById('ugTopicId');
+  sel.innerHTML = state.topics.length
+    ? state.topics.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
+    : '<option value="">— אין נושאים —</option>';
+  document.getElementById('ugTotal').value = '';
+  document.getElementById('ugStart').value = '1';
+  document.getElementById('ugDesc').value = '';
+  document.getElementById('unitGoalModal').classList.add('open');
+}
+function closeUnitGoalModal() { document.getElementById('unitGoalModal').classList.remove('open'); }
+
+function saveUnitGoal() {
+  ensureTopicUnitGoals();
+  const topicId = parseInt(document.getElementById('ugTopicId').value);
+  const unit = document.getElementById('ugUnit').value;
+  const total = parseInt(document.getElementById('ugTotal').value);
+  const start = parseInt(document.getElementById('ugStart').value) || 1;
+  const desc = document.getElementById('ugDesc').value.trim();
+  if (!topicId || !total || total < 1) { alert('בחר נושא ומספר יחידות תקין'); return; }
+  const items = [];
+  for (let i = start; i < start + total; i++) {
+    items.push({ id: i, label: `${unit === 'דפים' ? 'דף ' : unit === 'פרקים' ? 'פרק ' : unit === 'סימנים' ? 'סימן ' : ''}${i}`, done: false, doneDate: null });
+  }
+  state.topicUnitGoals.push({ id: Date.now(), topicId, unit, total, desc, start, items });
+  save();
+  closeUnitGoalModal();
+  renderUnitGoals();
+}
+
+function deleteUnitGoal(id) {
+  ensureTopicUnitGoals();
+  if (!confirm('למחוק יעד זה?')) return;
+  state.topicUnitGoals = state.topicUnitGoals.filter(g => g.id !== id);
+  save();
+  renderUnitGoals();
+}
+
+function toggleUnitItem(goalId, itemId) {
+  ensureTopicUnitGoals();
+  const goal = state.topicUnitGoals.find(g => g.id === goalId);
+  if (!goal) return;
+  const item = goal.items.find(i => i.id === itemId);
+  if (!item) return;
+  item.done = !item.done;
+  item.doneDate = item.done ? dateKey(new Date()) : null;
+  save();
+  renderUnitGoals();
+  // Re-render mark modal if open
+  const markModal = document.getElementById('markUnitModal');
+  if (markModal.classList.contains('open')) {
+    renderMarkUnitModal(goalId);
+  }
+}
+
+function openMarkModal(goalId) {
+  renderMarkUnitModal(goalId);
+  document.getElementById('markUnitModal').classList.add('open');
+}
+function closeMarkUnitModal() { document.getElementById('markUnitModal').classList.remove('open'); }
+
+function renderMarkUnitModal(goalId) {
+  ensureTopicUnitGoals();
+  const goal = state.topicUnitGoals.find(g => g.id === goalId);
+  if (!goal) return;
+  const topic = state.topics.find(t => t.id === goal.topicId);
+  document.getElementById('markUnitTitle').innerHTML = `<i class="ti ti-list-check" style="color:var(--purple)"></i> ${topic?.name || ''} — ${goal.unit}`;
+  const done = goal.items.filter(i => i.done).length;
+  document.getElementById('markUnitList').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <span class="badge badge-purple">${done}/${goal.items.length} ${goal.unit}</span>
+      ${goal.desc ? `<span style="font-size:12px;color:var(--text2)">${goal.desc}</span>` : ''}
+      <button class="btn btn-sm" onclick="markAllUnitItems(${goalId},true)" style="margin-right:auto">סמן הכל ✓</button>
+      <button class="btn btn-sm" onclick="markAllUnitItems(${goalId},false)">נקה הכל</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px">
+      ${goal.items.map(item => `
+        <div onclick="toggleUnitItem(${goalId},${item.id})"
+          style="padding:6px 8px;border-radius:6px;border:1px solid ${item.done ? 'var(--accent)' : 'var(--border2)'};
+          background:${item.done ? 'var(--accent-dim)' : 'var(--bg3)'};cursor:pointer;text-align:center;
+          font-size:12px;font-family:'JetBrains Mono',monospace;transition:all 0.15s;
+          color:${item.done ? 'var(--accent)' : 'var(--text2)'}">
+          ${item.done ? '✓' : ''} ${item.label}
+          ${item.doneDate ? `<div style="font-size:9px;color:var(--text3)">${formatDateShort(item.doneDate)}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function markAllUnitItems(goalId, done) {
+  ensureTopicUnitGoals();
+  const goal = state.topicUnitGoals.find(g => g.id === goalId);
+  if (!goal) return;
+  goal.items.forEach(i => { i.done = done; i.doneDate = done ? dateKey(new Date()) : null; });
+  save();
+  renderUnitGoals();
+  renderMarkUnitModal(goalId);
+}
+
+function renderUnitGoals() {
+  ensureTopicUnitGoals();
+  const c = document.getElementById('unitGoalsList');
+  if (!c) return;
+  if (!state.topicUnitGoals.length) {
+    c.innerHTML = '<div class="empty"><i class="ti ti-list-off"></i>אין יעדי תוכן. לחץ "יעד חדש" להתחיל.</div>';
+    return;
+  }
+  c.innerHTML = state.topicUnitGoals.map(goal => {
+    const topic = state.topics.find(t => t.id === goal.topicId);
+    const done = goal.items.filter(i => i.done).length;
+    const pct = Math.round(done / goal.items.length * 100);
+    const color = topic?.color || 'var(--accent)';
+    return `<div class="card card-sm mb2" style="border-color:${color}33">
+      <div class="flex justify-between items-center mb1">
+        <div>
+          <span style="font-size:14px;font-weight:600;color:${color}">${topic?.name || '—'}</span>
+          <span class="badge badge-gray" style="margin-right:8px">${goal.unit}</span>
+          ${goal.desc ? `<span style="font-size:12px;color:var(--text2);margin-right:4px">${goal.desc}</span>` : ''}
+        </div>
+        <div class="flex gap-sm">
+          <button class="btn btn-sm" onclick="openMarkModal(${goal.id})"><i class="ti ti-check"></i> סמן</button>
+          <button class="btn btn-sm btn-red" onclick="deleteUnitGoal(${goal.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px">
+          <div style="height:8px;background:${color};border-radius:4px;width:${pct}%;transition:width 0.5s"></div>
+        </div>
+        <span style="font-size:12px;font-family:'JetBrains Mono',monospace;min-width:65px;color:${color}">${done}/${goal.items.length} (${pct}%)</span>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">
+        ${goal.items.slice(0,20).map(i => `<span style="display:inline-block;margin:1px 2px;padding:1px 5px;border-radius:4px;background:${i.done ? color + '33' : 'var(--bg4)'};color:${i.done ? color : 'var(--text3)'}">${i.label.replace(/\D/g,'') || i.id}</span>`).join('')}
+        ${goal.items.length > 20 ? `<span style="color:var(--text3)">...ועוד ${goal.items.length-20}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// GUIDE MODAL
+// ============================================================
+function openGuide() { document.getElementById('guideModal').classList.add('open'); }
+function closeGuide() { document.getElementById('guideModal').classList.remove('open'); }
+
+// Wait for DOM to be fully ready before init
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+<!-- ===== MODAL: Unit Goal ===== -->
+<div class="modal-overlay" id="unitGoalModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-list-check" style="color:var(--purple)"></i> יעד תוכן חדש</span>
+      <button class="modal-close" onclick="closeUnitGoalModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">נושא</label>
+      <select class="form-select" id="ugTopicId"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">סוג יחידה</label>
+      <select class="form-select" id="ugUnit">
+        <option value="דפים">📖 דפים (תלמוד בבלי)</option>
+        <option value="פרקים">📋 פרקים (משניות / תנ"ך)</option>
+        <option value="סימנים">⚖️ סימנים (הלכה / משנה ברורה)</option>
+        <option value="הלכות">📜 הלכות</option>
+        <option value="עמודים">📄 עמודים</option>
+        <option value="שיעורים">🎓 שיעורים</option>
+        <option value="יחידות">✅ יחידות</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-row mb0"><label class="form-label">מספר כולל</label><input type="number" class="form-input" id="ugTotal" min="1" placeholder="למשל: 63"/></div>
+      <div class="form-row mb0"><label class="form-label">התחל מ- (אופ')</label><input type="number" class="form-input" id="ugStart" min="1" placeholder="1"/></div>
+    </div>
+    <div class="form-row mt2"><label class="form-label">תיאור / מטרה</label><input type="text" class="form-input" id="ugDesc" placeholder="למשל: ש&quot;ס כולו, פרקי אבות..."/></div>
+    <button class="btn btn-primary w100 mt2" onclick="saveUnitGoal()">צור יעד</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: Mark Unit Done ===== -->
+<div class="modal-overlay" id="markUnitModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title" id="markUnitTitle">סמן יחידות</span>
+      <button class="modal-close" onclick="closeMarkUnitModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="markUnitList" style="max-height:60vh;overflow-y:auto"></div>
+    <button class="btn btn-primary w100 mt2" onclick="closeMarkUnitModal()">סגור</button>
+  </div>
+</div>
+
+<!-- ===== GUIDE MODAL ===== -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal" style="max-width:600px;direction:rtl">
+    <div class="modal-header">
+      <span class="modal-title" style="color:var(--amber)"><i class="ti ti-help-circle"></i> מדריך למשתמש — מונה שעות Pro</span>
+      <button class="modal-close" onclick="closeGuide()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div style="font-size:13px;line-height:1.8;color:var(--text2)">
+
+      <div style="background:var(--accent-dim);border:1px solid rgba(74,222,128,0.2);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:1.25rem">
+        <span style="color:var(--accent);font-weight:600">ברוך הבא!</span> מונה שעות Pro הוא כלי מקיף למעקב, ניהול ויצוא שעות לימוד / עבודה — עם תמיכה מלאה בעברית, תאריך עברי, נושאים, יעדים, גרפים ועוד.
+      </div>
+
+      <!-- Section 1 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-player-play" style="color:var(--accent)"></i> טיימר</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li>לחץ <strong>התחל</strong> — הטיימר מתחיל למנות בזמן אמת</li>
+          <li><strong>השהה / המשך</strong> — עצור ותחדש בלי לאבד זמן</li>
+          <li><strong>סיום & שמור</strong> — שומר את הסשן ומאפס</li>
+          <li>בחר <strong>נושא</strong> (chip) — ניתן לסמן כמה נושאים במקביל לאותו סשן</li>
+          <li>מעגל ההתקדמות מציג % מהיעד היומי בזמן אמת</li>
+          <li><strong>הפעלה אוטומטית</strong> — הגדר בהגדרות "הפעל טיימר אוטומטי בפתיחה"</li>
+        </ul>
+      </div>
+
+      <!-- Section 2 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-target" style="color:var(--blue)"></i> יעדים יומיים</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li>הגדר יעד שעות לכל יום בשבוע (א–ש) עם הסליידר</li>
+          <li>הוסף <strong>תאריכים מיוחדים</strong> — חגים, ערבי חג, ימי מנוחה (עם יעד 0)</li>
+          <li>חגים יהודיים 5785 נטענים אוטומטית בהתקנה ראשונה</li>
+          <li>תצוגת "שבוע נוכחי" מציגה יעד vs. ביצוע לכל יום</li>
+        </ul>
+      </div>
+
+      <!-- Section 3 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-tag" style="color:var(--purple)"></i> נושאים</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li>צור נושאי לימוד עם שם, צבע ויעד יומי (גמרא, הלכה, מוסר...)</li>
+          <li>הגדר תקופת פעילות לנושא (תמיד / טווח תאריכים)</li>
+          <li>הגדר <strong>טווחי שעות</strong> (סדרים) — למשל "סדר בוקר" 08:00–13:30 ותראה מילוי אחוזי</li>
+          <li>ניתן לבחור <strong>מספר נושאים</strong> לאותו סשן בטיימר (chips)</li>
+        </ul>
+      </div>
+
+      <!-- Section 4 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-pencil-plus" style="color:var(--amber)"></i> הוספה ידנית</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li>הוסף שעות שלא נרשמו בזמן אמת — תאריך, שעת התחלה/סיום, נושא</li>
+          <li>ניתן להוריד דקות הפסקה אוטומטית</li>
+          <li>תאריך עברי מוצג מיד בעת בחירת תאריך</li>
+        </ul>
+      </div>
+
+      <!-- Section 5 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-chart-bar" style="color:var(--blue)"></i> גרפים ודוחות</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li><strong>גרף שבועי</strong> — ניווט בין שבועות, ראה ביצוע יומי vs. יעד</li>
+          <li><strong>גרף חודשי</strong> — סיכום לפי שבועות וימים בחודש</li>
+          <li><strong>היסטוריה</strong> — חיפוש, סינון לפי תאריך, מחיקת רשומות</li>
+        </ul>
+      </div>
+
+      <!-- Section 6 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-template" style="color:var(--accent)"></i> תבניות חבורה</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li><strong>חבורת י' שעות</strong>: א–ה 10h, ו–ש 5h (60h שבועי)</li>
+          <li><strong>חבורת ט' שעות</strong>: א–ה 9h, ו–ש 4.5h (54h שבועי)</li>
+          <li>לאחר הפעלה — ניתן להוסיף החרגות ספציפיות (חגים, ימי שינוי)</li>
+        </ul>
+      </div>
+
+      <!-- Section 7 -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-settings" style="color:var(--text2)"></i> הגדרות שימושיות</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li><strong>ערכת נושא</strong>: כהה / בהיר / אוטומטי לפי שעה</li>
+          <li><strong>הפעלה אוטומטית</strong> בפתיחת הקובץ</li>
+          <li><strong>זיהוי חוסר פעילות</strong> — השהיה אוטומטית + שמירה אוטומטית</li>
+          <li><strong>תזכורות</strong> — לפי זמן שנותר לסיום יעד, ולפי שעות קבועות</li>
+          <li><strong>הרצה כאפליקציה</strong> — ללא דפדפן, דרך Chrome Shortcut</li>
+        </ul>
+      </div>
+
+      <!-- Section 8 -->
+      <div style="margin-bottom:1rem">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="ti ti-note" style="color:var(--purple)"></i> תזכורות מהירות</div>
+        <ul style="padding-right:1.2rem;margin:0;list-style:disc">
+          <li>לחץ על כפתור ה-📝 בפינה שמאל-תחתון</li>
+          <li>כתוב תזכורת → שמור (Enter)</li>
+          <li>אפשר לקבוע שעה לתזכורת — תצוץ אוטומטית</li>
+          <li>בסגירה — מבקש לאשר שראית כל תזכורת</li>
+        </ul>
+      </div>
+
+      <!-- Tip -->
+      <div style="background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--purple)">
+        <i class="ti ti-bulb"></i> <strong>טיפ:</strong> כל הנתונים נשמרים אוטומטית ב-localStorage של הדפדפן. לגיבוי — לך ל<strong>יצוא / ייבוא</strong> ושמור JSON.
+      </div>
+
+    </div>
+
+    <div style="margin-top:1.5rem;text-align:center">
+      <button class="btn btn-primary" onclick="closeGuide()"><i class="ti ti-check"></i> הבנתי, בואו נתחיל!</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

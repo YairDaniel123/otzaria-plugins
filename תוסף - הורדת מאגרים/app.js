@@ -1,70 +1,49 @@
 const GITHUB_REPO = 'YairDaniel123/Otzarya-Library';
-const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
-const MIN_NETWORK_VERSION = '0.9.92';
+const LATEST_DL   = `https://github.com/${GITHUB_REPO}/releases/latest/download/`;
 
-let manifest = [];
 let expandedPaths = new Set();
-let fullLibraryUrl = null;
+let booted = false;
 
-Otzaria.on('plugin.boot', async (payload) => {
-    const appVersion = payload?.appVersion || '0.0.0';
-    const hasNetwork = compareVersions(appVersion, MIN_NETWORK_VERSION) >= 0;
+async function boot(payload) {
+    if (booted) return;
+    booted = true;
 
-    if (!hasNetwork) {
-        showNotice(`התוסף יעבוד במלואו החל מגרסה ${MIN_NETWORK_VERSION}.`);
+    // BOOKS_DATA נטען מ-books_data.js שמגיע עם החבילה
+    if (typeof BOOKS_DATA === 'undefined' || !BOOKS_DATA.length) {
         hideLoading();
+        showError('books_data.js לא נטען');
         return;
     }
 
-    try {
-        const releaseRes = await fetch(API_URL, {
-            headers: { 'Accept': 'application/vnd.github+json' }
-        });
-        if (!releaseRes.ok) throw new Error('GitHub API: ' + releaseRes.status);
-        const release = await releaseRes.json();
+    // הוסף כתובת הורדה לכל תיקייה (נפתחת בדפדפן — לא fetch)
+    const manifest = BOOKS_DATA.map(item => ({
+        ...item,
+        downloadUrl: LATEST_DL + item.zip
+    }));
 
-        const urlMap = {};
-        release.assets.forEach(a => { urlMap[a.name] = a.browser_download_url; });
+    hideLoading();
+    renderFullLibraryBtn();
+    renderTree(manifest);
+}
 
-        fullLibraryUrl = urlMap['full-library.zip'] || null;
+if (window.Otzaria) {
+    Otzaria.on('plugin.boot', boot);
+}
+setTimeout(() => boot({}), 500);
 
-        if (!urlMap['manifest.json']) throw new Error('manifest.json לא נמצא ב-Release');
-        const manifestRes = await fetch(urlMap['manifest.json']);
-        if (!manifestRes.ok) throw new Error('שגיאה בטעינת manifest');
-        manifest = await manifestRes.json();
+// ─── עץ ────────────────────────────────────────────────────────────
 
-        manifest.forEach(item => { item.downloadUrl = urlMap[item.zip] || null; });
-
-        hideLoading();
-        renderFullLibraryBtn();
-        renderTree();
-
-    } catch (err) {
-        hideLoading();
-        showNotice('שגיאה בטעינה: ' + err.message);
-    }
-});
-
-function buildTree(parentPath) {
+function buildTree(manifest, parentPath) {
     return manifest
         .filter(item => item.parent === parentPath)
-        .map(item => ({ ...item, children: buildTree(item.path) }));
+        .map(item => ({ ...item, children: buildTree(manifest, item.path) }));
 }
 
-function renderFullLibraryBtn() {
-    const btn = document.getElementById('full-library-btn');
-    if (!btn) return;
-    if (fullLibraryUrl) {
-        btn.addEventListener('click', () => window.open(fullLibraryUrl, '_blank'));
-        btn.style.display = 'inline-flex';
-    }
-}
-
-function renderTree() {
-    const roots = buildTree('');
+function renderTree(manifest) {
+    const roots = buildTree(manifest, '');
     const container = document.getElementById('tree');
     container.innerHTML = '';
-    if (roots.length === 0) {
+    if (!roots.length) {
         container.innerHTML = '<div class="empty">אין נתונים להצגה</div>';
         return;
     }
@@ -73,29 +52,29 @@ function renderTree() {
 
 function createNode(node, depth) {
     const hasChildren = node.children && node.children.length > 0;
-    const isExpanded = expandedPaths.has(node.path);
+    const isExpanded  = expandedPaths.has(node.path);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'tree-node';
 
     const row = document.createElement('div');
     row.className = 'tree-row';
-    row.style.paddingRight = (16 + depth * 28) + 'px';
+    row.style.paddingRight = (16 + depth * 24) + 'px';
 
     const toggle = document.createElement('span');
     toggle.className = 'toggle';
     if (hasChildren) {
-        toggle.textContent = isExpanded ? '▼' : '▶';
+        toggle.textContent = isExpanded ? '▾' : '▸';
         toggle.addEventListener('click', () => toggleNode(node.path));
     } else {
         toggle.textContent = '•';
-        toggle.style.cursor = 'default';
-        toggle.style.opacity = '0.3';
+        toggle.style.opacity = '0.25';
+        toggle.style.cursor  = 'default';
     }
     row.appendChild(toggle);
 
     const name = document.createElement('span');
-    name.className = 'node-name' + (hasChildren ? ' clickable' : '');
+    name.className = 'node-name' + (hasChildren ? ' folder' : '');
     name.textContent = node.name;
     if (hasChildren) name.addEventListener('click', () => toggleNode(node.path));
     row.appendChild(name);
@@ -110,51 +89,90 @@ function createNode(node, depth) {
     const btn = document.createElement('button');
     btn.className = 'dl-btn';
     btn.textContent = 'הורד';
-    if (node.downloadUrl) {
-        btn.addEventListener('click', () => window.open(node.downloadUrl, '_blank'));
-    } else {
-        btn.disabled = true;
-    }
+    btn.onclick = () => openUrl(node.downloadUrl);
     row.appendChild(btn);
 
     wrapper.appendChild(row);
 
     if (hasChildren && isExpanded) {
-        const childContainer = document.createElement('div');
-        childContainer.className = 'tree-children';
-        node.children.forEach(child => childContainer.appendChild(createNode(child, depth + 1)));
-        wrapper.appendChild(childContainer);
+        const sub = document.createElement('div');
+        sub.className = 'tree-children';
+        node.children.forEach(child => sub.appendChild(createNode(child, depth + 1)));
+        wrapper.appendChild(sub);
     }
 
     return wrapper;
 }
 
 function toggleNode(path) {
-    if (expandedPaths.has(path)) {
-        expandedPaths.delete(path);
-    } else {
-        expandedPaths.add(path);
-    }
-    renderTree();
+    expandedPaths.has(path) ? expandedPaths.delete(path) : expandedPaths.add(path);
+    // renderTree needs manifest — re-call boot pattern via re-render
+    const manifest = BOOKS_DATA.map(item => ({ ...item, downloadUrl: LATEST_DL + item.zip }));
+    renderTree(manifest);
 }
+
+// ─── פתיחת URL ─────────────────────────────────────────────────────
+
+function openUrl(url) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            showCopied(url);
+        }).catch(() => showCopied(url));
+    } else {
+        showCopied(url);
+    }
+}
+
+function showCopied(url) {
+    const el = document.getElementById('copy-toast');
+    if (!el) return;
+    el.querySelector('.copy-url').textContent = url;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+// ─── כפתור המאגר המלא ──────────────────────────────────────────────
+
+function renderFullLibraryBtn() {
+    const btn = document.getElementById('full-library-btn');
+    if (!btn) return;
+    btn.onclick = () => openUrl(LATEST_DL + 'full-library.zip');
+    btn.style.display = 'inline-flex';
+}
+
+// ─── UI ────────────────────────────────────────────────────────────
 
 function hideLoading() {
     const el = document.getElementById('loading');
     if (el) el.style.display = 'none';
 }
 
-function showNotice(msg) {
-    const el = document.getElementById('version-notice');
-    el.textContent = msg;
-    el.classList.add('visible');
+function showError(msg) {
+    const el = document.getElementById('error-msg');
+    if (el) { el.textContent = 'שגיאה: ' + msg; el.style.display = 'block'; }
 }
 
-function compareVersions(a, b) {
-    const pa = a.split('.').map(Number);
-    const pb = b.split('.').map(Number);
-    for (let i = 0; i < 3; i++) {
-        if ((pa[i] || 0) > (pb[i] || 0)) return 1;
-        if ((pa[i] || 0) < (pb[i] || 0)) return -1;
+// ─── ערכת נושא ─────────────────────────────────────────────────────
+
+function applyTheme(theme) {
+    if (!theme || !theme.colorScheme) return;
+    const cs = theme.colorScheme, r = document.documentElement.style;
+    if (cs.primary)    r.setProperty('--primary',           cs.primary);
+    if (cs.onPrimary)  r.setProperty('--on-primary',        cs.onPrimary);
+    if (cs.surface)    r.setProperty('--surface',           cs.surface);
+    if (cs.onSurface)  r.setProperty('--on-surface',        cs.onSurface);
+    if (cs.surfaceContainerHighest || cs.surfaceContainer)
+                       r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surfaceContainer);
+    if (cs.outline)    r.setProperty('--outline',           cs.outline);
+    if (theme.typography) {
+        const t = theme.typography;
+        if (t.fontFamily) r.setProperty('--font-family', t.fontFamily + ', system-ui, sans-serif');
+        if (t.fontSize)   r.setProperty('--font-size',   t.fontSize + 'px');
+        if (t.lineHeight) r.setProperty('--line-height', t.lineHeight);
     }
-    return 0;
+}
+
+if (window.Otzaria) {
+    Otzaria.on('plugin.boot',   p => applyTheme(p.theme));
+    Otzaria.on('theme.changed', t => applyTheme(t));
 }

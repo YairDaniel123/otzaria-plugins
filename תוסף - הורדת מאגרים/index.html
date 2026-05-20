@@ -1,220 +1,172 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מנהל הורדות מאגרים</title>
-    <style>
-        :root {
-            --primary: #1976d2;
-            --on-primary: #ffffff;
-            --surface: #ffffff;
-            --on-surface: #1a1a1a;
-            --surface-container: #f3f4f6;
-            --outline: #cbd5e1;
-            --error-bg: #fef2f2;
-            --error-color: #b91c1c;
-            --error-border: #fca5a5;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הורדת מאגרי ספרים</title>
+<style>
+:root {
+    --primary: #1976d2;
+    --on-primary: #ffffff;
+    --surface: #ffffff;
+    --on-surface: #1a1a1a;
+    --surface-container: #f3f4f6;
+    --outline: #d1d5db;
+    --font-family: system-ui, sans-serif;
+    --font-size: 15px;
+    --line-height: 1.5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: var(--surface);
+    color: var(--on-surface);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    padding: 20px 20px 60px;
+}
 
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; }
+h2 {
+    color: var(--primary);
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+}
+#release-name {
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-bottom: 16px;
+}
 
-        body {
-            background: var(--surface);
-            color: var(--on-surface);
-            font-family: var(--font-family, system-ui, sans-serif);
-            font-size: var(--font-size, 16px);
-            line-height: var(--line-height, 1.5);
-            transition: background-color .25s, color .25s;
-            padding: 20px 24px 40px;
-        }
+/* שגיאה */
+#error-msg {
+    display: none;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
 
-        h2 {
-            color: var(--primary);
-            font-size: 1.6rem;
-            margin: 0 0 12px;
-        }
+/* פס המאגר המלא */
+.full-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-container);
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.full-bar span { flex: 1; font-weight: 600; font-size: 0.95rem; }
+#full-library-btn {
+    display: none;
+    align-items: center;
+    background: var(--primary);
+    color: var(--on-primary);
+    border: none;
+    border-radius: 20px;
+    padding: 7px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+}
+#full-library-btn:hover { opacity: 0.88; }
 
-        .version-notice {
-            background-color: var(--error-bg);
-            color: var(--error-color);
-            border: 1px solid var(--error-border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
-            display: none;
-        }
-        .version-notice.visible { display: block; }
+/* עץ */
+#tree {
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.tree-node + .tree-node { border-top: 1px solid var(--outline); }
+.tree-children .tree-node { border-top: 1px solid var(--outline); }
 
-        /* כפתור הורדת המאגר המלא */
-        .full-library-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--surface-container);
-            border: 1px solid var(--outline);
-            border-radius: 14px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-        }
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    transition: background 0.12s;
+}
+.tree-row:hover { background: var(--surface-container); }
 
-        .full-library-bar span {
-            flex: 1;
-            font-weight: 600;
-            font-size: 1rem;
-        }
+.toggle {
+    width: 16px;
+    flex-shrink: 0;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--primary);
+    user-select: none;
+}
 
-        #full-library-btn {
-            display: none;
-            align-items: center;
-            gap: 6px;
-            background: var(--primary);
-            color: var(--on-primary);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-            transition: opacity 0.2s;
-            white-space: nowrap;
-        }
-        #full-library-btn:hover { opacity: 0.88; }
+.node-name {
+    flex: 1;
+    font-size: 0.95rem;
+}
+.node-name.folder {
+    font-weight: 600;
+    cursor: pointer;
+}
+.node-name.folder:hover { color: var(--primary); }
 
-        /* עץ תיקיות */
-        #tree {
-            border: 1px solid var(--outline);
-            border-radius: 14px;
-            overflow: hidden;
-        }
+.node-size {
+    font-size: 0.75rem;
+    opacity: 0.45;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 
-        .tree-node + .tree-node {
-            border-top: 1px solid var(--outline);
-        }
+.dl-btn {
+    background: var(--primary);
+    color: var(--on-primary);
+    border: none;
+    border-radius: 14px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.dl-btn:hover { opacity: 0.88; }
+.dl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .tree-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            padding-left: 16px;
-            transition: background 0.15s;
-        }
-
-        .tree-row:hover {
-            background: var(--surface-container);
-        }
-
-        .tree-children .tree-node {
-            border-top: 1px solid var(--outline);
-        }
-
-        .toggle {
-            width: 18px;
-            text-align: center;
-            flex-shrink: 0;
-            cursor: pointer;
-            font-size: 0.75rem;
-            user-select: none;
-            color: var(--primary);
-        }
-
-        .node-name {
-            flex: 1;
-            font-size: 0.97rem;
-        }
-
-        .node-name.clickable {
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .node-name.clickable:hover {
-            color: var(--primary);
-        }
-
-        .node-size {
-            font-size: 0.78rem;
-            opacity: 0.5;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-
-        .dl-btn {
-            background: var(--primary);
-            color: var(--on-primary);
-            border: none;
-            border-radius: 16px;
-            padding: 5px 16px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            flex-shrink: 0;
-            font-family: inherit;
-            transition: opacity 0.2s;
-            white-space: nowrap;
-        }
-        .dl-btn:hover { opacity: 0.88; }
-        .dl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            opacity: 0.5;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 40px;
-            opacity: 0.5;
-        }
-    </style>
+.loading, .empty {
+    text-align: center;
+    padding: 36px;
+    opacity: 0.45;
+}
+</style>
 </head>
 <body>
-    <h2>הורדת מאגרי ספרים</h2>
 
-    <div class="version-notice" id="version-notice"></div>
+<h2>הורדת מאגרי ספרים</h2>
+<div id="release-name"></div>
 
-    <div class="full-library-bar">
-        <span>המאגר המלא — כל הספרים בקובץ אחד</span>
-        <button id="full-library-btn">הורד הכל</button>
-    </div>
+<div id="error-msg"></div>
 
-    <div id="tree">
-        <div class="loading" id="loading">טוען רשימה...</div>
-    </div>
+<div class="full-bar">
+    <span>המאגר המלא — כל הספרים בקובץ אחד</span>
+    <button id="full-library-btn">הורד הכל</button>
+</div>
 
-    <script src="otzaria_plugin.js"></script>
-    <script src="app.js"></script>
+<div id="copy-toast" style="display:none;position:fixed;bottom:20px;right:20px;left:20px;background:#1a1a1a;color:#fff;border-radius:12px;padding:14px 16px;z-index:999;font-size:0.88rem;box-shadow:0 4px 20px rgba(0,0,0,0.35);">
+    <div style="font-weight:700;margin-bottom:6px;">✓ הקישור הועתק ללוח — הדבק בדפדפן להורדה</div>
+    <div class="copy-url" style="opacity:0.6;font-size:0.78rem;word-break:break-all;direction:ltr;text-align:left;"></div>
+</div>
 
-    <script>
-        function applyTheme(theme) {
-            if (!theme || !theme.colorScheme) return;
-            const cs = theme.colorScheme;
-            const r = document.documentElement.style;
-            if (cs.primary)                                          r.setProperty('--primary',           cs.primary);
-            if (cs.onPrimary)                                        r.setProperty('--on-primary',         cs.onPrimary);
-            if (cs.surface)                                          r.setProperty('--surface',            cs.surface);
-            if (cs.onSurface)                                        r.setProperty('--on-surface',         cs.onSurface);
-            if (cs.surfaceContainerHighest || cs.surfaceContainer)   r.setProperty('--surface-container', cs.surfaceContainerHighest || cs.surfaceContainer);
-            if (cs.outline)                                          r.setProperty('--outline',            cs.outline);
-            if (cs.errorContainer)                                   r.setProperty('--error-bg',           cs.errorContainer);
-            if (cs.onErrorContainer)                                 r.setProperty('--error-color',        cs.onErrorContainer);
-            if (cs.error)                                            r.setProperty('--error-border',       cs.error);
-            if (theme.typography) {
-                const t = theme.typography;
-                if (t.fontFamily) r.setProperty('--font-family', t.fontFamily + ', system-ui, sans-serif');
-                if (t.fontSize)   r.setProperty('--font-size',   t.fontSize + 'px');
-                if (t.lineHeight) r.setProperty('--line-height', t.lineHeight);
-            }
-        }
+<div id="tree">
+    <div class="loading" id="loading">טוען רשימה...</div>
+</div>
 
-        if (window.Otzaria) {
-            Otzaria.on('plugin.boot',   payload => applyTheme(payload.theme));
-            Otzaria.on('theme.changed', theme   => applyTheme(theme));
-        }
-    </script>
+<script src="books_data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

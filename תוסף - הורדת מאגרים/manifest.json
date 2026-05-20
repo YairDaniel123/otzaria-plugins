@@ -1,29 +1,30 @@
 {
   "schemaVersion": 1,
   "id": "otzaria-github-downloader",
-  "name": "מנהל הורדות מאגרים",
-  "version": "2.0.0",
+  "name": "הורדת מאגר גיטאב",
+  "version": "2.0.2",
   "description": "הורדה ועדכון מאגרי ספרים מ-GitHub",
-  "author": "Otzaria User",
+  "author": "Yair Daniel",
   "stability": "beta",
   "entrypoint": "index.html",
   "minAppVersion": "0.9.92",
   "sdkVersion": "1.x",
   "permissions": [
     "network.access",
-    "ui.snackbar"
+    "ui.feedback"
   ],
   "network": {
     "enabled": true,
     "allowlist": [
       "api.github.com",
-      "github.com",
-      "objects.githubusercontent.com"
+      "raw.githubusercontent.com",
+      "objects.githubusercontent.com",
+      "github.com"
     ]
   },
   "contributes": {
     "toolTab": {
-      "title": "הורדות",
+      "title": "הורדת מאגר גיטאב",
       "order": 100,
       "defaultPinned": true,
       "iconCodepoint": 60094,
